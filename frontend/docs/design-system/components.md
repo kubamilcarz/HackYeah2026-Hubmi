@@ -10,7 +10,7 @@ Polish; component APIs and this technical documentation are English.
 | --- | --- | --- |
 | `Button`, `ButtonLink`, `IconButton` | `ui/Button.tsx` | `Button` and `IconButton` render native actions; `ButtonLink` renders navigation. All expose `primary`, `secondary`, `tertiary`, and `destructive` variants plus `sm`, `md`, and `lg` sizes. An icon-only action requires a Polish accessible `label`. |
 | `Dialog` | `ui/Dialog.tsx` | Controlled native modal for explicit decisions; Escape/backdrop close it and focus returns to the trigger. |
-| `PageNavigationBar`, `AppNavigation`, `Pagination` | `ui/PageNavigationBar.tsx`, `ui/AppNavigation.tsx`, `ui/Pagination.tsx` | Responsive navigation with landmarks and current-page state. `Pagination` exposes either `onPageChange` for in-place paging or `getPageHref` for link navigation; it names page controls and marks the current page programmatically. |
+| `PageNavigationBar`, `AppNavigation`, `Pagination` | `ui/PageNavigationBar.tsx`, `ui/AppNavigation.tsx`, `ui/Pagination.tsx` | Desktop navigation with landmarks and current-page state. `AppNavigation` takes one `items` collection and renders the persistent sidebar. `Pagination` exposes either `onPageChange` for in-place paging or `getPageHref` for link navigation; it names page controls and marks the current page programmatically. |
 | `TabSwitcher` | `ui/TabSwitcher.tsx` | Controlled or uncontrolled WAI-ARIA tab list for content already available in the current view. It exposes labelled `tablist`, native tab buttons and associated panels; Left/Right, Home and End move focus and activate an enabled tab. The horizontal list scrolls at narrow widths. |
 | `TextField`, `TextAreaField`, `SearchField`, `SelectField`, `DateField` | `ui/FormControls.tsx` | Native labelled controls with associated help and error text. `TextAreaField` supports an optional visible character counter when `maxLength` is provided; it does not announce every keystroke. |
 | `PageHeader`, `SearchFilterBar` | `ui/PageHeader.tsx`, `ui/SearchFilterBar.tsx` | `PageHeader` renders a semantic `header`, title and optional description; it defaults to `h1` and permits a lower heading level in a nested showcase. `SearchFilterBar` pairs a labelled controlled search input with a named native button that lets the parent open filters. |
@@ -49,7 +49,7 @@ focus, and reflow from one column on mobile to richer layouts on wider screens.
 | Component | Source | Contract |
 | --- | --- | --- |
 | `DataTable` | `ui/DataTable.tsx` | Searchable and sortable native table with Polish labels and empty state. Optional `selectable` adds named native row/select-all checkboxes; `cellKind: "status"` plus `statusVariants` renders a textual `Badge` status. It scrolls horizontally on narrow screens rather than dropping data. |
-| `Map` | `ui/Map.tsx` | Map plus keyboard-accessible organization list and selected-detail area. The list remains available when map configuration fails. |
+| `Map` | `ui/Map.tsx` | Desktop map plus keyboard-accessible organization list and in-map selected-detail card. The list remains available when map configuration fails. |
 
 ## Knowledge resource patterns
 

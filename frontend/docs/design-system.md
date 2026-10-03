@@ -52,7 +52,7 @@ these components rather than introducing look-alikes.
 | Actions | `Button`, `ButtonLink`, `IconButton` | `Button` and `IconButton` are native actions; `ButtonLink` is navigation. All support `sm`, `md`, and `lg`; icon-only controls require an accessible Polish label. |
 | Forms | `TextField`, `TextAreaField`, `SearchField`, `SelectField`, `DateField`, `RadioGroup`, `CheckboxGroup`, `CheckboxChipGroup`, `SegmentedControl`, `Slider`, `Stepper`, `StepProgress` | Persistent label, hint/error association, validation state, keyboard use, and visible focus. `StepProgress` communicates form state only; it is not step navigation. |
 | Feedback | `Alert`, `Banner`, `Toast`, `Tag`, `Badge`, `LinearProgress`, `CircularProgress` | Textual non-colour cue; use alerts for changed status, contextual banners for persistent guidance, tags for metadata, and badges for compact named status. |
-| Navigation | `AppNavigation`, `PageNavigationBar`, `Pagination`, `TabSwitcher` | Landmark and current-page state; mobile and desktop expose the same destinations. `TabSwitcher` changes content already present in the current view; it is not URL navigation. |
+| Navigation | `AppNavigation`, `PageNavigationBar`, `Pagination`, `TabSwitcher` | Desktop landmarks and current-page state. `AppNavigation` uses a persistent sidebar and one `items` collection. `TabSwitcher` changes content already present in the current view; it is not URL navigation. |
 | Page composition | `PageHeader`, `SearchFilterBar` | `PageHeader` supplies the route or section heading and plain-language introduction. `SearchFilterBar` composes the labelled `SearchField` with a named action that opens narrowing criteria. |
 | Overlays | `Dialog` | Native modal for an explicit decision with dismissal and focus restoration. |
 | Splot domain | `QuickAction`, `ContentSection`, `ChallengeCard`, `RecommendationCard`, `NeedCard`, `SolutionCard`, `SolutionDetailHero`, `ExpandableDescription`, `SolutionInterestActions`, `FavoriteButton`, `DetailMetadataSection`, `SolutionDetailSidebar`, `OrganizationCard`, `MatchSummary`, `ContactAction`, `ConnectionList`, `ModerationStatus` | Identify the subject, responsible organization, status, and safe next action without relying on colour. |
@@ -117,9 +117,8 @@ these components rather than introducing look-alikes.
   marker supplies its name, position, type, optional categories and description,
   and optional visual tone; the visible type label is always supplied alongside
   the marker colour.
-- Selecting a point centres the map and reveals its card. The card is an
-  in-map overlay on wide screens and a non-modal, dismissible bottom sheet on
-  narrow screens. `onProfileClick` is an optional action callback; consumers
+- Selecting a point centres the map and reveals its dismissible card as an
+  in-map overlay. `onProfileClick` is an optional action callback; consumers
   add routing or another action outside the component.
 - The controls use native search and radio inputs, and the location list uses
   native buttons. Verify keyboard selection and dismissal, a no-results reset,

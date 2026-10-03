@@ -1,3 +1,5 @@
+"use client";
+
 import { CheckCircle, MapPin, UsersThree } from "@phosphor-icons/react";
 import { ExpandableDescription } from "@/components/ui/ExpandableDescription";
 import { SolutionInterestActions } from "@/components/ui/SolutionInterestActions";

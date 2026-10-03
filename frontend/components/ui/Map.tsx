@@ -229,9 +229,6 @@ export function Map({
         {(configurationError ?? error) && <p className="map__status map__status--error" role="alert">{configurationError ?? error}</p>}
         {selectedMarker && <SelectedMarkerCard className="map__selected-card--desktop" marker={selectedMarker} onClose={() => setSelectedMarkerId(undefined)} onProfileClick={onProfileClick} />}
       </div>
-
-      {selectedMarker && <SelectedMarkerCard className="map__selected-card--mobile" marker={selectedMarker} onClose={() => setSelectedMarkerId(undefined)} onProfileClick={onProfileClick} />}
-
       <div className="map__supporting-content">
         {filteredMarkers.length > 0 ? (
           <div>
