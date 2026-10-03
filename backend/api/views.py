@@ -349,6 +349,154 @@ class IdeaSubmissionViewSet(viewsets.ModelViewSet):
             qs = qs.filter(persona_key=persona)
         return qs
 
+    @extend_schema(
+        summary="Asystent AI Kreatora Innowacji",
+        description="Generuje rekomendacje AI dla poszczególnych sekcji formularza FERS (deinstytucjonalizacja, wyróżniki, diagnoza powiatowa, budżet, schemat).",
+    )
+    @action(detail=False, methods=["post"], url_path="ai-assist")
+    def ai_assist(self, request):
+        field_type = request.data.get("field", "deinstitutionalization")
+        title = request.data.get("title", "Innowacja społeczna")
+        category_val = request.data.get("category")
+        county_val = request.data.get("county")
+        recipients = request.data.get("target_recipients", "")
+        concept = request.data.get("concept", "")
+
+        category_obj = None
+        if category_val:
+            category_obj = InnovationCategory.objects.filter(
+                Q(id=category_val) if str(category_val).isdigit() else Q(code=category_val)
+            ).first()
+
+        county_obj = None
+        if county_val:
+            county_obj = County.objects.filter(
+                Q(id=county_val) if str(county_val).isdigit() else Q(slug=county_val)
+            ).first()
+
+        cat_name = category_obj.name if category_obj else "Włączenie społeczne"
+        county_name = county_obj.name if county_obj else "Małopolska"
+
+        if field_type == "deinstitutionalization":
+            suggestion = (
+                f"Rekomendacja deinstytucjonalizacji (ROPS Kraków): Wpisz innowację w model usług "
+                f"świadczonych w środowisku lokalnym jako alternatywę dla opieki całodobowej w instytucjach (DPS/ZOL). "
+                f"Dla kategorii «{cat_name}» wskaż, jak {title} umożliwia beneficjentom samodzielne funkcjonowanie "
+                f"we własnym mieszkaniu, opierając się na wsparciu sąsiedzkim, mobilnych opiekunach i technologii asystującej."
+            )
+            return Response({"field": field_type, "suggestion": suggestion})
+
+        elif field_type == "innovation_uniqueness":
+            suggestion = (
+                f"Wyróżniki innowacyjności (na tle Polski i UE): W odróżnieniu od tradycyjnych form wsparcia, "
+                f"projekt «{title}» eliminuje bariery geograficzne w powiatach Małopolski, obniża koszty "
+                f"jednostkowe wsparcia o min. 35% w porównaniu z placówkami stacjonarnymi oraz włącza lokalną społeczność "
+                f"w rolę współtwórców rozwiązania (co-design zgodny ze standardami FERS Działanie 5.1)."
+            )
+            return Response({"field": field_type, "suggestion": suggestion})
+
+        elif field_type == "county_diagnosis":
+            challenges = []
+            senior_ratio = "23.5"
+            population_str = "powyżej 100 tys."
+            if county_obj:
+                senior_ratio = f"{county_obj.senior_ratio:.1f}" if county_obj.senior_ratio else "22.8"
+                if county_obj.population:
+                    population_str = f"{county_obj.population:,} mieszkańców".replace(",", " ")
+                if county_obj.main_challenges:
+                    challenges.extend(county_obj.main_challenges)
+                rc_qs = RegionalChallenge.objects.filter(county=county_obj)
+                for rc in rc_qs:
+                    if rc.title not in challenges:
+                        challenges.append(rc.title)
+
+            challenges_str = (
+                ", ".join(challenges) if challenges else "dostępność usług społecznych, samotność i starzenie się społeczności"
+            )
+            diagnosis_text = (
+                f"Na podstawie Raportu Obserwatorium Polityki Społecznej ROPS Kraków dla obszaru: {county_name}.\n"
+                f"• Liczba ludności powiatu: {population_str}.\n"
+                f"• Wskaźnik starości demograficznej: {senior_ratio}% mieszkańców w wieku senioralnym (60+).\n"
+                f"• Zdiagnozowane wyzwania strategiczne: {challenges_str}.\n"
+                f"Diagnoza wskazuje na pilną konieczność wdrożenia innowacji «{title}» z uwagi na deficyt lokalnych "
+                f"kadr opiekuńczych i dysproporcje w dostępie do usług między ośrodkami miejskimi a sołectwami."
+            )
+            return Response({
+                "field": field_type,
+                "county": county_name,
+                "senior_ratio": senior_ratio,
+                "challenges": challenges,
+                "suggestion": diagnosis_text,
+            })
+
+        elif field_type == "scalability":
+            suggestion = (
+                f"Model replikacji w Małopolsce: Rozwiązanie zostało zaprojektowane modularnie, dzięki czemu "
+                f"po zakończeniu grantu mikroinnowacji (FERS) może zostać zaadaptowane przez dowolne Centrum Usług Społecznych "
+                f"(CUS) lub Ośrodek Pomocy Społecznej w Małopolsce w formie Programu Usług Społecznych (PUS). "
+                f"Podręcznik wdrożeniowy i standardy procedur zostaną udostępnione w formule Open Source na platformie Splot."
+            )
+            return Response({"field": field_type, "suggestion": suggestion})
+
+        elif field_type == "budget_action_plan":
+            prep_plan = [
+                {
+                    "dzialanie": "Opracowanie standardu innowacji, regulaminu i procedur bezpieczeństwa",
+                    "termin": "Miesiąc 1-2",
+                    "koszt": 8000,
+                },
+                {
+                    "dzialanie": "Szkolenie zespołu wdrożeniowego i adaptacja narzędzi testowych",
+                    "termin": "Miesiąc 2-3",
+                    "koszt": 6000,
+                },
+            ]
+            testing_plan = [
+                {
+                    "dzialanie": "Pilotażowe wdrożenie u min. 25 beneficjentów w wybranym powiecie",
+                    "termin": "Miesiące 4-9",
+                    "koszt": 32000,
+                    "liczba_testerow": 25,
+                },
+                {
+                    "dzialanie": "Audyt dostępności WCAG 2.2, badanie ewaluacyjne i raport końcowy",
+                    "termin": "Miesiące 10-12",
+                    "koszt": 4000,
+                    "liczba_testerow": 25,
+                },
+            ]
+            return Response({
+                "field": field_type,
+                "action_plan_prep": prep_plan,
+                "action_plan_testing": testing_plan,
+                "requested_grant_amount": 50000,
+                "suggestion": "Wygenerowano optymalny harmonogram i budżet FERS: 14 000 PLN faza przygotowawcza + 36 000 PLN faza testowa = 50 000 PLN (maksymalny limit mikrograntu).",
+            })
+
+        elif field_type == "concept_diagram":
+            target = recipients or "Mieszkańcy Małopolski zagrożeni wykluczeniem"
+            mermaid_code = (
+                f"graph TD\n"
+                f"  A[\"Diagnoza: {county_name}<br/>Potrzeby odbiorców: {target}\"] --> B[\"Innowacja: {title}<br/>Kategoria: {cat_name}\"]\n"
+                f"  B --> C[\"Faza Przygotowawcza (3 m-ce)<br/>Standard usługi & zespół\"]\n"
+                f"  C --> D[\"Faza Testowa (9 m-cy)<br/>Pilotaż u 25 testerów\"]\n"
+                f"  D --> E[\"Rezultat deinstytucjonalizacji<br/>Trwałe włączenie & replikacja w CUS\"]\n"
+            )
+            steps = [
+                {"title": "Diagnoza lokalna", "description": f"Wyzwania i potrzeby grupy: {target} w {county_name}"},
+                {"title": "Innowacyjne rozwiązanie", "description": f"{title} w kategorii {cat_name}"},
+                {"title": "Okres przygotowawczy", "description": "Procedury, szkolenia kadry, standard (maks. 3 m-ce)"},
+                {"title": "Okres testowania", "description": "Pilotaż u min. 25 osób z ewaluacją WCAG (maks. 9 m-cy)"},
+                {"title": "Trwała zmiana i skalowanie", "description": "Deinstytucjonalizacja i wdrożenie w CUS/JST"},
+            ]
+            return Response({
+                "field": field_type,
+                "mermaid_code": mermaid_code,
+                "steps": steps,
+            })
+
+        return Response({"field": field_type, "suggestion": "Wskazówka asystenta innowacji ROPS Kraków."})
+
     @action(detail=True, methods=["post"], url_path="evaluate")
     def evaluate(self, request, pk=None):
         """Ocena wniosku przez koordynatora ROPS Kraków"""

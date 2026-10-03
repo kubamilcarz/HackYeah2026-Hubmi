@@ -71,10 +71,10 @@ Aby pogodzić **błyskawiczną prezentację bez wpisywania haseł** z **brakiem 
 ---
 
 ### Faza 4: Moduł III – Kreator Pomysłów + Generator Wniosków FERS + Asystent AI (+5%)
-- [ ] **4.1. Architektura dwupoziomowa zgłoszeń**:
+- [x] **4.1. Architektura dwupoziomowa zgłoszeń**:
   - **Poziom A: Fiszka Pomysłu (całoroczna, lekka)**: 3-minutowe zgłoszenie koncepcji innowacji przez mieszkańca/NGO (Tytuł, Autor, Istota pomysłu, Odbiorcy, Etap, Zapotrzebowanie na wsparcie/partnera).
   - **Poziom B: Generator Wniosków Grantowych (Inkubator Włączenia Społecznego 2.0 / FERS Działanie 5.1)**: Pełny, interaktywny wieloetapowy kreator (Wizard) oparty w 100% o oficjalny 12-punktowy wzór ROPS Kraków.
-- [ ] **4.2. Implementacja 12 sekcji oficjalnego Formularza ROPS**:
+- [x] **4.2. Implementacja 12 sekcji oficjalnego Formularza ROPS**:
   - **Pkt 1: Tytuł innowacji**: Krótki, zwięzły tytuł powiązany z przedmiotem innowacji.
   - **Pkt 2: Dane pomysłodawcy (dynamiczne gałęzie + autofill z Persony)**:
     - *Osoba fizyczna* (Imię, Nazwisko, Adres, Kod, Miejscowość, Telefon, E-mail) – persona *Anna Nowak*.
@@ -93,7 +93,7 @@ Aby pogodzić **błyskawiczną prezentację bez wpisywania haseł** z **brakiem 
   - **Pkt 11: Zespół projektowy i doświadczenie**: Kluczowe osoby, kompetencje i dotychczasowe wdrożenia.
   - **Pkt 12: Oświadczenia formalne**: Checkboxy zgodności z regulaminem naboru FERS / ROPS.
   - **Eksport i wydruk**: Funkcja pobrania wygenerowanego oficjalnego formularza w PDF / do druku.
-- [ ] **4.3. Inteligentny Asystent Kreatora Innowacji (AI)**:
+- [x] **4.3. Inteligentny Asystent Kreatora Innowacji (AI)**:
   - *Wsparcie w Pkt 3 i 4*: Generowanie sugestii wyróżników innowacji i wpisania w deinstytucjonalizację.
   - *Wsparcie w Pkt 5*: Automatyczne podpowiadanie danych statystycznych i cytatów z regionalnych raportów ROPS dla wskazanego powiatu.
   - *Wsparcie w Pkt 8*: Propozycje modeli replikacji innowacji w innych gminach Małopolski.

@@ -256,6 +256,17 @@ class IdeaSubmissionSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
 
+    def to_internal_value(self, data):
+        # Create a mutable copy if necessary
+        mutable_data = data.copy() if hasattr(data, "copy") else dict(data)
+        if "solution_concept" in mutable_data and "innovation_description" not in mutable_data:
+            mutable_data["innovation_description"] = mutable_data.pop("solution_concept")
+        if "target_group" in mutable_data and "target_recipients" not in mutable_data:
+            mutable_data["target_recipients"] = mutable_data.pop("target_group")
+        if "estimated_budget_pln" in mutable_data and "requested_grant_amount" not in mutable_data:
+            mutable_data["requested_grant_amount"] = mutable_data.pop("estimated_budget_pln")
+        return super().to_internal_value(mutable_data)
+
 
 class PilotEvaluationSerializer(serializers.ModelSerializer):
     class Meta:

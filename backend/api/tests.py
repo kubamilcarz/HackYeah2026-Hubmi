@@ -205,6 +205,67 @@ class BackendFullTestSuite(TestCase):
         self.assertEqual(eval_res.data["status"], "zaakceptowany")
         self.assertEqual(eval_res.data["admin_score"], 92.5)
 
+    def test_idea_submission_fiszka_with_aliases(self):
+        """Test utworzenia lekkiej Fiszki Pomysłu z mapowaniem aliasów pól"""
+        payload = {
+            "submission_type": "fiszka",
+            "title": "Sąsiedzka opieka wytchnieniowa",
+            "category": self.cat_seniors.id,
+            "county": self.county.id,
+            "applicant_name": "Anna Nowak",
+            "applicant_email": "anna.nowak@przyklad.pl",
+            "solution_concept": "Sąsiedzka pomoc doraźna dla opiekunów seniorów.",
+            "target_group": "Opiekunowie osób starszych w Grybowie",
+            "estimated_budget_pln": 35000,
+        }
+        res = self.client.post("/api/ideas/", payload, format="json")
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(res.data["submission_type"], "fiszka")
+        self.assertEqual(res.data["innovation_description"], "Sąsiedzka pomoc doraźna dla opiekunów seniorów.")
+        self.assertEqual(res.data["target_recipients"], "Opiekunowie osób starszych w Grybowie")
+        self.assertEqual(float(res.data["requested_grant_amount"]), 35000.0)
+
+    def test_idea_ai_assist_endpoints(self):
+        """Test działania asystenta AI dla formularza FERS"""
+        # 1. Deinstytucjonalizacja
+        res_deinst = self.client.post("/api/ideas/ai-assist/", {
+            "field": "deinstitutionalization",
+            "title": "Mobilna Opieka Senioralna",
+            "category": self.cat_seniors.id,
+        }, format="json")
+        self.assertEqual(res_deinst.status_code, status.HTTP_200_OK)
+        self.assertIn("deinstytucjonalizacji", res_deinst.data["suggestion"])
+
+        # 2. Diagnoza powiatowa
+        res_diag = self.client.post("/api/ideas/ai-assist/", {
+            "field": "county_diagnosis",
+            "county": self.county.id,
+            "title": "Mobilna Opieka Senioralna",
+        }, format="json")
+        self.assertEqual(res_diag.status_code, status.HTTP_200_OK)
+        self.assertIn("senior_ratio", res_diag.data)
+        self.assertIn("Obserwatorium Polityki Społecznej ROPS Kraków", res_diag.data["suggestion"])
+
+        # 3. Plan budżetowy
+        res_budget = self.client.post("/api/ideas/ai-assist/", {
+            "field": "budget_action_plan",
+        }, format="json")
+        self.assertEqual(res_budget.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res_budget.data["action_plan_prep"]), 2)
+        self.assertEqual(len(res_budget.data["action_plan_testing"]), 2)
+        self.assertEqual(res_budget.data["requested_grant_amount"], 50000)
+
+        # 4. Diagram koncepcji
+        res_diag_concept = self.client.post("/api/ideas/ai-assist/", {
+            "field": "concept_diagram",
+            "title": "Mobilna Opieka Senioralna",
+            "category": self.cat_seniors.id,
+            "county": self.county.id,
+        }, format="json")
+        self.assertEqual(res_diag_concept.status_code, status.HTTP_200_OK)
+        self.assertIn("graph TD", res_diag_concept.data["mermaid_code"])
+        self.assertGreaterEqual(len(res_diag_concept.data["steps"]), 4)
+
     def test_pilot_apply_and_evaluation(self):
         """Test zapisu na testy oraz złożenia formularza ewaluacji"""
         # Zgłoszenie kandydata na testera

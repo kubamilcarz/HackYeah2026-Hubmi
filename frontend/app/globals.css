@@ -3816,4 +3816,47 @@ a.app-navigation__link {
   padding-top: var(--space-4);
 }
 
+/* ==========================================================================
+   Druk i eksport PDF (Moduł III & dokumenty urzędowe ROPS)
+   ========================================================================== */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt !important;
+    line-height: 1.4 !important;
+  }
+
+  .hub-header,
+  .hub-breadcrumbs,
+  .hub-bottom-nav,
+  .persona-switcher,
+  .floating-accessibility-menu,
+  .no-print,
+  button:not(.fers-print-keep),
+  a:not(.fers-print-keep) {
+    display: none !important;
+  }
+
+  .hub-main,
+  .hub-content,
+  .kreator-flow,
+  .fers-print-container {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .fers-print-card {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
+    margin-bottom: 1rem !important;
+  }
+}
+
+
 
