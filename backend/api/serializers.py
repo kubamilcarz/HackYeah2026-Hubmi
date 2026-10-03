@@ -409,7 +409,11 @@ class PilotProjectSerializer(serializers.ModelSerializer):
 
 class PartnershipPostSerializer(serializers.ModelSerializer):
     county_name = serializers.CharField(source="county.name", read_only=True)
+    county_slug = serializers.CharField(source="county.slug", read_only=True)
     category_name = serializers.CharField(source="category.name", read_only=True)
+    category_code = serializers.CharField(source="category.code", read_only=True)
+    organization_type_display = serializers.CharField(source="get_organization_type_display", read_only=True)
+    looking_for_display = serializers.CharField(source="get_looking_for_display", read_only=True)
 
     class Meta:
         model = PartnershipPost
@@ -419,12 +423,16 @@ class PartnershipPostSerializer(serializers.ModelSerializer):
             "title",
             "organization_name",
             "organization_type",
+            "organization_type_display",
             "county",
             "county_name",
+            "county_slug",
             "municipality_name",
             "category",
             "category_name",
+            "category_code",
             "looking_for",
+            "looking_for_display",
             "description",
             "contact_email",
             "contact_phone",
@@ -432,8 +440,67 @@ class PartnershipPostSerializer(serializers.ModelSerializer):
             "created_at",
         ]
 
+    def to_internal_value(self, data):
+        mutable_data = data.copy() if hasattr(data, "copy") else dict(data)
+
+        # Map county string/slug to ID if necessary
+        if "county" in mutable_data:
+            county_val = mutable_data["county"]
+            if isinstance(county_val, str) and not county_val.isdigit():
+                county_obj = County.objects.filter(slug=county_val).first()
+                if county_obj:
+                    mutable_data["county"] = county_obj.id
+                else:
+                    mutable_data.pop("county", None)
+            elif county_val is None or county_val == "":
+                mutable_data.pop("county", None)
+
+        # Map category code to ID if necessary
+        if "category" in mutable_data:
+            cat_val = mutable_data["category"]
+            if isinstance(cat_val, str) and not cat_val.isdigit():
+                cat_obj = InnovationCategory.objects.filter(code=cat_val).first()
+                if cat_obj:
+                    mutable_data["category"] = cat_obj.id
+                else:
+                    mutable_data.pop("category", None)
+            elif cat_val is None or cat_val == "":
+                mutable_data.pop("category", None)
+
+        # Aliases mapping
+        if "sector" in mutable_data and "organization_type" not in mutable_data:
+            sec = mutable_data.pop("sector")
+            if sec == "jst":
+                mutable_data["organization_type"] = "jst_cus"
+            elif sec in ("ngo", "pes", "nauka"):
+                mutable_data["organization_type"] = sec
+
+        if "target_partner_type" in mutable_data and "looking_for" not in mutable_data:
+            t = mutable_data.pop("target_partner_type")
+            if "ngo" in t.lower():
+                mutable_data["looking_for"] = "ngo"
+            elif "jst" in t.lower() or "gmin" in t.lower() or "samorz" in t.lower():
+                mutable_data["looking_for"] = "jst"
+            elif "ekspert" in t.lower():
+                mutable_data["looking_for"] = "ekspert"
+            elif "technolog" in t.lower():
+                mutable_data["looking_for"] = "technologiczny"
+            else:
+                mutable_data["looking_for"] = "ngo"
+
+        if "desc" in mutable_data and "description" not in mutable_data:
+            mutable_data["description"] = mutable_data.pop("desc")
+        if "phone" in mutable_data and "contact_phone" not in mutable_data:
+            mutable_data["contact_phone"] = mutable_data.pop("phone")
+        if "email" in mutable_data and "contact_email" not in mutable_data:
+            mutable_data["contact_email"] = mutable_data.pop("email")
+
+        return super().to_internal_value(mutable_data)
+
 
 class InquirySerializer(serializers.ModelSerializer):
+    recipient_type_display = serializers.CharField(source="get_recipient_type_display", read_only=True)
+
     class Meta:
         model = Inquiry
         fields = [
@@ -442,6 +509,7 @@ class InquirySerializer(serializers.ModelSerializer):
             "author_name",
             "author_email",
             "recipient_type",
+            "recipient_type_display",
             "subject",
             "message",
             "response",
@@ -451,6 +519,18 @@ class InquirySerializer(serializers.ModelSerializer):
             "created_at",
             "answered_at",
         ]
+
+    def to_internal_value(self, data):
+        mutable_data = data.copy() if hasattr(data, "copy") else dict(data)
+        if "topic" in mutable_data and "subject" not in mutable_data:
+            mutable_data["subject"] = mutable_data.pop("topic")
+        if "content" in mutable_data and "message" not in mutable_data:
+            mutable_data["message"] = mutable_data.pop("content")
+        if "name" in mutable_data and "author_name" not in mutable_data:
+            mutable_data["author_name"] = mutable_data.pop("name")
+        if "email" in mutable_data and "author_email" not in mutable_data:
+            mutable_data["author_email"] = mutable_data.pop("email")
+        return super().to_internal_value(mutable_data)
 
 
 class MiddlemanGenerateRequestSerializer(serializers.Serializer):

@@ -1374,78 +1374,260 @@ export async function submitEvaluation(data: {
   }
 }
 
+export type InquiryItem = {
+  id: number;
+  author_persona_key?: string;
+  author_name: string;
+  author_email: string;
+  recipient_type: "rops_coordinator" | "expert_mentor";
+  recipient_type_display?: string;
+  subject: string;
+  message: string;
+  response?: string;
+  responder_name?: string;
+  is_answered: boolean;
+  is_public_faq: boolean;
+  created_at?: string;
+  answered_at?: string;
+};
+
 export type InquiryPayload = {
   author_name: string;
   author_email: string;
+  author_persona_key?: string;
+  recipient_type?: "rops_coordinator" | "expert_mentor";
+  subject?: string;
+  message?: string;
+  // Aliases for compatibility
+  topic?: string;
+  content?: string;
   author_organization?: string;
-  topic: string;
-  content: string;
   related_innovation_id?: number | string | null;
 };
 
-export async function createInquiry(payload: InquiryPayload): Promise<{ id: number; status: string }> {
+export const FALLBACK_INQUIRIES: InquiryItem[] = [
+  {
+    id: 1,
+    author_name: "Anna Nowak",
+    author_email: "anna.nowak@przyklad.pl",
+    recipient_type: "rops_coordinator",
+    recipient_type_display: "Koordynator Małopolskiego Hubu (ROPS Kraków)",
+    subject: "Czy gmina wiejska może pozyskać dofinansowanie na adaptację łazienek dla seniorów?",
+    message: "Dzień dobry, w naszej wsi wielu seniorów ma problem z korzystaniem z wysokich wanien. Czy ROPS posiada program wspierający takie instalacje?",
+    response: "Tak, w ramach Inkubatora Włączenia Społecznego 2.0 (FERS) gminy i organizacje mogą ubiegać się o granty do 50 000 zł na testowanie i skalowanie modularnych łazienek dostępnych.",
+    responder_name: "Magdalena Kaczmarczyk (ROPS Kraków)",
+    is_answered: true,
+    is_public_faq: true,
+    created_at: "2026-09-15T10:00:00Z",
+  },
+  {
+    id: 2,
+    author_name: "Katarzyna Zielińska",
+    author_email: "kontakt@aktywna-malopolska.pl",
+    recipient_type: "expert_mentor",
+    recipient_type_display: "Ekspert branżowy / Mentor",
+    subject: "Jakie kryteria musi spełniać wniosek FERS w zakresie deinstytucjonalizacji?",
+    message: "Przygotowujemy wniosek w Kreatorze i chcemy upewnić się, czy usługa świadczona w klubie seniora kwalifikuje się jako wsparcie środowiskowe.",
+    response: "Jak najbardziej! Deinstytucjonalizacja to właśnie rozwój usług świadczonych na poziomie społeczności lokalnej (Kluby Seniora, CUS, opieka domowa) jako alternatywa dla opieki całodobowej w DPS.",
+    responder_name: "dr Piotr Adamski (Ekspert ROPS)",
+    is_answered: true,
+    is_public_faq: true,
+    created_at: "2026-09-20T14:30:00Z",
+  },
+];
+
+export async function getInquiries(filters?: {
+  faq?: boolean;
+  recipient_type?: string;
+  is_answered?: boolean;
+  q?: string;
+}): Promise<InquiryItem[]> {
   try {
-    return await apiFetch<{ id: number; status: string }>("/inquiries/", {
+    const params = new URLSearchParams();
+    if (filters?.faq) params.set("faq", "true");
+    if (filters?.recipient_type && filters.recipient_type !== "all") params.set("recipient_type", filters.recipient_type);
+    if (filters?.is_answered !== undefined) params.set("is_answered", filters.is_answered ? "true" : "false");
+    if (filters?.q) params.set("q", filters.q);
+
+    const query = params.toString() ? `?${params.toString()}` : "";
+    const list = await apiFetch<InquiryItem[]>(`/inquiries/${query}`);
+    return list && list.length > 0 ? list : FALLBACK_INQUIRIES;
+  } catch {
+    return FALLBACK_INQUIRIES;
+  }
+}
+
+export async function createInquiry(payload: InquiryPayload): Promise<InquiryItem> {
+  const body = {
+    author_name: payload.author_name,
+    author_email: payload.author_email,
+    author_persona_key: payload.author_persona_key || "",
+    recipient_type: payload.recipient_type || "rops_coordinator",
+    subject: payload.subject || payload.topic || "Konsultacja z zespołem ROPS Kraków",
+    message: payload.message || payload.content || "",
+  };
+
+  try {
+    return await apiFetch<InquiryItem>("/inquiries/", {
       method: "POST",
-      body: JSON.stringify({
-        author_name: payload.author_name,
-        author_email: payload.author_email,
-        author_organization: payload.author_organization || "",
-        topic: payload.topic,
-        content: payload.content,
-        related_innovation: payload.related_innovation_id ? Number(payload.related_innovation_id) : null,
-      }),
+      body: JSON.stringify(body),
     });
   } catch {
-    return { id: 1, status: "wysłano" };
+    return {
+      id: Math.floor(Math.random() * 8000) + 100,
+      ...body,
+      is_answered: false,
+      is_public_faq: false,
+      created_at: new Date().toISOString(),
+    };
   }
+}
+
+export async function respondToInquiry(
+  id: number,
+  payload: { response: string; responder_name?: string; is_public_faq?: boolean }
+): Promise<InquiryItem> {
+  return await apiFetch<InquiryItem>(`/inquiries/${id}/respond/`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
 
 export type PartnershipItem = {
   id: number;
+  author_persona_key?: string;
   title: string;
   organization_name: string;
-  sector: "ngo" | "jst" | "biznes" | "nauka";
+  organization_type: "jst_cus" | "ngo" | "pes" | "nauka";
+  organization_type_display?: string;
+  county?: number;
   county_name?: string;
+  county_slug?: string;
+  municipality_name?: string;
+  category?: number;
+  category_name?: string;
+  category_code?: string;
+  looking_for: "ngo" | "jst" | "ekspert" | "technologiczny";
+  looking_for_display?: string;
   description: string;
-  target_partner_type: string;
+  contact_email: string;
+  contact_phone?: string;
+  is_active: boolean;
+  created_at?: string;
+  // Aliases for compatibility
+  sector?: "ngo" | "jst" | "biznes" | "nauka";
+  target_partner_type?: string;
 };
 
 export const FALLBACK_PARTNERSHIPS: PartnershipItem[] = [
   {
     id: 1,
-    title: "Poszukujemy NGO do prowadzenia Klubu Sąsiedzkiego w Myślenicach",
+    title: "CUS Myślenice szuka NGO do realizacji usługi mobilnej opieki wytchnieniowej",
     organization_name: "Centrum Usług Społecznych w Myślenicach",
+    organization_type: "jst_cus",
+    organization_type_display: "Jednostka Samorządu / CUS",
     sector: "jst",
     county_name: "Powiat myślenicki",
-    description: "Dysponujemy bezpłatnym lokalem z wyposażeniem. Szukamy organizacji pozarządowej posiadającej doświadczenie w animacji seniorów i młodzieży.",
-    target_partner_type: "Lokalne NGO (stowarzyszenie lub fundacja)",
+    county_slug: "myslenicki",
+    municipality_name: "Myślenice",
+    category_name: "Zdrowie i opieka",
+    category_code: "health",
+    looking_for: "ngo",
+    looking_for_display: "Organizację pozarządową (NGO)",
+    description: "Planujemy uruchomienie nowej usługi opieki wytchnieniowej dla 20 rodzin opiekujących się osobami leżącymi. Poszukujemy doświadczonego podmiotu ekonomii społecznej lub stowarzyszenia do realizacji wizyt domowych.",
+    contact_email: "cus@myslenice.pl",
+    contact_phone: "12 272 56 00",
+    is_active: true,
+    target_partner_type: "Organizację pozarządową (NGO)",
   },
   {
     id: 2,
-    title: "Fundacja Aktywna Małopolska zaprasza gminy do wdrożenia deinstytucjonalizacji",
-    organization_name: "Fundacja Aktywna Małopolska (Tarnów)",
+    title: "Fundacja Aktywna Małopolska oferuje partnerstwo w tworzeniu Kawiarenki Naprawczej",
+    organization_name: "Fundacja Aktywna Małopolska",
+    organization_type: "ngo",
+    organization_type_display: "Organizacja Pozarządowa (NGO)",
     sector: "ngo",
     county_name: "Powiat tarnowski",
-    description: "Chcemy złożyć wspólny wniosek grantowy FERS Działanie 5.1 na mobilną asystenturę osób z niepełnosprawnościami.",
-    target_partner_type: "Gmina lub Ośrodek Pomocy Społecznej",
+    county_slug: "tarnowski",
+    municipality_name: "Tarnów",
+    category_name: "Praca i włączenie zawodowe",
+    category_code: "labor",
+    looking_for: "jst",
+    looking_for_display: "Samorząd / Gminę (JST)",
+    description: "Dysponujemy kadrą mistrzów rzemiosła i gotowym pakietem wyposażenia warsztatowego. Szukamy gminy lub domu kultury chętnego udostępnić salę raz w tygodniu.",
+    contact_email: "kontakt@aktywna-malopolska.pl",
+    contact_phone: "14 621 00 00",
+    is_active: true,
+    target_partner_type: "Samorząd / Gminę (JST)",
+  },
+  {
+    id: 3,
+    title: "Spółdzielnia Socjalna «Horyzonty» poszukuje partnera technologicznego do aplikacji asystenta",
+    organization_name: "Spółdzielnia Socjalna Horyzonty",
+    organization_type: "pes",
+    organization_type_display: "Podmiot Ekonomii Społecznej",
+    sector: "ngo",
+    county_name: "Kraków i krakowski",
+    county_slug: "krakowski",
+    municipality_name: "Kraków",
+    category_name: "Dostępność sensoryczna",
+    category_code: "sensory",
+    looking_for: "technologiczny",
+    looking_for_display: "Partnera technologicznego",
+    description: "Rozwijamy narzędzie komunikacji alternatywnej (AAC) dla osób po udarach i w spektrum autyzmu. Szukamy partnera technologicznego lub zespołu IT do optymalizacji interfejsu WCAG i wdrożenia mobilnego.",
+    contact_email: "kontakt@horyzonty-spoldzielnia.pl",
+    contact_phone: "12 430 11 22",
+    is_active: true,
+    target_partner_type: "Partnera technologicznego",
   },
 ];
 
-export async function getPartnerships(): Promise<PartnershipItem[]> {
+export async function getPartnerships(filters?: {
+  looking_for?: string;
+  county?: string;
+  category?: string;
+  organization_type?: string;
+  q?: string;
+}): Promise<PartnershipItem[]> {
   try {
-    const list = await apiFetch<Array<{
-      id: number;
-      title: string;
-      organization_name: string;
-      sector: "ngo" | "jst" | "biznes" | "nauka";
-      county_name?: string;
-      description: string;
-      target_partner_type: string;
-    }>>("/partnerships/");
+    const params = new URLSearchParams();
+    if (filters?.looking_for && filters.looking_for !== "all") params.set("looking_for", filters.looking_for);
+    if (filters?.county && filters.county !== "all") params.set("county", filters.county);
+    if (filters?.category && filters.category !== "all") params.set("category", filters.category);
+    if (filters?.organization_type && filters.organization_type !== "all") params.set("organization_type", filters.organization_type);
+    if (filters?.q) params.set("q", filters.q);
+
+    const query = params.toString() ? `?${params.toString()}` : "";
+    const list = await apiFetch<PartnershipItem[]>(`/partnerships/${query}`);
     return list && list.length > 0 ? list : FALLBACK_PARTNERSHIPS;
   } catch {
     return FALLBACK_PARTNERSHIPS;
+  }
+}
+
+export async function createPartnership(payload: Partial<PartnershipItem>): Promise<PartnershipItem> {
+  try {
+    return await apiFetch<PartnershipItem>("/partnerships/", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    const fallbackItem: PartnershipItem = {
+      id: Math.floor(Math.random() * 8000) + 100,
+      title: payload.title || "Nowe ogłoszenie partnerstwa",
+      organization_name: payload.organization_name || "Podmiot zgłaszający",
+      organization_type: payload.organization_type || "ngo",
+      looking_for: payload.looking_for || "ngo",
+      description: payload.description || "",
+      contact_email: payload.contact_email || "kontakt@przyklad.pl",
+      contact_phone: payload.contact_phone || "",
+      municipality_name: payload.municipality_name || "",
+      county_name: payload.county_name || "Województwo Małopolskie",
+      category_name: payload.category_name || "Innowacje społeczne",
+      is_active: true,
+      created_at: new Date().toISOString(),
+    };
+    return fallbackItem;
   }
 }
 

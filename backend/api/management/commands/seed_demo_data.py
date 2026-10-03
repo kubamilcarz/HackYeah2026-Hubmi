@@ -605,6 +605,46 @@ class Command(BaseCommand):
             },
         )
 
+        PartnershipPost.objects.get_or_create(
+            title="Spółdzielnia Socjalna «Horyzonty» poszukuje partnera technologicznego do aplikacji asystenta",
+            defaults={
+                "author_persona_key": "",
+                "organization_name": "Spółdzielnia Socjalna Horyzonty",
+                "organization_type": "pes",
+                "county": counties_map["krakowski"],
+                "municipality_name": "Kraków",
+                "category": categories_map["sensory"],
+                "looking_for": "technologiczny",
+                "description": (
+                    "Rozwijamy narzędzie komunikacji alternatywnej (AAC) dla osób po udarach i w spektrum autyzmu. "
+                    "Szukamy partnera technologicznego lub zespołu IT do optymalizacji interfejsu WCAG i wdrożenia mobilnego."
+                ),
+                "contact_email": "kontakt@horyzonty-spoldzielnia.pl",
+                "contact_phone": "12 430 11 22",
+                "is_active": True,
+            },
+        )
+
+        PartnershipPost.objects.get_or_create(
+            title="Uniwersytet Rolniczy w Krakowie oferuje wsparcie badawczo-eksperckie dla gmin testujących innowacje",
+            defaults={
+                "author_persona_key": "piotr_adamski",
+                "organization_name": "Uniwersytet Rolniczy im. Hugona Kołłątaja w Krakowie",
+                "organization_type": "nauka",
+                "county": counties_map["krakowski"],
+                "municipality_name": "Kraków",
+                "category": categories_map["seniors"],
+                "looking_for": "jst",
+                "description": (
+                    "Katedra Polityki Społecznej oferuje bezpłatny audyt potrzeb środowiskowych i wsparcie w ewaluacji pilotaży "
+                    "innowacji społecznych dla 3 gmin wiejskich z Małopolski w ramach prac badawczych."
+                ),
+                "contact_email": "badania.spoleczne@urk.edu.pl",
+                "contact_phone": "12 662 40 00",
+                "is_active": True,
+            },
+        )
+
         # 7. Komunikacja i Zapytania do ROPS / FAQ (Moduł V)
         Inquiry.objects.get_or_create(
             subject="Czy gmina wiejska może pozyskać dofinansowanie na adaptację łazienek dla seniorów?",
@@ -633,6 +673,36 @@ class Command(BaseCommand):
                 "responder_name": "dr Piotr Adamski (Ekspert ROPS)",
                 "is_answered": True,
                 "is_public_faq": True,
+            },
+        )
+
+        Inquiry.objects.get_or_create(
+            subject="Wymogi techniczne dla symulatora biletomatów Merkury w szkole specjalnej",
+            defaults={
+                "author_persona_key": "",
+                "author_name": "Tomasz Lisowski",
+                "author_email": "tomasz.lisowski@szkola-specjalna.pl",
+                "recipient_type": "expert_mentor",
+                "message": "Czy symulator Merkury można uruchomić na starszych tabletach z systemem Android 9, czy wymagany jest nowszy sprzęt?",
+                "response": "Symulator został zoptymalizowany pod kątem niskich wymagań sprzętowych i działa płynnie na urządzeniach z systemem Android 8.0+ oraz ekranach dotykowych o przekątnej min. 10 cali.",
+                "responder_name": "dr Piotr Adamski (Ekspert ROPS)",
+                "is_answered": True,
+                "is_public_faq": True,
+            },
+        )
+
+        Inquiry.objects.get_or_create(
+            subject="Jakie formalności wiążą się z wdrożeniem BaWita w gminnym klubie seniora w Grybowie?",
+            defaults={
+                "author_persona_key": "anna_nowak",
+                "author_name": "Anna Nowak",
+                "author_email": "anna.nowak@przyklad.pl",
+                "recipient_type": "rops_coordinator",
+                "message": "Chcielibyśmy zgłosić zapotrzebowanie na zestaw BaWita dla klubu seniora. Czy wystarczy zwykły wniosek, czy potrzebna jest uchwała gminy?",
+                "response": "",
+                "responder_name": "",
+                "is_answered": False,
+                "is_public_faq": False,
             },
         )
 

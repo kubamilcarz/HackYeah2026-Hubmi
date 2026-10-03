@@ -568,7 +568,7 @@ class PilotEvaluationViewSet(viewsets.ModelViewSet):
 
 
 class PartnershipPostViewSet(viewsets.ModelViewSet):
-    queryset = PartnershipPost.objects.select_related("county", "category").filter(is_active=True)
+    queryset = PartnershipPost.objects.select_related("county", "category").filter(is_active=True).order_by("-created_at")
     serializer_class = PartnershipPostSerializer
 
     def get_queryset(self):
@@ -576,25 +576,59 @@ class PartnershipPostViewSet(viewsets.ModelViewSet):
         looking_for = self.request.query_params.get("looking_for")
         county = self.request.query_params.get("county")
         category = self.request.query_params.get("category")
+        org_type = self.request.query_params.get("organization_type")
+        q = self.request.query_params.get("q")
 
-        if looking_for:
+        if looking_for and looking_for != "all":
             qs = qs.filter(looking_for=looking_for)
-        if county:
-            qs = qs.filter(county__slug=county)
-        if category:
-            qs = qs.filter(category__code=category)
+        if org_type and org_type != "all":
+            qs = qs.filter(organization_type=org_type)
+        if county and county != "all":
+            if county.isdigit():
+                qs = qs.filter(county_id=int(county))
+            else:
+                qs = qs.filter(county__slug=county)
+        if category and category != "all":
+            if category.isdigit():
+                qs = qs.filter(category_id=int(category))
+            else:
+                qs = qs.filter(category__code=category)
+        if q:
+            qs = qs.filter(
+                Q(title__icontains=q)
+                | Q(organization_name__icontains=q)
+                | Q(description__icontains=q)
+                | Q(municipality_name__icontains=q)
+            )
         return qs
 
 
 class InquiryViewSet(viewsets.ModelViewSet):
-    queryset = Inquiry.objects.all()
+    queryset = Inquiry.objects.all().order_by("-created_at")
     serializer_class = InquirySerializer
 
     def get_queryset(self):
         qs = super().get_queryset()
         only_faq = self.request.query_params.get("faq")
+        recipient = self.request.query_params.get("recipient_type")
+        is_answered = self.request.query_params.get("is_answered")
+        q = self.request.query_params.get("q")
+
         if only_faq in ("true", "1"):
             qs = qs.filter(is_public_faq=True, is_answered=True)
+        if recipient and recipient != "all":
+            qs = qs.filter(recipient_type=recipient)
+        if is_answered in ("true", "1"):
+            qs = qs.filter(is_answered=True)
+        elif is_answered in ("false", "0"):
+            qs = qs.filter(is_answered=False)
+        if q:
+            qs = qs.filter(
+                Q(subject__icontains=q)
+                | Q(message__icontains=q)
+                | Q(response__icontains=q)
+                | Q(author_name__icontains=q)
+            )
         return qs
 
     @action(detail=True, methods=["post"], url_path="respond")
