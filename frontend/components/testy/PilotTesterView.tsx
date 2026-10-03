@@ -9,9 +9,10 @@ import {
   Star,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/Button";
-import { TextField, TextAreaField, SelectField } from "@/components/ui/FormControls";
+import { TextField, TextAreaField, SelectField, Slider } from "@/components/ui/FormControls";
 import { Badge } from "@/components/ui/Tag";
 import { LinearProgress } from "@/components/ui/Progress";
+import { Alert } from "@/components/ui/Alert";
 import { Dialog } from "@/components/ui/Dialog";
 import { usePersona } from "@/contexts/PersonaContext";
 import {
@@ -41,6 +42,7 @@ export function PilotTesterView() {
   const [role, setRole] = useState<string>(activePersona.roleType);
   const [motivation, setMotivation] = useState("");
   const [applySuccess, setApplySuccess] = useState(false);
+  const [applyError, setApplyError] = useState<string | null>(null);
 
   // Formularz ewaluacji WCAG
   const [usabilityScore, setUsabilityScore] = useState(5);
@@ -48,6 +50,7 @@ export function PilotTesterView() {
   const [accessibilityScore, setAccessibilityScore] = useState(5);
   const [evalComments, setEvalComments] = useState("");
   const [evalSuccess, setEvalSuccess] = useState(false);
+  const [evalError, setEvalError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadPilots() {
@@ -70,6 +73,7 @@ export function PilotTesterView() {
   async function handleApply(e: React.FormEvent) {
     e.preventDefault();
     if (!selectedPilot) return;
+    setApplyError(null);
     try {
       await applyToPilot(selectedPilot.id, {
         applicant_name: name,
@@ -83,14 +87,15 @@ export function PilotTesterView() {
         setIsApplyOpen(false);
         setApplySuccess(false);
       }, 3000);
-    } catch {
-      setApplySuccess(true);
+    } catch (err) {
+      setApplyError(err instanceof Error ? err.message : "Nie udało się wysłać zgłoszenia. Spróbuj ponownie.");
     }
   }
 
   async function handleEval(e: React.FormEvent) {
     e.preventDefault();
     if (!selectedPilot) return;
+    setEvalError(null);
     try {
       await submitEvaluation({
         pilot: selectedPilot.id,
@@ -106,8 +111,8 @@ export function PilotTesterView() {
         setIsEvalOpen(false);
         setEvalSuccess(false);
       }, 3000);
-    } catch {
-      setEvalSuccess(true);
+    } catch (err) {
+      setEvalError(err instanceof Error ? err.message : "Nie udało się zapisać oceny. Spróbuj ponownie.");
     }
   }
 
@@ -223,6 +228,7 @@ export function PilotTesterView() {
               onChange={(e) => setMotivation(e.target.value)}
               placeholder="np. Jestem opiekunem osoby starszej / działam w lokalnym kole gospodyń..."
             />
+            {applyError && <Alert title="Błąd zgłoszenia" description={applyError} variant="danger" />}
             <div className="dialog__actions">
               <Button type="button" variant="tertiary" onClick={() => setIsApplyOpen(false)}>
                 Anuluj
@@ -250,18 +256,33 @@ export function PilotTesterView() {
           </div>
         ) : (
           <form onSubmit={handleEval} className="space-y-4">
-            <div className="space-y-2">
-              <label className="type-body font-semibold block">1. Łatwość i intuicyjność stosowania (Użyteczność): {usabilityScore}/5</label>
-              <input type="range" min={1} max={5} value={usabilityScore} onChange={(e) => setUsabilityScore(Number(e.target.value))} className="w-full" />
-            </div>
-            <div className="space-y-2">
-              <label className="type-body font-semibold block">2. Skuteczność i rozwiązanie problemu społecznego: {effectivenessScore}/5</label>
-              <input type="range" min={1} max={5} value={effectivenessScore} onChange={(e) => setEffectivenessScore(Number(e.target.value))} className="w-full" />
-            </div>
-            <div className="space-y-2">
-              <label className="type-body font-semibold block">3. Dostępność dla osób ze szczególnymi potrzebami (WCAG): {accessibilityScore}/5</label>
-              <input type="range" min={1} max={5} value={accessibilityScore} onChange={(e) => setAccessibilityScore(Number(e.target.value))} className="w-full" />
-            </div>
+            <Slider
+              label={`1. Łatwość i intuicyjność stosowania (Użyteczność): ${usabilityScore}/5`}
+              min={1}
+              max={5}
+              step={1}
+              value={usabilityScore}
+              formatValue={(v) => `${v} z 5`}
+              onValueChange={setUsabilityScore}
+            />
+            <Slider
+              label={`2. Skuteczność i rozwiązanie problemu społecznego: ${effectivenessScore}/5`}
+              min={1}
+              max={5}
+              step={1}
+              value={effectivenessScore}
+              formatValue={(v) => `${v} z 5`}
+              onValueChange={setEffectivenessScore}
+            />
+            <Slider
+              label={`3. Dostępność dla osób ze szczególnymi potrzebami (WCAG): ${accessibilityScore}/5`}
+              min={1}
+              max={5}
+              step={1}
+              value={accessibilityScore}
+              formatValue={(v) => `${v} z 5`}
+              onValueChange={setAccessibilityScore}
+            />
             <TextAreaField
               label="Uwagi i propozycje usprawnień"
               name="comments"
@@ -270,6 +291,7 @@ export function PilotTesterView() {
               onChange={(e) => setEvalComments(e.target.value)}
               placeholder="Co warto zmienić przed wdrożeniem innowacji na stałe w innych gminach?"
             />
+            {evalError && <Alert title="Błąd zapisu oceny" description={evalError} variant="danger" />}
             <div className="dialog__actions">
               <Button type="button" variant="tertiary" onClick={() => setIsEvalOpen(false)}>
                 Anuluj
