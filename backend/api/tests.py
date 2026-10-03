@@ -408,12 +408,12 @@ class BackendFullTestSuite(TestCase):
         self.assertTrue(all(item["is_public_faq"] and item["is_answered"] for item in faq_res.data))
 
     def test_middleman_package_generation(self):
-        """Test generatora pakietu wdrożeniowego usługi dla JST (Middleman AI)"""
+        """Test generatora pakietu wdrożeniowego usługi dla JST (Middleman AI) oraz pobierania pakietów"""
         payload = {
             "innovation_id": self.innovation.id,
             "county_id": self.county.id,
             "municipality_name": "Grybów",
-            "municipality_type": "wiejska",
+            "municipality_type": "gmina_wiejska",
             "population": 22000,
             "has_cus": False,
             "execution_model": "zlecenie_ngo",
@@ -425,6 +425,19 @@ class BackendFullTestSuite(TestCase):
         self.assertGreaterEqual(len(res.data["staffing_requirements"]), 2)
         self.assertIn("FERS", str(res.data["funding_sources"]))
         self.assertGreater(res.data["cost_breakdown"]["annual_total_pln"], 0)
+        self.assertIn("resolution_template", res.data)
+        self.assertTrue(len(res.data["resolution_template"]) > 0)
+
+        # Sprawdzenie pobierania listy pakietów (GET)
+        list_res = self.client.get(reverse("middleman-package"))
+        self.assertEqual(list_res.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(len(list_res.data), 1)
+
+        # Sprawdzenie pobierania pojedynczego pakietu wg id
+        pkg_id = res.data["id"]
+        detail_res = self.client.get(f"{reverse('middleman-package')}?id={pkg_id}")
+        self.assertEqual(detail_res.status_code, status.HTTP_200_OK)
+        self.assertEqual(detail_res.data["municipality_name"], "Grybów")
 
     def test_admin_trends_and_moderation(self):
         """Test analityki trendów i moderacji zgłoszenia przez koordynatora ROPS"""

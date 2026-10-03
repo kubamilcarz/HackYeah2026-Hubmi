@@ -8,10 +8,6 @@ import {
   Plus,
   Handshake,
   Users,
-  Buildings,
-  GraduationCap,
-  ChatText,
-  MagnifyingGlass,
   Phone,
   EnvelopeSimple,
   Sparkle,
@@ -30,7 +26,6 @@ import {
   TextField,
   TextAreaField,
   SelectField,
-  SegmentedControl,
 } from "@/components/ui/FormControls";
 import { Tag, Badge } from "@/components/ui/Tag";
 import { TabSwitcher } from "@/components/ui/TabSwitcher";
@@ -82,7 +77,13 @@ export function ContactPartnershipsView() {
   const [pendingInquiries, setPendingInquiries] = useState<InquiryItem[]>([]);
   const [counties, setCounties] = useState<County[]>([]);
   const [categories, setCategories] = useState<InnovationCategory[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+
+  // Active Tab
+  const [activeTab, setActiveTab] = useState(
+    queryTab === "konsultacje" || queryTab === "partnerstwa" || queryTab === "faq" || queryTab === "panel_eksperta"
+      ? queryTab
+      : "partnerstwa"
+  );
 
   // Filters for Partnerships
   const [searchPartnership, setSearchPartnership] = useState("");
@@ -149,7 +150,9 @@ export function ContactPartnershipsView() {
   const [respondSuccessMsg, setRespondSuccessMsg] = useState<string | null>(null);
 
   // Sync with active persona changes
-  useEffect(() => {
+  const [prevPersonaKey, setPrevPersonaKey] = useState(activePersona.key);
+  if (prevPersonaKey !== activePersona.key) {
+    setPrevPersonaKey(activePersona.key);
     setInquirerName(activePersona.name || "");
     setInquirerEmail(activePersona.email || "");
     setInquirerOrg(activePersona.organization || "");
@@ -170,12 +173,11 @@ export function ContactPartnershipsView() {
         ? "dr Piotr Adamski (Ekspert ROPS)"
         : `${activePersona.name} (${activePersona.role})`
     );
-  }, [activePersona]);
+  }
 
   // Load initial data
   useEffect(() => {
     async function initData() {
-      setIsLoading(true);
       try {
         const [parts, faqs, pending, cnts, cats] = await Promise.all([
           getPartnerships(),
@@ -191,8 +193,6 @@ export function ContactPartnershipsView() {
         if (cats) setCategories(cats);
       } catch {
         // Fallbacks already in state
-      } finally {
-        setIsLoading(false);
       }
     }
     initData();
@@ -622,7 +622,7 @@ export function ContactPartnershipsView() {
                   { label: "Uczelnia / Ośrodek Badań", value: "nauka" },
                 ]}
                 value={newOrgType}
-                onChange={(e) => setNewOrgType(e.target.value as any)}
+                onChange={(e) => setNewOrgType(e.target.value as "jst_cus" | "ngo" | "pes" | "nauka")}
               />
             </div>
 
@@ -661,7 +661,7 @@ export function ContactPartnershipsView() {
                   { label: "Partnera technologicznego", value: "technologiczny" },
                 ]}
                 value={newLookingFor}
-                onChange={(e) => setNewLookingFor(e.target.value as any)}
+                onChange={(e) => setNewLookingFor(e.target.value as "ngo" | "jst" | "ekspert" | "technologiczny")}
               />
             </div>
 
@@ -1190,6 +1190,8 @@ export function ContactPartnershipsView() {
       <TabSwitcher
         items={tabItems}
         label="Sekcje kontaktu, partnerstw i bazy wiedzy ROPS"
+        value={activeTab}
+        onValueChange={setActiveTab}
       />
     </div>
   );

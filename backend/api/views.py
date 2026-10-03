@@ -692,12 +692,44 @@ class InquiryViewSet(viewsets.ModelViewSet):
 class MiddlemanPackageView(APIView):
     """
     Moduł VII: Middleman Innowacji (Asystent AI dla JST)
-    Generuje kompletny pakiet wdrożeniowy usługi społecznej dla wybranej gminy na bazie innowacji ROPS.
+    Generuje kompletny pakiet wdrożeniowy usługi społecznej dla wybranej gminy na bazie innowacji ROPS
+    oraz umożliwia przeglądanie zapisanych pakietów wdrożeniowych.
     """
 
     @extend_schema(
+        parameters=[
+            OpenApiParameter("id", int, OpenApiParameter.QUERY, description="ID konkretnego pakietu"),
+            OpenApiParameter("municipality", str, OpenApiParameter.QUERY, description="Filtruj wg nazwy gminy"),
+            OpenApiParameter("innovation_id", int, OpenApiParameter.QUERY, description="Filtruj wg ID innowacji"),
+            OpenApiParameter("county_id", int, OpenApiParameter.QUERY, description="Filtruj wg ID powiatu"),
+        ],
+        responses={200: MiddlemanPackageSerializer(many=True)},
+        summary="Pobieranie wygenerowanych pakietów wdrożeniowych JST (Middleman)",
+    )
+    def get(self, request):
+        qs = MiddlemanPackage.objects.select_related("innovation", "county").all()
+        pk = request.query_params.get("id")
+        if pk:
+            obj = qs.filter(id=pk).first()
+            if not obj:
+                return Response({"error": "Nie znaleziono pakietu"}, status=status.HTTP_404_NOT_FOUND)
+            return Response(MiddlemanPackageSerializer(obj).data)
+
+        muni = request.query_params.get("municipality")
+        if muni:
+            qs = qs.filter(municipality_name__icontains=muni)
+        inn_id = request.query_params.get("innovation_id")
+        if inn_id:
+            qs = qs.filter(innovation_id=inn_id)
+        county_id = request.query_params.get("county_id")
+        if county_id:
+            qs = qs.filter(county_id=county_id)
+
+        return Response(MiddlemanPackageSerializer(qs[:50], many=True).data)
+
+    @extend_schema(
         request=MiddlemanGenerateRequestSerializer,
-        responses={200: MiddlemanPackageSerializer},
+        responses={201: MiddlemanPackageSerializer},
         summary="Generowanie pakietu wdrożeniowego usługi dla samorządu (Middleman)",
     )
     def post(self, request):
@@ -714,39 +746,79 @@ class MiddlemanPackageView(APIView):
             return Response({"error": "Nie znaleziono powiatu"}, status=status.HTTP_404_NOT_FOUND)
 
         municipality_name = data["municipality_name"]
-        m_type = data["municipality_type"]
-        population = data["population"]
-        has_cus = data["has_cus"]
-        exec_model = data["execution_model"]
+        m_type = data.get("municipality_type", "wiejska")
+        population = data.get("population", 15000)
+        has_cus = data.get("has_cus", True)
+        exec_model = data.get("execution_model", "zlecenie_ngo")
 
-        # Generowanie standardu i parametrów pakietu
+        # Tytuł pakietu wdrożeniowego
         service_name = f"Lokalna Usługa Społeczna: {innovation.title} dla mieszkańców gminy {municipality_name}"
 
-        # Standard usługi
-        service_standard = (
-            f"Standard realizacji usługi '{innovation.title}' w gminie {municipality_name} "
-            f"({m_type}, {population} mieszkańców). Usługa skierowana do grupy: {innovation.target_audience}. "
-            f"Model organizacyjny: {'poprzez Centrum Usług Społecznych (CUS)' if has_cus else 'poprzez Ośrodek Pomocy Społecznej (OPS)'}. "
-            f"Wymiar wsparcia: bezpośrednie sesje/świadczenia mobilne w wymiarze do 20 godzin tygodniowo "
-            f"z wykorzystaniem certyfikowanej metodologii ROPS Kraków."
+        # Standard usługi z uwzględnieniem specyfiki innowacji, typu gminy i modelu realizacji
+        type_desc = {
+            "wiejska": "gminie wiejskiej o rozproszonej strukturze osadniczej",
+            "miejsko-wiejska": "gminie miejsko-wiejskiej łączącej ośrodek miejski z sołectwami",
+            "miejska": "miejskim ośrodku samorządowym",
+        }.get(m_type, f"gminie {municipality_name}")
+
+        org_framework = (
+            "Centrum Usług Społecznych (CUS) w oparciu o Program Usług Społecznych (PUS), "
+            "zgodnie z ustawą z dnia 19 lipca 2019 r. o realizowaniu usług społecznych przez centrum usług społecznych. "
+            "Koordynację wsparcia i kwalifikację uczestników prowadzi Koordynator Indywidualnych Planów Usług Społecznych"
+            if has_cus
+            else "Ośrodek Pomocy Społecznej (OPS) w ramach zadań własnych gminy z zakresu polityki społecznej "
+            "i wsparcia środowiskowego (ustawa o pomocy społecznej)"
         )
 
-        # Wymogi kadrowe
+        exec_desc = {
+            "zlecenie_ngo": "zlecenie realizacji zadania publicznego lokalnym organizacjom pozarządowym (NGO) / PES w trybie otwartego konkursu ofert lub trybu małych zleceń (art. 19a ustawy o pożytku publicznym)",
+            "hybrydowy": "partnerstwo publiczno-społeczne (CUS/OPS kwalifikuje uczestników, a wyspecjalizowana organizacja pozarządowa prowadzi bezpośrednie działania animacyjno-terapeutyczne)",
+            "wlasna_kadra": "bezpośrednia realizacja kadrą własną jednostki samorządowej (CUS/OPS) po ukończeniu warsztatów ROPS Kraków",
+        }.get(exec_model, "współpraca samorządowo-społeczna")
+
+        rural_delivery = (
+            " Z uwagi na uwarunkowania terytorialne usługa obejmuje mobilny zespół wyjazdowy docierający bezpośrednio "
+            "do sołectw gminy oraz transport door-to-door dla osób z trudnościami w poruszaniu się."
+            if m_type == "wiejska"
+            else " Usługa świadczona jest w formule stacjonarnej w lokalnym centrum aktywności oraz w formie wizyt środowiskowych."
+        )
+
+        service_standard = (
+            f"1. ZAKRES I METODOLOGIA: Wdrożenie certyfikowanej innowacji społecznej ROPS Kraków '{innovation.title}' "
+            f"w {type_desc} ({population} mieszkańców, powiat {county.name}).\n"
+            f"2. ODBIORCY: Usługa dedykowana grupie: {innovation.target_audience}.\n"
+            f"3. RAMY ORGANIZACYJNE: Realizacja poprzez {org_framework}.\n"
+            f"4. MODEL WYKONAWCZY: Formuła realizacji: {exec_desc}.\n"
+            f"5. LOGISTYKA I DOSTĘPNOŚĆ:{rural_delivery} Wszystkie materiały, procedury i narzędzia cyfrowe "
+            f"spełniają standard dostępności cyfrowej WCAG 2.2 AA oraz wymogi ustawy o zapewnianiu dostępności osobom ze szczególnymi potrzebami.\n"
+            f"6. CZAS I WYMIAR: Świadczenie wsparcia w minimalnym wymiarze 20-30 godzin bezpośrednich sesji tygodniowo "
+            f"przez 6-miesięczny cykl pilotażowy z możliwością kontynuacji."
+        )
+
+        # Wymogi kadrowe dostosowane do innowacji i wielkości gminy
+        hours_coord = "1.0 etat" if population > 25000 else "0.5 etatu"
         staffing_requirements = [
             {
-                "role": "Koordynator usługi społecznej",
-                "allocation": "0.5 etatu",
-                "qualifications": "Wykształcenie wyższe (praca socjalna / pedagogika / zarządzanie usługami społecznymi)",
+                "role": "Koordynator Usługi Społecznej (CUS/OPS)",
+                "allocation": hours_coord,
+                "qualifications": "Wykształcenie wyższe (praca socjalna, pedagogika, zarządzanie w polityce społecznej lub certyfikat koordynatora CUS).",
             },
             {
-                "role": "Specjalista / Animator / Wykonawca innowacji",
-                "allocation": "1.0 etat (lub umowa zlecenia)",
-                "qualifications": "Ukończony warsztat wdrożeniowy ROPS z zakresu: " + innovation.title,
+                "role": f"Specjalista / Animator metody '{innovation.title}'",
+                "allocation": "1.0 etat (lub ekwiwalent zleceń)",
+                "qualifications": f"Certyfikat ukończenia warsztatu wdrożeniowego ROPS Kraków z zakresu innowacji '{innovation.title}'. Doświadczenie w pracy z grupą docelową.",
             },
         ]
 
+        if m_type == "wiejska" or population > 20000:
+            staffing_requirements.append({
+                "role": "Asystent mobilny / Kierowca transportu door-to-door",
+                "allocation": "0.5 etatu (umowa zlecenie)",
+                "qualifications": "Prawo jazdy kat. B, ukończone szkolenie z pierwszej pomocy i asysty osobom ze szczególnymi potrzebami.",
+            })
+
         # Kalkulacja kosztów (dostosowana do wielkości gminy)
-        base_annual = 45000 if population < 10000 else (75000 if population < 30000 else 120000)
+        base_annual = 50000 if population < 10000 else (80000 if population < 30000 else 130000)
         staff_costs = round(base_annual * 0.65)
         tools_costs = round(base_annual * 0.20)
         operating_costs = round(base_annual * 0.15)
@@ -758,18 +830,74 @@ class MiddlemanPackageView(APIView):
             "operational_and_travel_pln": operating_costs,
         }
 
+        fers_pln = round(base_annual * 0.70)
+        own_pln = round(base_annual * 0.15)
+        pfron_pln = base_annual - fers_pln - own_pln
+
         funding_sources = [
-            {"source": "Program FERS Działanie 5.1 (Innowacje Społeczne ROPS)", "percentage": 70, "amount_pln": round(base_annual * 0.70)},
-            {"source": "Środki własne gminy / CUS", "percentage": 15, "amount_pln": round(base_annual * 0.15)},
-            {"source": "PFRON / Programy wsparcia dostępności", "percentage": 15, "amount_pln": round(base_annual * 0.15)},
+            {
+                "source": "Program FERS Działanie 5.1 (Grant Wdrożeniowy ROPS Kraków)",
+                "percentage": 70,
+                "amount_pln": fers_pln,
+            },
+            {
+                "source": f"Środki własne gminy {municipality_name} / budżet CUS/OPS",
+                "percentage": 15,
+                "amount_pln": own_pln,
+            },
+            {
+                "source": "PFRON / Programy wyrównywania różnic między regionami",
+                "percentage": 15,
+                "amount_pln": pfron_pln,
+            },
         ]
 
+        steps_m2 = (
+            f"Ogłoszenie otwartego konkursu ofert dla lokalnych NGO na Giełdzie Współpracy platformy Splot. Przeszkolenie kadry w ROPS Kraków."
+            if exec_model != "wlasna_kadra"
+            else f"Wewnętrzny nabór i certyfikacja kadry w ROPS Kraków z metodyki '{innovation.title}' oraz odbiór pakietów wdrożeniowych."
+        )
+
         implementation_steps = [
-            {"month": "Miesiąc 1", "step": "Podjęcie uchwały Rady Gminy lub aktualizacja Programu Usług Społecznych CUS."},
-            {"month": "Miesiąc 2", "step": "Pozyskanie pakietu innowacji z ROPS Kraków i przeszkolenie kadry / ogłoszenie konkursu dla NGO na Giełdzie Współpracy."},
-            {"month": "Miesiąc 3", "step": "Rekrutacja uczestników z terenu gminy i uruchomienie pierwszych cykli usługi."},
-            {"month": "Miesiące 4-6", "step": "Świadczenie usługi, monitoring wskaźników satysfakcji i raport ewaluacyjny do ROPS."},
+            {
+                "month": "Miesiąc 1",
+                "step": f"Przyjęcie uchwały Rady Gminy {municipality_name} w sprawie Programu Usług Społecznych (PUS) lub zarządzenia Wójta/Burmistrza.",
+            },
+            {
+                "month": "Miesiąc 2",
+                "step": steps_m2,
+            },
+            {
+                "month": "Miesiąc 3",
+                "step": f"Kampania informacyjna w gminie {municipality_name}, rekrutacja pierwszych 25-50 uczestników i adaptacja przestrzeni/sprzętu.",
+            },
+            {
+                "month": "Miesiące 4-5",
+                "step": f"Bezpośrednie świadczenie usługi '{innovation.title}', mobilne dyżury w sołectwach oraz monitoring satysfakcji odbiorców.",
+            },
+            {
+                "month": "Miesiąc 6",
+                "step": f"Ewaluacja końcowa etapu pilotażowego, raport wdrożeniowy do ROPS Kraków oraz decyzja o trwałym finansowaniu usługi.",
+            },
         ]
+
+        resolution_template = (
+            f"UCHWAŁA NR ....../2026\n"
+            f"RADY GMINY {municipality_name.upper()}\n"
+            f"z dnia .................... 2026 r.\n\n"
+            f"w sprawie przyjęcia Programu Wdrożenia Lokalnej Usługi Społecznej\n"
+            f"\"{innovation.title}\" w Gminie {municipality_name} na bazie innowacji ROPS Kraków\n\n"
+            f"Na podstawie art. 18 ust. 2 pkt 15 ustawy z dnia 8 marca 1990 r. o samorządzie gminnym (Dz. U. z 2024 r. poz. 609) "
+            f"oraz art. 4 ust. 1 ustawy z dnia 19 lipca 2019 r. o realizowaniu usług społecznych przez centrum usług społecznych (Dz. U. z 2019 r. poz. 1818), "
+            f"Rada Gminy {municipality_name} uchwala, co następuje:\n\n"
+            f"§ 1. Przyjmuje się do realizacji na terenie Gminy {municipality_name} Program Wdrożenia Lokalnej Usługi Społecznej \"{innovation.title}\", "
+            f"stanowiący odpowiedź na potrzeby mieszkańców powiatu {county.name} w zakresie: {innovation.target_audience}.\n\n"
+            f"§ 2. 1. Usługa realizowana będzie w modelu: {exec_desc}.\n"
+            f"2. Szacowany roczny koszt realizacji programu wynosi {base_annual:,} PLN, z czego 70% stanowi dofinansowanie "
+            f"w ramach programu FERS Działanie 5.1 za pośrednictwem ROPS Kraków, 15% środki PFRON, a 15% wkład własny Gminy {municipality_name}.\n\n"
+            f"§ 3. Wykonanie uchwały powierza się Wójtowi / Burmistrzowi Gminy {municipality_name}.\n\n"
+            f"§ 4. Uchwała wchodzi w życie z dniem podjęcia."
+        )
 
         package = MiddlemanPackage.objects.create(
             innovation=innovation,
@@ -785,6 +913,7 @@ class MiddlemanPackageView(APIView):
             cost_breakdown=cost_breakdown,
             funding_sources=funding_sources,
             implementation_steps=implementation_steps,
+            resolution_template=resolution_template,
         )
 
         return Response(MiddlemanPackageSerializer(package).data, status=status.HTTP_201_CREATED)

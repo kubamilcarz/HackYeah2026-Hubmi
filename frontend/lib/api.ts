@@ -973,6 +973,15 @@ export type MiddlemanPackagePayload = {
 
 export type MiddlemanPackageResult = {
   id?: number;
+  innovation?: number;
+  innovation_title?: string;
+  county?: number;
+  county_name?: string;
+  municipality_name?: string;
+  municipality_type?: string;
+  population?: number;
+  has_cus?: boolean;
+  execution_model?: string;
   service_name: string;
   service_standard: string;
   staffing_requirements: Array<{
@@ -995,7 +1004,72 @@ export type MiddlemanPackageResult = {
     month: string;
     step: string;
   }>;
+  resolution_template?: string;
+  created_at?: string;
 };
+
+export const FALLBACK_MIDDLEMAN_PACKAGE: MiddlemanPackageResult = {
+  id: 1,
+  innovation_title: "BaWita – tablica sensoryczna dla seniorów",
+  county_name: "myślenicki",
+  municipality_name: "Myślenice",
+  municipality_type: "miejsko-wiejska",
+  population: 45000,
+  has_cus: true,
+  execution_model: "hybrydowy",
+  service_name: "Gminny Program Aktywizacji Sensorycznej BaWita dla seniorów CUS Myślenice",
+  service_standard: "Mobilne sesje sensoryczne u 40 seniorów z terenu miasta i 16 sołectw gminy Myślenice. Realizacja poprzez Centrum Usług Społecznych (CUS) w oparciu o Program Usług Społecznych (PUS). Zapewnienie pełnej dostępności cyfrowej materiałów (WCAG 2.2 AA).",
+  staffing_requirements: [
+    { role: "Koordynator Usług CUS", allocation: "0.5 etatu", qualifications: "Certyfikat koordynatora CUS i wykształcenie wyższe w zakresie polityki społecznej" },
+    { role: "Mobilny Animator Terapii", allocation: "1.0 etat", qualifications: "Terapia zajęciowa / warsztat wdrożeniowy ROPS Kraków" },
+    { role: "Kierowca transportu door-to-door", allocation: "0.5 etatu", qualifications: "Prawo jazdy kat. B, przeszkolenie asystenckie" },
+  ],
+  cost_breakdown: {
+    annual_total_pln: 75000,
+    staff_compensation_pln: 48750,
+    materials_and_innovation_license_pln: 15000,
+    operational_and_travel_pln: 11250,
+  },
+  funding_sources: [
+    { source: "Program FERS Działanie 5.1 (Grant wdrożeniowy ROPS Kraków)", percentage: 70, amount_pln: 52500 },
+    { source: "Budżet Gminy Myślenice (wkład CUS)", percentage: 15, amount_pln: 11250 },
+    { source: "PFRON (Program wyrównywania różnic między regionami)", percentage: 15, amount_pln: 11250 },
+  ],
+  implementation_steps: [
+    { month: "Miesiąc 1", step: "Zatwierdzenie zmiany w Programie Usług Społecznych CUS Myślenice przez Radę Miejską." },
+    { month: "Miesiąc 2", step: "Dostawa 4 zestawów BaWita i certyfikacja kadry w ROPS Kraków." },
+    { month: "Miesiąc 3", step: "Kampania informacyjna w sołectwach, rekrutacja 40 seniorów." },
+    { month: "Miesiące 4-5", step: "Realizacja 240 sesji mobilnych u mieszkańców i bieżący monitoring jakości." },
+    { month: "Miesiąc 6", step: "Badanie satysfakcji, raport wdrożeniowy do ROPS i decyzja o trwałym finansowaniu." },
+  ],
+  resolution_template: `UCHWAŁA NR XXII/184/2026 RADY MIEJSKIEJ W MYŚLENICACH
+z dnia 25 marca 2026 r.
+
+w sprawie przyjęcia Programu Wdrożenia Usługi Społecznej 'BaWita – tablica sensoryczna dla seniorów' w Centrum Usług Społecznych w Myślenicach.
+
+Na podstawie art. 18 ust. 2 pkt 15 ustawy z dnia 8 marca 1990 r. o samorządzie gminnym oraz art. 4 ust. 1 ustawy z dnia 19 lipca 2019 r. o realizowaniu usług społecznych przez centrum usług społecznych, Rada Miejska w Myślenicach uchwala realizację programu ze wsparciem FERS Działanie 5.1 (70%) i PFRON (15%).`,
+  created_at: new Date().toISOString(),
+};
+
+export async function getMiddlemanPackages(params?: {
+  municipality?: string;
+  innovation_id?: string | number;
+  county_id?: string | number;
+}): Promise<MiddlemanPackageResult[]> {
+  try {
+    const query = new URLSearchParams();
+    if (params?.municipality) query.set("municipality", params.municipality);
+    if (params?.innovation_id) query.set("innovation_id", String(params.innovation_id));
+    if (params?.county_id) query.set("county_id", String(params.county_id));
+    const qs = query.toString();
+    const endpoint = `/middleman/package/${qs ? `?${qs}` : ""}`;
+    const result = await apiFetch<MiddlemanPackageResult[]>(endpoint);
+    return Array.isArray(result) && result.length > 0 ? result : [FALLBACK_MIDDLEMAN_PACKAGE];
+  } catch (err) {
+    console.warn("[getMiddlemanPackages] Backend niedostępny – używam danych lokalnych:", err);
+    return [FALLBACK_MIDDLEMAN_PACKAGE];
+  }
+}
 
 export async function generateMiddlemanPackage(payload: MiddlemanPackagePayload): Promise<MiddlemanPackageResult> {
   try {
@@ -1005,29 +1079,37 @@ export async function generateMiddlemanPackage(payload: MiddlemanPackagePayload)
         innovation_id: Number(payload.innovation_id) || 1,
         county_id: Number(payload.county_id) || 1,
         municipality_name: payload.municipality_name || "Gmina Małopolska",
-        municipality_type: payload.municipality_type || "gmina_wiejska",
-        population: payload.population || 14500,
+        municipality_type: payload.municipality_type || "wiejska",
+        population: payload.population || 15000,
         has_cus: payload.has_cus ?? true,
-        execution_model: payload.execution_model || "wlasny_cus",
+        execution_model: payload.execution_model || "zlecenie_ngo",
       }),
     });
   } catch (err) {
     console.warn("[generateMiddlemanPackage] Backend niedostępny – używam lokalnego fallbacku:", err);
-    const pop = payload.population || 14500;
-    const baseAnnual = pop < 10000 ? 45000 : pop < 30000 ? 75000 : 120000;
+    const pop = payload.population || 15000;
+    const baseAnnual = pop < 10000 ? 50000 : pop < 30000 ? 80000 : 130000;
+    const fersAmount = Math.round(baseAnnual * 0.70);
+    const ownAmount = Math.round(baseAnnual * 0.15);
+    const pfronAmount = baseAnnual - fersAmount - ownAmount;
     return {
-      id: 99,
-      service_name: `Pakiet wdrożeniowy usługi społecznej dla ${payload.municipality_name || "gminy"}`,
-      service_standard: `Certyfikowany standard ROPS Kraków: świadczenie wsparcia z wykorzystaniem metodyki innowacji społecznej w gminie ${payload.municipality_name || "małopolskiej"} (${pop} mieszkańców). Dostępność architektoniczna i cyfrowa WCAG 2.2 AA.`,
+      id: Date.now(),
+      municipality_name: payload.municipality_name || "Gmina Małopolska",
+      municipality_type: payload.municipality_type || "wiejska",
+      population: pop,
+      has_cus: payload.has_cus ?? true,
+      execution_model: payload.execution_model || "zlecenie_ngo",
+      service_name: `Lokalna Usługa Społeczna: Pakiet wdrożeniowy dla gminy ${payload.municipality_name || "małopolskiej"}`,
+      service_standard: `Certyfikowany standard ROPS Kraków: świadczenie wsparcia z wykorzystaniem metodyki innowacji społecznej w gminie ${payload.municipality_name || "małopolskiej"} (${pop} mieszkańców). Model realizacji: ${payload.execution_model === "wlasna_kadra" ? "kadra własna CUS/OPS" : payload.execution_model === "hybrydowy" ? "partnerstwo publiczno-społeczne (CUS + NGO)" : "zlecenie zadania NGO w trybie Pożytku Publicznego"}. Dostępność architektoniczna i cyfrowa WCAG 2.2 AA.`,
       staffing_requirements: [
         {
-          role: "Koordynator Usługi Społecznej",
-          allocation: "0.5 etatu",
+          role: "Koordynator Usługi Społecznej (CUS/OPS)",
+          allocation: pop > 25000 ? "1.0 etat" : "0.5 etatu",
           qualifications: "Wykształcenie wyższe (praca socjalna / pedagogika / organizacja pomocy społecznej)",
         },
         {
-          role: "Animator / Realizator innowacji",
-          allocation: "1.0 etat",
+          role: "Specjalista / Animator wdrożeniowy",
+          allocation: "1.0 etat (lub ekwiwalent umów)",
           qualifications: "Certyfikat warsztatowy ROPS Kraków z zakresu wdrażania innowacji",
         },
       ],
@@ -1038,15 +1120,23 @@ export async function generateMiddlemanPackage(payload: MiddlemanPackagePayload)
         operational_and_travel_pln: Math.round(baseAnnual * 0.15),
       },
       funding_sources: [
-        { source: "FERS Działanie 5.1 (Innowacje Społeczne ROPS)", percentage: 70, amount_pln: Math.round(baseAnnual * 0.70) },
-        { source: "Środki własne JST / CUS", percentage: 15, amount_pln: Math.round(baseAnnual * 0.15) },
-        { source: "PFRON / Programy Dostępności", percentage: 15, amount_pln: Math.round(baseAnnual * 0.15) },
+        { source: "Program FERS Działanie 5.1 (Grant Wdrożeniowy ROPS Kraków)", percentage: 70, amount_pln: fersAmount },
+        { source: `Środki własne gminy ${payload.municipality_name || "JST"} / budżet CUS/OPS`, percentage: 15, amount_pln: ownAmount },
+        { source: "PFRON / Programy wyrównywania różnic między regionami", percentage: 15, amount_pln: pfronAmount },
       ],
       implementation_steps: [
-        { month: "Miesiąc 1", step: "Uchwała Rady Gminy i włączenie usługi do Programu Usług Społecznych (PUS)." },
-        { month: "Miesiąc 2", step: "Przeszkolenie kadry w ROPS Kraków i odbiór bezpłatnych materiałów wdrożeniowych." },
-        { month: "Miesiąc 3", step: "Rekrutacja mieszkańców i start bezpośrednich świadczeń opiekuńczo-włączających." },
+        { month: "Miesiąc 1", step: `Przyjęcie uchwały Rady Gminy ${payload.municipality_name || ""} w sprawie Programu Usług Społecznych (PUS) lub zarządzenia Wójta/Burmistrza.` },
+        { month: "Miesiąc 2", step: "Przeszkolenie kadry w ROPS Kraków, odbiór bezpłatnych zestawów metodycznych i procedur." },
+        { month: "Miesiąc 3", step: "Rekrutacja mieszkańców, kampania informacyjna i start bezpośrednich świadczeń opiekuńczo-włączających." },
+        { month: "Miesiące 4-5", step: "Świadczenie usługi, mobilne sesje w sołectwach i bieżący monitoring satysfakcji." },
+        { month: "Miesiąc 6", step: "Ewaluacja końcowa etapu pilotażowego i raport wdrożeniowy do ROPS Kraków." },
       ],
+      resolution_template: `UCHWAŁA NR ....../2026 RADY GMINY ${(payload.municipality_name || "GMINY").toUpperCase()}
+z dnia .................... 2026 r.
+
+w sprawie przyjęcia Programu Wdrożenia Lokalnej Usługi Społecznej na terenie Gminy ${payload.municipality_name || ""} na bazie innowacji ROPS Kraków.
+
+Na podstawie art. 18 ust. 2 pkt 15 ustawy z dnia 8 marca 1990 r. o samorządzie gminnym oraz art. 4 ust. 1 ustawy z dnia 19 lipca 2019 r. o realizowaniu usług społecznych przez centrum usług społecznych, Rada Gminy uchwala wdrożenie programu w montażu 70% FERS / 15% PFRON / 15% wkład własny.`,
     };
   }
 }
@@ -1901,7 +1991,7 @@ export async function moderateProblemSubmission(
   } catch {
     const found = FALLBACK_PROBLEM_SUBMISSIONS.find((s) => s.id === id);
     if (found) {
-      found.status = payload.status as any;
+      found.status = payload.status as ProblemSubmissionItem["status"];
       if (payload.admin_notes !== undefined) found.admin_notes = payload.admin_notes;
       return { ...found };
     }
@@ -1913,7 +2003,7 @@ export async function moderateProblemSubmission(
       title: "Zgłoszenie",
       description: "",
       affected_group: "",
-      status: payload.status as any,
+      status: payload.status as ProblemSubmissionItem["status"],
       admin_notes: payload.admin_notes || "",
       created_at: new Date().toISOString(),
     };
@@ -1962,7 +2052,7 @@ export async function evaluateIdeaSubmission(
     if (found) {
       if (payload.score !== undefined) found.admin_score = payload.score;
       if (payload.feedback !== undefined) found.admin_feedback = payload.feedback;
-      if (payload.status) found.status = payload.status as any;
+      if (payload.status) found.status = payload.status as IdeaSubmissionItem["status"];
       return { ...found };
     }
     throw new Error("Wniosek nie został odnaleziony");
@@ -1982,7 +2072,7 @@ export async function updateInnovationStage(
   } catch {
     const found = FALLBACK_INNOVATIONS.find((i) => i.slug === slug);
     if (found) {
-      found.maturity_stage = payload.maturity_stage as any;
+      found.maturity_stage = payload.maturity_stage as SocialInnovation["maturity_stage"];
       if (payload.replication_readiness_score !== undefined) {
         found.replication_readiness_score = payload.replication_readiness_score;
       }
