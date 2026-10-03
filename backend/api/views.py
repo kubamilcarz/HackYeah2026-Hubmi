@@ -1,8 +1,61 @@
-from rest_framework.views import APIView
+import re
+from decimal import Decimal
+from django.db.models import Count, Q
+from django.utils import timezone
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework import status
-from drf_spectacular.utils import extend_schema, inline_serializer
-from rest_framework import serializers
+from rest_framework.views import APIView
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
+
+from .models import (
+    InnovationCategory,
+    County,
+    Municipality,
+    SocialInnovation,
+    ProblemSubmission,
+    ProblemMatch,
+    RegionalChallenge,
+    IdeaSubmission,
+    PilotProject,
+    PilotEvaluation,
+    PartnershipPost,
+    Inquiry,
+    MiddlemanPackage,
+)
+from .serializers import (
+    InnovationCategorySerializer,
+    CountySerializer,
+    MunicipalitySerializer,
+    SocialInnovationListSerializer,
+    SocialInnovationDetailSerializer,
+    ProblemSubmissionSerializer,
+    MatchmakingAnalyzeRequestSerializer,
+    MatchmakingAnalyzeResponseSerializer,
+    RegionalChallengeSerializer,
+    IdeaSubmissionSerializer,
+    PilotProjectSerializer,
+    PilotEvaluationSerializer,
+    PartnershipPostSerializer,
+    InquirySerializer,
+    MiddlemanPackageSerializer,
+    MiddlemanGenerateRequestSerializer,
+    AdminTrendsResponseSerializer,
+    AdminModerationSerializer,
+)
+
+
+STOP_WORDS = {
+    "i", "w", "z", "ze", "do", "na", "o", "po", "dla", "oraz", "a", "lub", "albo",
+    "jest", "są", "sie", "się", "to", "co", "jak", "nie", "tak", "bardzo", "przez",
+    "od", "przy", "aby", "ze", "za", "tym", "ten", "ta", "te", "jako", "który", "która",
+}
+
+
+def extract_keywords(text: str) -> set[str]:
+    """Wycina polskie słowa kluczowe o długości min. 3 liter."""
+    words = re.findall(r"\b[a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ]{3,}\b", text.lower())
+    return {w for w in words if w not in STOP_WORDS}
 
 
 class HealthCheckView(APIView):
@@ -14,17 +67,7 @@ class HealthCheckView(APIView):
 
     @extend_schema(
         summary="Service Health Check",
-        description="Returns the status of the Django backend service.",
-        responses={
-            200: inline_serializer(
-                name="HealthCheckResponse",
-                fields={
-                    "status": serializers.CharField(),
-                    "service": serializers.CharField(),
-                    "version": serializers.CharField(),
-                },
-            )
-        },
+        responses={200: OpenApiTypes.OBJECT},
     )
     def get(self, request):
         return Response(
@@ -32,6 +75,561 @@ class HealthCheckView(APIView):
                 "status": "healthy",
                 "service": "Hubmi Backend",
                 "version": "1.0.0",
+                "timestamp": timezone.now().isoformat(),
             },
             status=status.HTTP_200_OK,
         )
+
+
+class InnovationCategoryViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = InnovationCategory.objects.all()
+    serializer_class = InnovationCategorySerializer
+    lookup_field = "code"
+
+
+class CountyViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = County.objects.prefetch_related("municipalities").all()
+    serializer_class = CountySerializer
+    lookup_field = "slug"
+
+
+class SocialInnovationViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = SocialInnovation.objects.select_related("category").prefetch_related("secondary_categories").all()
+    lookup_field = "slug"
+
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return SocialInnovationDetailSerializer
+        return SocialInnovationListSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        category = self.request.query_params.get("category")
+        stage = self.request.query_params.get("stage")
+        kind = self.request.query_params.get("type")
+        q = self.request.query_params.get("q")
+
+        if category:
+            qs = qs.filter(Q(category__code=category) | Q(secondary_categories__code=category)).distinct()
+        if stage:
+            qs = qs.filter(maturity_stage=stage)
+        if kind:
+            qs = qs.filter(innovation_type=kind)
+        if q:
+            qs = qs.filter(
+                Q(title__icontains=q)
+                | Q(short_summary__icontains=q)
+                | Q(full_description__icontains=q)
+                | Q(target_audience__icontains=q)
+            )
+        return qs
+
+    @action(detail=True, methods=["post"], url_path="like")
+    def like(self, request, slug=None):
+        innovation = self.get_object()
+        innovation.likes_count += 1
+        innovation.save(update_fields=["likes_count"])
+        return Response({"status": "liked", "likes_count": innovation.likes_count})
+
+
+class MatchmakingAnalyzeView(APIView):
+    """
+    Moduł I: Matchmaking Społeczny (Obligatoryjny)
+    Inteligentny mechanizm analizujący zgłaszany problem i kojarzący go z bazą innowacji ROPS Kraków.
+    Gwarantuje 100% działanie offline i transparentne kryteria punktacji.
+    """
+
+    @extend_schema(
+        request=MatchmakingAnalyzeRequestSerializer,
+        responses={200: MatchmakingAnalyzeResponseSerializer},
+        summary="Analiza matchmakingowa problemu społecznego",
+        description="Analizuje opis problemu, wylicza trafność (0-100%) wobec bazy innowacji ROPS Kraków, generuje uzasadnienie i identyfikuje ewentualne luki.",
+    )
+    def post(self, request):
+        serializer = MatchmakingAnalyzeRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        title = data["title"]
+        description = data["description"]
+        affected_group = data.get("affected_group", "")
+        category_id = data.get("category_id")
+        category_code = data.get("category_code")
+        county_id = data.get("county_id")
+        municipality_name = data.get("municipality_name", "")
+        save_submission = data.get("save_submission", True)
+
+        category = None
+        if category_id:
+            category = InnovationCategory.objects.filter(id=category_id).first()
+        elif category_code:
+            category = InnovationCategory.objects.filter(code=category_code).first()
+
+        county = None
+        if county_id:
+            county = County.objects.filter(id=county_id).first()
+
+        # Ekstrakcja słów kluczowych ze zgłoszenia
+        problem_keywords = extract_keywords(f"{title} {description} {affected_group}")
+
+        all_innovations = SocialInnovation.objects.select_related("category").prefetch_related("secondary_categories").all()
+        scored_results = []
+
+        for inn in all_innovations:
+            score = 0.0
+            reasons = []
+
+            # 1. Spójność kategorialna (do 40 pkt)
+            if category:
+                if inn.category_id == category.id:
+                    score += 40.0
+                    reasons.append(f"Zbieżność w głównej kategorii ROPS: {category.name}")
+                elif inn.secondary_categories.filter(id=category.id).exists():
+                    score += 25.0
+                    reasons.append(f"Zbieżność w kategorii powiązanej: {category.name}")
+            else:
+                score += 15.0  # kategoria niesprecyzowana
+
+            # 2. Analiza słów kluczowych w tytule, opisie i tagach (do 45 pkt)
+            inn_text = f"{inn.title} {inn.short_summary} {inn.full_description} {' '.join(inn.tags)}"
+            inn_keywords = extract_keywords(inn_text)
+            matched_words = problem_keywords.intersection(inn_keywords)
+
+            if matched_words:
+                overlap_ratio = min(len(matched_words) / max(len(problem_keywords), 1), 1.0)
+                text_points = round(overlap_ratio * 45.0, 1)
+                score += text_points
+                sample_words = ", ".join(list(matched_words)[:4])
+                reasons.append(f"Zgodność kluczowych zagadnień ({sample_words})")
+
+            # 3. Zbieżność grupy docelowej (do 15 pkt)
+            if affected_group:
+                affected_keywords = extract_keywords(affected_group)
+                target_keywords = extract_keywords(inn.target_audience)
+                if affected_keywords.intersection(target_keywords):
+                    score += 15.0
+                    reasons.append(f"Dopasowanie grupy docelowej: {inn.target_audience}")
+
+            # Normalizacja wyniku do zakresu 0 - 97%
+            normalized_score = min(round(score, 1), 97.0)
+
+            # Określenie sugerowanego kroku
+            has_pilot = PilotProject.objects.filter(innovation=inn, status="recruiting").exists()
+            if has_pilot:
+                step = "tester"
+            elif inn.maturity_stage == "sprawdzona":
+                step = "middleman"
+            else:
+                step = "contact"
+
+            justification = ". ".join(reasons) if reasons else "Ogólne dopasowanie tematyczne w obszarze innowacji społecznych."
+            justification += f" Rozwiązanie jest na etapie: {inn.get_maturity_stage_display()}."
+
+            if normalized_score >= 35.0:
+                scored_results.append({
+                    "innovation": inn,
+                    "similarity_score": normalized_score,
+                    "justification": justification,
+                    "suggested_next_step": step,
+                })
+
+        # Sortowanie wg trafności malejąco
+        scored_results.sort(key=lambda x: x["similarity_score"], reverse=True)
+        top_matches = scored_results[:4]
+
+        is_gap = len(top_matches) == 0 or (top_matches[0]["similarity_score"] < 45.0)
+
+        # Zapis zgłoszenia do bazy jeśli flaga ustawiona
+        submission = None
+        if save_submission and category:
+            submission_status = "gap_identified" if is_gap else "matched"
+            submission = ProblemSubmission.objects.create(
+                persona_key=data.get("persona_key", "anna_nowak"),
+                reporter_role=data.get("reporter_role", "mieszkaniec"),
+                reporter_name=data.get("reporter_name", "Anna Nowak"),
+                reporter_email=data.get("reporter_email", "anna.nowak@przyklad.pl"),
+                reporter_phone=data.get("reporter_phone", "501 234 567"),
+                county=county,
+                municipality_name=municipality_name,
+                category=category,
+                title=title,
+                description=description,
+                affected_group=affected_group,
+                estimated_scale=data.get("estimated_scale", "gminna"),
+                status=submission_status,
+            )
+
+            # Zapis powiązanych dopasowań
+            for item in top_matches:
+                ProblemMatch.objects.create(
+                    submission=submission,
+                    innovation=item["innovation"],
+                    similarity_score=item["similarity_score"],
+                    justification=item["justification"],
+                    suggested_next_step=item["suggested_next_step"],
+                )
+                item["innovation"].matches_count += 1
+                item["innovation"].save(update_fields=["matches_count"])
+
+        gap_message = ""
+        if is_gap:
+            gap_message = (
+                "W bazie ROPS Kraków nie zidentyfikowano jeszcze bezpośredniej innowacji dla tak sformułowanej potrzeby. "
+                "Twoje zgłoszenie zostało zarejestrowane jako 'Biała plama' (Luka społeczna). "
+                "Możesz od razu przekształcić ten problem w pomysł na nową innowację w Kreatorze Pomysłów i ubiegać się o mikrogrant FERS do 50 000 zł!"
+            )
+            recommended_action = "kreator"
+        else:
+            recommended_action = top_matches[0]["suggested_next_step"]
+
+        serialized_matches = [
+            {
+                "innovation": SocialInnovationListSerializer(item["innovation"]).data,
+                "similarity_score": item["similarity_score"],
+                "justification": item["justification"],
+                "suggested_next_step": item["suggested_next_step"],
+            }
+            for item in top_matches
+        ]
+
+        return Response(
+            {
+                "submission_id": submission.id if submission else None,
+                "is_gap_identified": is_gap,
+                "gap_message": gap_message,
+                "total_matches": len(serialized_matches),
+                "top_score": top_matches[0]["similarity_score"] if top_matches else 0.0,
+                "matches": serialized_matches,
+                "recommended_action": recommended_action,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class ProblemSubmissionViewSet(viewsets.ModelViewSet):
+    queryset = ProblemSubmission.objects.select_related("category", "county").prefetch_related("matches__innovation").all()
+    serializer_class = ProblemSubmissionSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        status_param = self.request.query_params.get("status")
+        county = self.request.query_params.get("county")
+        persona = self.request.query_params.get("persona")
+
+        if status_param:
+            qs = qs.filter(status=status_param)
+        if county:
+            qs = qs.filter(county__slug=county)
+        if persona:
+            qs = qs.filter(persona_key=persona)
+        return qs
+
+
+class RegionalChallengeViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = RegionalChallenge.objects.select_related("category", "county").prefetch_related("related_innovations").all()
+    serializer_class = RegionalChallengeSerializer
+    lookup_field = "slug"
+
+
+class IdeaSubmissionViewSet(viewsets.ModelViewSet):
+    queryset = IdeaSubmission.objects.select_related("category", "county").all()
+    serializer_class = IdeaSubmissionSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        sub_type = self.request.query_params.get("type")
+        status_param = self.request.query_params.get("status")
+        persona = self.request.query_params.get("persona")
+
+        if sub_type:
+            qs = qs.filter(submission_type=sub_type)
+        if status_param:
+            qs = qs.filter(status=status_param)
+        if persona:
+            qs = qs.filter(persona_key=persona)
+        return qs
+
+    @action(detail=True, methods=["post"], url_path="evaluate")
+    def evaluate(self, request, pk=None):
+        """Ocena wniosku przez koordynatora ROPS Kraków"""
+        idea = self.get_object()
+        score = request.data.get("score")
+        feedback = request.data.get("feedback", "")
+        new_status = request.data.get("status", "zaakceptowany")
+
+        if score is not None:
+            idea.admin_score = float(score)
+        idea.admin_feedback = feedback
+        idea.status = new_status
+        idea.save()
+        return Response(IdeaSubmissionSerializer(idea).data)
+
+
+class PilotProjectViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = PilotProject.objects.select_related("innovation", "county").prefetch_related("evaluations").all()
+    serializer_class = PilotProjectSerializer
+
+    @action(detail=True, methods=["post"], url_path="apply")
+    def apply_as_tester(self, request, pk=None):
+        pilot = self.get_object()
+        if pilot.current_testers_count >= pilot.max_testers:
+            return Response(
+                {"error": "Limit miejsc na ten pilotaż został wyczerpany."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        pilot.current_testers_count += 1
+        pilot.save(update_fields=["current_testers_count"])
+        return Response({
+            "status": "applied",
+            "message": "Zgłoszenie do udziału w testach zostało przyjęte.",
+            "current_testers_count": pilot.current_testers_count,
+            "max_testers": pilot.max_testers,
+        })
+
+
+class PilotEvaluationViewSet(viewsets.ModelViewSet):
+    queryset = PilotEvaluation.objects.select_related("pilot__innovation").all()
+    serializer_class = PilotEvaluationSerializer
+
+
+class PartnershipPostViewSet(viewsets.ModelViewSet):
+    queryset = PartnershipPost.objects.select_related("county", "category").filter(is_active=True)
+    serializer_class = PartnershipPostSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        looking_for = self.request.query_params.get("looking_for")
+        county = self.request.query_params.get("county")
+        category = self.request.query_params.get("category")
+
+        if looking_for:
+            qs = qs.filter(looking_for=looking_for)
+        if county:
+            qs = qs.filter(county__slug=county)
+        if category:
+            qs = qs.filter(category__code=category)
+        return qs
+
+
+class InquiryViewSet(viewsets.ModelViewSet):
+    queryset = Inquiry.objects.all()
+    serializer_class = InquirySerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        only_faq = self.request.query_params.get("faq")
+        if only_faq in ("true", "1"):
+            qs = qs.filter(is_public_faq=True, is_answered=True)
+        return qs
+
+    @action(detail=True, methods=["post"], url_path="respond")
+    def respond(self, request, pk=None):
+        inquiry = self.get_object()
+        response_text = request.data.get("response", "")
+        responder_name = request.data.get("responder_name", "Koordynator ROPS")
+        make_faq = request.data.get("is_public_faq", False)
+
+        inquiry.response = response_text
+        inquiry.responder_name = responder_name
+        inquiry.is_answered = True
+        inquiry.is_public_faq = bool(make_faq)
+        inquiry.answered_at = timezone.now()
+        inquiry.save()
+
+        return Response(InquirySerializer(inquiry).data)
+
+
+class MiddlemanPackageView(APIView):
+    """
+    Moduł VII: Middleman Innowacji (Asystent AI dla JST)
+    Generuje kompletny pakiet wdrożeniowy usługi społecznej dla wybranej gminy na bazie innowacji ROPS.
+    """
+
+    @extend_schema(
+        request=MiddlemanGenerateRequestSerializer,
+        responses={200: MiddlemanPackageSerializer},
+        summary="Generowanie pakietu wdrożeniowego usługi dla samorządu (Middleman)",
+    )
+    def post(self, request):
+        serializer = MiddlemanGenerateRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        innovation = SocialInnovation.objects.filter(id=data["innovation_id"]).first()
+        if not innovation:
+            return Response({"error": "Nie znaleziono innowacji"}, status=status.HTTP_404_NOT_FOUND)
+
+        county = County.objects.filter(id=data["county_id"]).first()
+        if not county:
+            return Response({"error": "Nie znaleziono powiatu"}, status=status.HTTP_404_NOT_FOUND)
+
+        municipality_name = data["municipality_name"]
+        m_type = data["municipality_type"]
+        population = data["population"]
+        has_cus = data["has_cus"]
+        exec_model = data["execution_model"]
+
+        # Generowanie standardu i parametrów pakietu
+        service_name = f"Lokalna Usługa Społeczna: {innovation.title} dla mieszkańców gminy {municipality_name}"
+
+        # Standard usługi
+        service_standard = (
+            f"Standard realizacji usługi '{innovation.title}' w gminie {municipality_name} "
+            f"({m_type}, {population} mieszkańców). Usługa skierowana do grupy: {innovation.target_audience}. "
+            f"Model organizacyjny: {'poprzez Centrum Usług Społecznych (CUS)' if has_cus else 'poprzez Ośrodek Pomocy Społecznej (OPS)'}. "
+            f"Wymiar wsparcia: bezpośrednie sesje/świadczenia mobilne w wymiarze do 20 godzin tygodniowo "
+            f"z wykorzystaniem certyfikowanej metodologii ROPS Kraków."
+        )
+
+        # Wymogi kadrowe
+        staffing_requirements = [
+            {
+                "role": "Koordynator usługi społecznej",
+                "allocation": "0.5 etatu",
+                "qualifications": "Wykształcenie wyższe (praca socjalna / pedagogika / zarządzanie usługami społecznymi)",
+            },
+            {
+                "role": "Specjalista / Animator / Wykonawca innowacji",
+                "allocation": "1.0 etat (lub umowa zlecenia)",
+                "qualifications": "Ukończony warsztat wdrożeniowy ROPS z zakresu: " + innovation.title,
+            },
+        ]
+
+        # Kalkulacja kosztów (dostosowana do wielkości gminy)
+        base_annual = 45000 if population < 10000 else (75000 if population < 30000 else 120000)
+        staff_costs = round(base_annual * 0.65)
+        tools_costs = round(base_annual * 0.20)
+        operating_costs = round(base_annual * 0.15)
+
+        cost_breakdown = {
+            "annual_total_pln": base_annual,
+            "staff_compensation_pln": staff_costs,
+            "materials_and_innovation_license_pln": tools_costs,
+            "operational_and_travel_pln": operating_costs,
+        }
+
+        funding_sources = [
+            {"source": "Program FERS Działanie 5.1 (Innowacje Społeczne ROPS)", "percentage": 70, "amount_pln": round(base_annual * 0.70)},
+            {"source": "Środki własne gminy / CUS", "percentage": 15, "amount_pln": round(base_annual * 0.15)},
+            {"source": "PFRON / Programy wsparcia dostępności", "percentage": 15, "amount_pln": round(base_annual * 0.15)},
+        ]
+
+        implementation_steps = [
+            {"month": "Miesiąc 1", "step": "Podjęcie uchwały Rady Gminy lub aktualizacja Programu Usług Społecznych CUS."},
+            {"month": "Miesiąc 2", "step": "Pozyskanie pakietu innowacji z ROPS Kraków i przeszkolenie kadry / ogłoszenie konkursu dla NGO na Giełdzie Współpracy."},
+            {"month": "Miesiąc 3", "step": "Rekrutacja uczestników z terenu gminy i uruchomienie pierwszych cykli usługi."},
+            {"month": "Miesiące 4-6", "step": "Świadczenie usługi, monitoring wskaźników satysfakcji i raport ewaluacyjny do ROPS."},
+        ]
+
+        package = MiddlemanPackage.objects.create(
+            innovation=innovation,
+            county=county,
+            municipality_name=municipality_name,
+            municipality_type=m_type,
+            population=population,
+            has_cus=has_cus,
+            execution_model=exec_model,
+            service_name=service_name,
+            service_standard=service_standard,
+            staffing_requirements=staffing_requirements,
+            cost_breakdown=cost_breakdown,
+            funding_sources=funding_sources,
+            implementation_steps=implementation_steps,
+        )
+
+        return Response(MiddlemanPackageSerializer(package).data, status=status.HTTP_201_CREATED)
+
+
+class AdminTrendsView(APIView):
+    """
+    Moduł VI: Panel Administratora ROPS & Moduł II: Analityka Trendów
+    Agreguje potrzeby z całego regionu, wskazuje 'Białe plamy' i dynamikę zgłoszeń.
+    """
+
+    @extend_schema(
+        responses={200: AdminTrendsResponseSerializer},
+        summary="Analityka trendów regionalnych Małopolski",
+    )
+    def get(self, request):
+        total_submissions = ProblemSubmission.objects.count()
+        total_ideas = IdeaSubmission.objects.count()
+        total_pilots = PilotProject.objects.count()
+        total_partnerships = PartnershipPost.objects.count()
+
+        categories = InnovationCategory.objects.all()
+        by_category = []
+        for cat in categories:
+            prob_count = ProblemSubmission.objects.filter(category=cat).count()
+            inn_count = SocialInnovation.objects.filter(category=cat).count()
+            by_category.append({
+                "category_id": cat.id,
+                "category_name": cat.name,
+                "category_code": cat.code,
+                "submissions_count": prob_count,
+                "innovations_count": inn_count,
+            })
+
+        counties = County.objects.all()
+        by_county = []
+        for c in counties:
+            prob_count = ProblemSubmission.objects.filter(county=c).count()
+            by_county.append({
+                "county_id": c.id,
+                "county_name": c.name,
+                "population": c.population,
+                "senior_ratio": c.senior_ratio,
+                "submissions_count": prob_count,
+            })
+
+        # Zidentyfikowane Białe Plamy (zgłoszenia ze statusem gap_identified lub kategorie bez innowacji)
+        gaps_submissions = ProblemSubmission.objects.filter(status="gap_identified").select_related("category", "county")
+        white_spots = [
+            {
+                "submission_id": sub.id,
+                "title": sub.title,
+                "category_name": sub.category.name,
+                "county_name": sub.county.name if sub.county else "Województwo",
+                "affected_group": sub.affected_group,
+                "reported_at": sub.created_at.isoformat(),
+            }
+            for sub in gaps_submissions
+        ]
+
+        return Response(
+            {
+                "total_submissions": total_submissions,
+                "total_ideas": total_ideas,
+                "total_pilots": total_pilots,
+                "total_partnerships": total_partnerships,
+                "by_category": by_category,
+                "by_county": by_county,
+                "white_spots": white_spots,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class AdminModerationView(APIView):
+    """
+    Moderacja pojedynczego zgłoszenia potrzeby przez koordynatora ROPS
+    """
+
+    @extend_schema(
+        request=AdminModerationSerializer,
+        responses={200: ProblemSubmissionSerializer},
+        summary="Moderacja zgłoszenia potrzeby",
+    )
+    def patch(self, request, pk):
+        submission = ProblemSubmission.objects.filter(pk=pk).first()
+        if not submission:
+            return Response({"error": "Nie znaleziono zgłoszenia"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = AdminModerationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        submission.status = serializer.validated_data["status"]
+        if "admin_notes" in serializer.validated_data:
+            submission.admin_notes = serializer.validated_data["admin_notes"]
+        submission.save()
+
+        return Response(ProblemSubmissionSerializer(submission).data, status=status.HTTP_200_OK)
