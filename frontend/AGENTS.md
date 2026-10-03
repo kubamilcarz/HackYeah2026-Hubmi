@@ -52,3 +52,33 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Support keyboard operation, visible focus, touch targets of at least 44 CSS
   pixels for primary actions, enlarged text, browser zoom, reduced motion,
   forced colours, and every documented accessibility theme.
+
+## Established routes
+
+| Route | Shell | Purpose |
+|---|---|---|
+| `/` | None (public landing) | Hero section, search, benefit CTAs |
+| `/start` | `HubShell` | Resident dashboard, quick actions, challenges, stats |
+| `/needs/new` | `HubShell` | Multi-step need-reporting wizard (`NeedReportFlow`) |
+| `/solutions` | `HubShell` | Solution matcher hub with AI matching flow |
+| `/solutions/[slug]` | `HubShell` | Solution detail: tabbed content, metadata sidebar |
+| `/map` | `HubShell` | Interactive Mapbox GL map of Małopolska |
+| `/design-system` | None (reference) | Living design-system showcase—not a product route |
+
+## Backend API integration
+
+The Django backend at `http://localhost:8000/api/` is fully built. Read the
+root `AGENTS.md` for the module summary and `backend/AGENTS.md` for the
+complete endpoint catalog. Key integration points:
+
+- **Matchmaking**: `POST /api/matchmaking/analyze/` — replace the simulated
+  matching in `SolutionMatcher` with real API calls.
+- **Solutions catalog**: `GET /api/innovations/` and `/api/innovations/{slug}/`
+  — replace the mock data in `lib/solutions.ts` with API fetches.
+- **Need submission**: `POST /api/problems/` or
+  `POST /api/matchmaking/analyze/` with `save_submission=true` — wire the
+  `NeedReportFlow` wizard to persist data.
+- **Regional data**: `GET /api/counties/`, `/api/challenges/` — feed the map
+  and dashboard with real county and challenge data.
+- **Interactive docs**: Swagger UI at `http://localhost:8000/api/docs/`,
+  OpenAPI schema at `http://localhost:8000/api/schema/`.

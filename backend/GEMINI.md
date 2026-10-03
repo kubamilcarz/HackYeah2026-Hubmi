@@ -1,13 +1,18 @@
-# Antigravity Agent Guidelines for Hubmi Backend (HackYeah 2026)
+# Antigravity Agent Guidelines for Splot Backend (HackYeah 2026)
 
 ## Project Context
 This is a fast-paced **hackathon project** (HackYeah 2026). The goal is building a working, accessible demo product quickly and cleanly.
 
 ## Key Rules & Constraints
 
-### 1. Consult the User First
-- **Always ask questions** on how to approach tasks before jumping into assumptions or complex architectures.
-- Confirm preferences on domain models, flows, and API design.
+### 1. Work with the Established Architecture
+- The domain models, views, serializers, and endpoints are **fully built**.
+  Read `backend/AGENTS.md` for the complete domain map before making changes.
+- **Ask before major structural changes** (new models, endpoint redesigns,
+  scoring-algorithm modifications). Incremental additions and bug fixes are
+  fine without asking.
+- Confirm preferences on new flows or API design that extend beyond the
+  existing 7 ROPS modules.
 
 ### 2. No Production Overhead (Hackathon Scope)
 Keep the codebase lean and focused on core demo features. Specifically, **DO NOT** add:
