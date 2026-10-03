@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowLeft } from "@phosphor-icons/react";
 import type { Icon } from "@phosphor-icons/react/lib";
@@ -21,10 +23,11 @@ export type PageNavigationSearch = {
 };
 
 export type PageNavigationProfile = {
-  href: string;
+  href?: string;
   imageSrc?: string;
   initials: string;
   label: string;
+  onClick?: MouseEventHandler<HTMLButtonElement>;
 };
 
 export type PageNavigationBarProps = {
@@ -91,13 +94,23 @@ export function PageNavigationBar({
           />
           ))}
           {profile && (
-            <Link aria-label={profile.label} className="page-navigation-bar__profile" href={profile.href}>
-              {profile.imageSrc ? (
-                // The profile link itself supplies the accessible name.
-                // eslint-disable-next-line @next/next/no-img-element
-                <img alt="" src={profile.imageSrc} />
-              ) : <span aria-hidden="true">{profile.initials}</span>}
-            </Link>
+            profile.href ? (
+              <Link aria-label={profile.label} className="page-navigation-bar__profile" href={profile.href}>
+                {profile.imageSrc ? (
+                  // The profile link itself supplies the accessible name.
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img alt="" src={profile.imageSrc} />
+                ) : <span aria-hidden="true">{profile.initials}</span>}
+              </Link>
+            ) : (
+              <button aria-label={profile.label} className="page-navigation-bar__profile" onClick={profile.onClick} type="button">
+                {profile.imageSrc ? (
+                  // The button itself supplies the accessible name.
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img alt="" src={profile.imageSrc} />
+                ) : <span aria-hidden="true">{profile.initials}</span>}
+              </button>
+            )
           )}
         </div>
       )}
