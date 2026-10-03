@@ -109,6 +109,22 @@ these components rather than introducing look-alikes.
   Map visible status text to a semantic variant through `statusVariants`; do
   not make the colour or indicator its sole meaning.
 
+## Map
+
+- `Map` supports local discovery with a title and introduction, labelled search,
+  one active type filter (`Wszystkie`, `Rozwiązania`, `Partnerzy`,
+  `Wydarzenia`), Mapbox markers, and a paired accessible location list. A
+  marker supplies its name, position, type, optional categories and description,
+  and optional visual tone; the visible type label is always supplied alongside
+  the marker colour.
+- Selecting a point centres the map and reveals its card. The card is an
+  in-map overlay on wide screens and a non-modal, dismissible bottom sheet on
+  narrow screens. `onProfileClick` is an optional action callback; consumers
+  add routing or another action outside the component.
+- The controls use native search and radio inputs, and the location list uses
+  native buttons. Verify keyboard selection and dismissal, a no-results reset,
+  400% zoom, forced colours, and a selected point with a screen reader.
+
 ## Pagination
 
 - `Pagination` renders a named `nav` with an ordered page list, current-page
