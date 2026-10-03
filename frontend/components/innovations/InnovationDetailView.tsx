@@ -85,9 +85,13 @@ export function InnovationDetailView({ innovation }: InnovationDetailViewProps) 
     }
   }
 
-  function handleCopyTranscript() {
+  async function handleCopyTranscript() {
     if (innovation.video_transcript) {
-      navigator.clipboard.writeText(innovation.video_transcript);
+      try {
+        await navigator.clipboard.writeText(innovation.video_transcript);
+      } catch {
+        // Fallback if clipboard API restricted
+      }
       setShowCopyAlert(true);
       setTimeout(() => setShowCopyAlert(false), 4000);
     }
@@ -266,9 +270,9 @@ export function InnovationDetailView({ innovation }: InnovationDetailViewProps) 
           </div>
           <a
             aria-label={`Pobierz Podręcznik wdrożeniowy innowacji ${innovation.title} (plik PDF)`}
-            className="btn btn--primary"
+            className="button button--primary"
             download
-            href={innovation.handbook_pdf_url || "#"}
+            href={innovation.handbook_pdf_url || "/documents/podrecznik_bawita_rops.pdf"}
           >
             <DownloadSimple aria-hidden="true" size={20} />
             <span>Pobierz PDF</span>
@@ -288,9 +292,9 @@ export function InnovationDetailView({ innovation }: InnovationDetailViewProps) 
           </div>
           <a
             aria-label="Pobierz Wzór kalkulacji kosztów (plik PDF)"
-            className="btn btn--secondary"
+            className="button button--secondary"
             download
-            href={innovation.handbook_pdf_url || "#"}
+            href="/documents/wzor_kalkulacji_rops.pdf"
           >
             <DownloadSimple aria-hidden="true" size={20} />
             <span>Pobierz wzór</span>

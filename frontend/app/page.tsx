@@ -13,11 +13,11 @@ import { Button, ButtonLink } from "@/components/ui/Button";
 import { SearchField } from "@/components/ui/FormControls";
 
 const navigationItems = [
-  { href: "/about", label: "O Hubie" },
+  { href: "/start", label: "Pulpit" },
   { href: "/solutions", label: "Rozwiązania" },
-  { href: "/challenges", label: "Wyzwania" },
-  { href: "/community", label: "Społeczność" },
-  { href: "/news", label: "Aktualności" },
+  { href: "/innowacje", label: "Innowacje" },
+  { href: "/wyzwania", label: "Wyzwania" },
+  { href: "/map", label: "Mapa" },
 ];
 
 const benefits = [
@@ -45,14 +45,14 @@ export default function Home() {
             <details className="landing-search">
               <summary><MagnifyingGlass aria-hidden="true" size={21} weight="bold" /><span className="sr-only">Otwórz wyszukiwanie</span></summary>
               <div className="landing-search__panel">
-                <form action="/search" className="landing-search__form" method="get" role="search">
+                <form action="/solutions" className="landing-search__form" method="get" role="search">
                   <SearchField className="landing-search__field" hideLabel label="Szukaj w Splot" name="q" placeholder="Czego szukasz?" />
                   <Button size="sm" type="submit">Szukaj</Button>
                 </form>
               </div>
             </details>
-            <ButtonLink href="/login" size="sm" variant="tertiary">Zaloguj się</ButtonLink>
-            <ButtonLink href="/join" size="sm">Dołącz</ButtonLink>
+            <ButtonLink href="/start" size="sm" variant="tertiary">Zaloguj się</ButtonLink>
+            <ButtonLink href="/start" size="sm">Otwórz Hub</ButtonLink>
           </div>
 
           <details className="landing-mobile-menu">
@@ -62,12 +62,12 @@ export default function Home() {
                 {navigationItems.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
               </nav>
               <div className="landing-mobile-menu__actions">
-                <form action="/search" className="landing-search__form landing-search__form--mobile" method="get" role="search">
+                <form action="/solutions" className="landing-search__form landing-search__form--mobile" method="get" role="search">
                   <SearchField className="landing-search__field" hideLabel label="Szukaj w Splot" name="q" placeholder="Czego szukasz?" />
                   <Button size="sm" type="submit">Szukaj</Button>
                 </form>
-                <ButtonLink href="/login" variant="tertiary">Zaloguj się</ButtonLink>
-                <ButtonLink href="/join">Dołącz</ButtonLink>
+                <ButtonLink href="/start" variant="tertiary">Zaloguj się</ButtonLink>
+                <ButtonLink href="/start">Otwórz Hub</ButtonLink>
               </div>
             </div>
           </details>
