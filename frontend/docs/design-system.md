@@ -55,7 +55,7 @@ these components rather than introducing look-alikes.
 | Navigation | `AppNavigation`, `PageNavigationBar`, `Pagination`, `TabSwitcher` | Landmark and current-page state; mobile and desktop expose the same destinations. `TabSwitcher` changes content already present in the current view; it is not URL navigation. |
 | Page composition | `PageHeader`, `SearchFilterBar` | `PageHeader` supplies the route or section heading and plain-language introduction. `SearchFilterBar` composes the labelled `SearchField` with a named action that opens narrowing criteria. |
 | Overlays | `Dialog` | Native modal for an explicit decision with dismissal and focus restoration. |
-| Splot domain | `QuickAction`, `ContentSection`, `ChallengeCard`, `RecommendationCard`, `NeedCard`, `SolutionCard`, `OrganizationCard`, `MatchSummary`, `ContactAction`, `ConnectionList`, `ModerationStatus` | Identify the subject, responsible organization, status, and safe next action without relying on colour. |
+| Splot domain | `QuickAction`, `ContentSection`, `ChallengeCard`, `RecommendationCard`, `NeedCard`, `SolutionCard`, `SolutionDetailHero`, `ExpandableDescription`, `SolutionInterestActions`, `FavoriteButton`, `DetailMetadataSection`, `SolutionDetailSidebar`, `OrganizationCard`, `MatchSummary`, `ContactAction`, `ConnectionList`, `ModerationStatus` | Identify the subject, responsible organization, status, and safe next action without relying on colour. |
 | Admin and location | `DataTable`, `Map` | Responsive table alternative and map/list pairing; labelled filters and accessible location list. |
 
 ## Adoption rules
@@ -148,6 +148,14 @@ these components rather than introducing look-alikes.
 - Card actions are links because they lead to details or contact. The outlined
   action treatment remains at least 44 CSS pixels tall and the card reflows as
   a single column at narrow widths and enlarged text.
+
+## Solution details
+
+- `SolutionDetailHero` combines one meaningful image, the route heading, a plain-language summary and an optional named matching badge. It stacks on small screens and uses a two-column layout on wider screens.
+- `ExpandableDescription` is a named native button that reveals or collapses the rest of a long description in place. It exposes `aria-expanded` and `aria-controls`; do not use it to hide essential safety information.
+- `SolutionInterestActions` provides one primary interest action and `FavoriteButton`, a named icon button with `aria-pressed`. The first showcase keeps these states in memory only; future persistence belongs to a feature wrapper, not these primitives.
+- `DetailMetadataSection` uses a heading and definition list for grouped supplementary information. It reuses `Tag` for areas and `Badge` for status; mobile reading order keeps the sidebar after the primary content.
+- Test the full composition at 400% zoom and with keyboard only: tabs, description, interest and favourite controls must remain reachable, visibly focused and understandable in every appearance mode.
 
 ## Resident discovery
 
