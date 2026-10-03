@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Splot",
-  description: "Splot",
+  title: "Splot - łączymy ludzi, pomysły i rozwiązania",
+  description: "Splot łączy potrzeby społeczne z innowacyjnymi rozwiązaniami w Małopolsce.",
 };
 
 const preferenceScript = `
