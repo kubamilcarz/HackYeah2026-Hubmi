@@ -1631,3 +1631,391 @@ export async function createPartnership(payload: Partial<PartnershipItem>): Prom
   }
 }
 
+
+
+// ==========================================
+// MODUŁ VI: PANEL ADMINISTRATORA ROPS KRAKÓW
+// ==========================================
+
+export type ProblemMatchItem = {
+  id: number;
+  innovation: SocialInnovation;
+  similarity_score: number;
+  justification: string;
+  suggested_next_step: "middleman" | "tester" | "contact" | string;
+  created_at: string;
+};
+
+export type ProblemSubmissionItem = {
+  id: number;
+  persona_key?: string;
+  reporter_role: string;
+  reporter_name: string;
+  reporter_email: string;
+  reporter_phone?: string;
+  reporter_institution?: string;
+  county?: number | null;
+  county_name?: string;
+  municipality_name?: string;
+  category?: number | null;
+  category_name?: string;
+  title: string;
+  description: string;
+  affected_group: string;
+  estimated_scale?: string;
+  status: "pending" | "matched" | "gap_identified" | "in_progress" | "resolved";
+  admin_notes?: string;
+  matches?: ProblemMatchItem[];
+  created_at: string;
+  updated_at?: string;
+};
+
+export type IdeaSubmissionItem = {
+  id: number;
+  submission_type: "fiszka" | "grant_fers";
+  persona_key?: string;
+  title: string;
+  category?: number | null;
+  category_name?: string;
+  county?: number | null;
+  county_name?: string;
+  status: "roboczy" | "zlozony" | "w_ocenie" | "zaakceptowany" | "odrzucony";
+  applicant_type?: string;
+  applicant_name: string;
+  applicant_email: string;
+  applicant_phone?: string;
+  applicant_address?: string;
+  applicant_city?: string;
+  applicant_postal_code?: string;
+  organization_krs?: string;
+  organization_nip?: string;
+  organization_regon?: string;
+  organization_representative?: string;
+  innovation_description?: string;
+  solution_concept?: string;
+  uniqueness_rationale?: string;
+  problem_diagnosis?: string;
+  target_recipients?: string;
+  expected_change?: string;
+  scalability_model?: string;
+  action_plan_prep?: Array<{ dzialanie: string; termin: string; koszt?: number }>;
+  action_plan_testing?: Array<{ dzialanie: string; termin: string; koszt?: number }>;
+  requested_grant_amount?: number;
+  team_experience?: string;
+  formal_declarations_accepted?: boolean;
+  admin_score?: number | null;
+  admin_feedback?: string;
+  created_at: string;
+  updated_at?: string;
+};
+
+export const FALLBACK_PROBLEM_SUBMISSIONS: ProblemSubmissionItem[] = [
+  {
+    id: 1,
+    persona_key: "anna_nowak",
+    reporter_role: "mieszkaniec",
+    reporter_name: "Anna Nowak",
+    reporter_email: "anna.nowak@przyklad.pl",
+    reporter_phone: "501 234 567",
+    reporter_institution: "Klub Seniora w Grybowie",
+    county: 1,
+    county_name: "Powiat nowosądecki",
+    municipality_name: "Grybów",
+    category: 1,
+    category_name: "Dla seniorów",
+    title: "Wykluczenie transportowe i samotność seniorów w sołectwach wiejskich Grybowa",
+    description: "Seniorzy mieszkający w przysiółkach nie mają jak dojechać do lekarza i na zajęcia klubu seniora. Często tygodniami nie rozmawiają z nikim poza listonoszem.",
+    affected_group: "Osoby starsze 75+ i ich opiekunowie rodzinni w sołectwach wiejskich",
+    estimated_scale: "Około 60 seniorów w 4 sołectwach gminy Grybów",
+    status: "matched",
+    admin_notes: "Zweryfikowano przez koordynatora ROPS. Zgłoszenie zakwalifikowane do wsparcia mobilnego. Powiązano z innowacją BaWita.",
+    matches: [
+      {
+        id: 1,
+        innovation: FALLBACK_INNOVATIONS[0],
+        similarity_score: 91.5,
+        justification: "Innowacja BaWita posiada moduł mobilny umożliwiający regularne dojazdy przeszkolonych animatorów i wolontariuszy do domów seniorów wiejskich wraz ze sprzętem aktywizującym.",
+        suggested_next_step: "middleman",
+        created_at: "2026-09-25T11:00:00Z",
+      },
+    ],
+    created_at: "2026-09-25T10:45:00Z",
+  },
+  {
+    id: 2,
+    persona_key: "piotr_adamski",
+    reporter_role: "ekspert",
+    reporter_name: "dr Piotr Adamski",
+    reporter_email: "ekspert@innowacjespoleczne.pl",
+    reporter_phone: "601 987 654",
+    reporter_institution: "Uniwersytet Pedagogiczny w Krakowie",
+    county: 5,
+    county_name: "Powiat gorlicki",
+    municipality_name: "Biecz",
+    category: 9,
+    category_name: "Dla osób z niepełnosprawnością intelektualną",
+    title: "Brak wsparcia wytchnieniowego dla opiekunów dorosłych osób z głęboką niepełnosprawnością sprzężoną",
+    description: "Rodzice w wieku 60-70 lat opiekują się dorosłymi dziećmi 24h na dobę. Brak ośrodka dziennego lub mobilnej asystencji wytchnieniowej na terenie powiatu gorlickiego. Skrajne wyczerpanie opiekunów.",
+    affected_group: "Opiekunowie 35 dorosłych osób z niepełnosprawnością sprzężoną w powiecie gorlickim",
+    estimated_scale: "35 rodzin bez dostępu do placówki dziennej po ukończeniu 25 roku życia przez podopiecznych",
+    status: "gap_identified",
+    admin_notes: "BIAŁA PLAMA: W bazie innowacji ROPS brak gotowego modelu dla dorosłych ze sprzężeniami w powiatach peryferyjnych. Zgłoszenie skierowano do naboru wniosków FERS.",
+    matches: [],
+    created_at: "2026-09-28T09:30:00Z",
+  },
+  {
+    id: 3,
+    persona_key: "katarzyna_zielinska",
+    reporter_role: "ngo",
+    reporter_name: "Katarzyna Zielińska",
+    reporter_email: "kontakt@aktywna-malopolska.pl",
+    reporter_phone: "14 621 00 00",
+    reporter_institution: "Fundacja Aktywna Małopolska",
+    county: 3,
+    county_name: "Powiat tarnowski",
+    municipality_name: "Tarnów",
+    category: 4,
+    category_name: "Dla osób z niepełnosprawnością sensoryczną",
+    title: "Bariery komunikacyjne dla osób głuchych w rejonowych przychodniach zdrowia",
+    description: "Brak tłumacza PJM w placówkach zdrowia i brak możliwości rejestracji wizyty przez SMS/komunikator internetowy. Pacjenci muszą przychodzić z członkami rodzin do intymnych badań lekarskich.",
+    affected_group: "Niesłyszący mieszkańcy Tarnowa i okolicznych gmin korzystający z POZ",
+    estimated_scale: "Ponad 120 osób z wadami słuchu rocznie",
+    status: "pending",
+    admin_notes: "",
+    matches: [],
+    created_at: "2026-10-02T14:20:00Z",
+  },
+];
+
+export const FALLBACK_IDEA_SUBMISSIONS: IdeaSubmissionItem[] = [
+  {
+    id: 1,
+    submission_type: "grant_fers",
+    persona_key: "katarzyna_zielinska",
+    status: "w_ocenie",
+    category: 1,
+    category_name: "Dla seniorów",
+    county: 3,
+    county_name: "Powiat tarnowski",
+    applicant_type: "podmiot_ngo",
+    applicant_name: "Fundacja Aktywna Małopolska",
+    applicant_email: "kontakt@aktywna-malopolska.pl",
+    applicant_phone: "14 621 00 00",
+    applicant_address: "ul. Krakowska 12",
+    applicant_city: "Tarnów",
+    applicant_postal_code: "33-100",
+    organization_krs: "0000123456",
+    organization_nip: "9930012345",
+    organization_regon: "123456789",
+    organization_representative: "Katarzyna Zielińska - Prezes Zarządu",
+    title: "Sąsiedzka Sieć Wytchnieniowa – Mobilni wolontariusze wsparcia seniora",
+    innovation_description: "Stworzenie aplikacji i procedury szybkiego wzywania przeszkolonych sąsiadów do doraźnej opieki wytchnieniowej.",
+    uniqueness_rationale: "Tradycyjne agencje opieki są za drogie i nie docierają do małych sołectw. Nasz model opiera się na mikrostypendiach samopomocowych.",
+    problem_diagnosis: "Oparte na Mapie Wyzwań ROPS dla powiatu tarnowskiego (24.2% seniorów).",
+    target_recipients: "30 opiekunów rodzinnych osób niesamodzielnych.",
+    expected_change: "Zmniejszenie obciążenia psychofizycznego opiekunów o min. 40%.",
+    scalability_model: "Możliwość łatwej replikacji w każdym CUS w Małopolsce.",
+    action_plan_prep: [
+      { dzialanie: "Opracowanie standardu bezpieczeństwa i regulaminu", termin: "Miesiąc 1-2", koszt: 8000 },
+      { dzialanie: "Warsztaty pierwszej pomocy dla wolontariuszy", termin: "Miesiąc 3", koszt: 6000 },
+    ],
+    action_plan_testing: [
+      { dzialanie: "Pilotaż u 30 rodzin w 3 gminach wiejskich", termin: "Miesiące 4-9", koszt: 34000 },
+      { dzialanie: "Ewaluacja i raport końcowy", termin: "Miesiące 10-12", koszt: 2000 },
+    ],
+    requested_grant_amount: 50000,
+    team_experience: "10 lat doświadczenia w realizacji projektów społecznych FERS i ASOS w Małopolsce.",
+    formal_declarations_accepted: true,
+    created_at: "2026-09-27T16:00:00Z",
+  },
+  {
+    id: 2,
+    submission_type: "fiszka",
+    persona_key: "marek_wisniewski",
+    status: "zaakceptowany",
+    category: 1,
+    category_name: "Dla seniorów",
+    county: 2,
+    county_name: "Powiat myślenicki",
+    applicant_name: "Marek Wiśniewski",
+    applicant_email: "cus@myslenice.pl",
+    title: "Klub Aktywnego Seniora z warsztatem cyfrowym",
+    solution_concept: "Adaptacja remizy OSP na przestrzeń spotkań i nauki cyfrowej dla osób 60+.",
+    target_recipients: "Seniorzy z sołectw gminy Myślenice",
+    admin_score: 90,
+    admin_feedback: "Bardzo cenna inicjatywa łącząca CUS z OSP. Skierowano do inkubacji.",
+    created_at: "2026-09-15T12:00:00Z",
+  },
+];
+
+/** Pobiera listę zgłoszeń problemów dla panelu moderatora ROPS */
+export async function getProblemSubmissions(filters?: {
+  status?: string;
+  county?: string;
+  persona?: string;
+  category?: string;
+  q?: string;
+}): Promise<ProblemSubmissionItem[]> {
+  try {
+    const params = new URLSearchParams();
+    if (filters?.status && filters.status !== "all") params.set("status", filters.status);
+    if (filters?.county && filters.county !== "all") params.set("county", filters.county);
+    if (filters?.persona) params.set("persona", filters.persona);
+    if (filters?.category && filters.category !== "all") params.set("category", filters.category);
+    if (filters?.q) params.set("q", filters.q);
+
+    const query = params.toString() ? `?${params.toString()}` : "";
+    const list = await apiFetch<ProblemSubmissionItem[]>(`/problems/${query}`);
+    return list && list.length > 0 ? list : FALLBACK_PROBLEM_SUBMISSIONS;
+  } catch {
+    let result = [...FALLBACK_PROBLEM_SUBMISSIONS];
+    if (filters?.status && filters.status !== "all") {
+      result = result.filter((s) => s.status === filters.status);
+    }
+    if (filters?.county && filters.county !== "all") {
+      result = result.filter((s) => s.county_name?.toLowerCase().includes(filters.county!.toLowerCase()));
+    }
+    if (filters?.q) {
+      const q = filters.q.toLowerCase();
+      result = result.filter(
+        (s) =>
+          s.title.toLowerCase().includes(q) ||
+          s.description.toLowerCase().includes(q) ||
+          s.reporter_name.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }
+}
+
+/** Moderacja zgłoszenia potrzeby przez koordynatora ROPS */
+export async function moderateProblemSubmission(
+  id: number,
+  payload: { status: string; admin_notes?: string }
+): Promise<ProblemSubmissionItem> {
+  try {
+    return await apiFetch<ProblemSubmissionItem>(`/admin/moderate/${id}/`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    const found = FALLBACK_PROBLEM_SUBMISSIONS.find((s) => s.id === id);
+    if (found) {
+      found.status = payload.status as any;
+      if (payload.admin_notes !== undefined) found.admin_notes = payload.admin_notes;
+      return { ...found };
+    }
+    return {
+      id,
+      reporter_role: "mieszkaniec",
+      reporter_name: "Zgłaszający",
+      reporter_email: "kontakt@przyklad.pl",
+      title: "Zgłoszenie",
+      description: "",
+      affected_group: "",
+      status: payload.status as any,
+      admin_notes: payload.admin_notes || "",
+      created_at: new Date().toISOString(),
+    };
+  }
+}
+
+/** Pobiera listę wniosków i pomysłów z Kreatora (Moduł III) */
+export async function getIdeaSubmissions(filters?: {
+  type?: string;
+  status?: string;
+  persona?: string;
+}): Promise<IdeaSubmissionItem[]> {
+  try {
+    const params = new URLSearchParams();
+    if (filters?.type && filters.type !== "all") params.set("type", filters.type);
+    if (filters?.status && filters.status !== "all") params.set("status", filters.status);
+    if (filters?.persona) params.set("persona", filters.persona);
+
+    const query = params.toString() ? `?${params.toString()}` : "";
+    const list = await apiFetch<IdeaSubmissionItem[]>(`/ideas/${query}`);
+    return list && list.length > 0 ? list : FALLBACK_IDEA_SUBMISSIONS;
+  } catch {
+    let result = [...FALLBACK_IDEA_SUBMISSIONS];
+    if (filters?.type && filters.type !== "all") {
+      result = result.filter((i) => i.submission_type === filters.type);
+    }
+    if (filters?.status && filters.status !== "all") {
+      result = result.filter((i) => i.status === filters.status);
+    }
+    return result;
+  }
+}
+
+/** Ocena wniosku grantowego FERS przez koordynatora ROPS */
+export async function evaluateIdeaSubmission(
+  id: number,
+  payload: { score?: number; feedback?: string; status?: string }
+): Promise<IdeaSubmissionItem> {
+  try {
+    return await apiFetch<IdeaSubmissionItem>(`/ideas/${id}/evaluate/`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    const found = FALLBACK_IDEA_SUBMISSIONS.find((i) => i.id === id);
+    if (found) {
+      if (payload.score !== undefined) found.admin_score = payload.score;
+      if (payload.feedback !== undefined) found.admin_feedback = payload.feedback;
+      if (payload.status) found.status = payload.status as any;
+      return { ...found };
+    }
+    throw new Error("Wniosek nie został odnaleziony");
+  }
+}
+
+/** Aktualizacja etapu dojrzałości innowacji społecznej (Moduł VI & IV) */
+export async function updateInnovationStage(
+  slug: string,
+  payload: { maturity_stage: string; replication_readiness_score?: number }
+): Promise<SocialInnovation> {
+  try {
+    return await apiFetch<SocialInnovation>(`/innovations/${slug}/update-stage/`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    const found = FALLBACK_INNOVATIONS.find((i) => i.slug === slug);
+    if (found) {
+      found.maturity_stage = payload.maturity_stage as any;
+      if (payload.replication_readiness_score !== undefined) {
+        found.replication_readiness_score = payload.replication_readiness_score;
+      }
+      return { ...found };
+    }
+    throw new Error("Innowacja nie została odnaleziona");
+  }
+}
+
+/** Odpowiedź koordynatora ROPS na zapytanie mieszkańca / NGO / JST */
+export async function answerInquiry(
+  id: number,
+  payload: { response: string; responder_name: string; is_answered?: boolean; is_public_faq?: boolean }
+): Promise<InquiryItem> {
+  try {
+    return await apiFetch<InquiryItem>(`/inquiries/${id}/`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        response: payload.response,
+        responder_name: payload.responder_name,
+        is_answered: payload.is_answered ?? true,
+        is_public_faq: payload.is_public_faq ?? false,
+      }),
+    });
+  } catch {
+    const found = FALLBACK_INQUIRIES.find((i) => i.id === id);
+    if (found) {
+      found.response = payload.response;
+      found.responder_name = payload.responder_name;
+      found.is_answered = payload.is_answered ?? true;
+      if (payload.is_public_faq !== undefined) found.is_public_faq = payload.is_public_faq;
+      return { ...found };
+    }
+    throw new Error("Zapytanie nie zostało odnalezione");
+  }
+}

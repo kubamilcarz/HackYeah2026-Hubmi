@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, useMemo, type ReactNode } from "react";
 import {
   Bell,
   BookOpen,
@@ -16,6 +16,7 @@ import {
   MapTrifold,
   Sparkle,
   ArrowsClockwise,
+  ShieldCheck,
 } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { AppNavigation, type NavigationItem } from "@/components/ui/AppNavigation";
@@ -25,7 +26,7 @@ import { usePersona } from "@/contexts/PersonaContext";
 import { PersonaSwitcherModal } from "@/components/hub/PersonaSwitcherModal";
 import { Badge } from "@/components/ui/Tag";
 
-const navigationItems: NavigationItem[] = [
+const baseNavigationItems: NavigationItem[] = [
   { id: "start", label: "Strona główna", href: "/start", icon: House },
   { id: "report-need", label: "Zgłoś potrzebę", href: "/needs/new", icon: HandHeart },
   { id: "innowacje", label: "Biblioteka Innowacji", href: "/innowacje", icon: BookOpen },
@@ -48,6 +49,16 @@ export function HubShell({ activeItem, children }: HubShellProps) {
   const router = useRouter();
   const { activePersona, openPersonaModal } = usePersona();
   const [toast, setToast] = useState<{ description: string; title: string } | null>(null);
+
+  const navigationItems = useMemo(() => {
+    if (activePersona.roleType === "admin" || activeItem === "admin") {
+      return [
+        ...baseNavigationItems,
+        { id: "admin", label: "Panel ROPS", href: "/admin", icon: ShieldCheck },
+      ];
+    }
+    return baseNavigationItems;
+  }, [activePersona.roleType, activeItem]);
 
   return (
     <div className="hub-shell">

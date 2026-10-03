@@ -63,6 +63,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 | `/solutions` | `HubShell` | Solution matcher hub with AI matching flow |
 | `/solutions/[slug]` | `HubShell` | Solution detail: tabbed content, metadata sidebar |
 | `/map` | `HubShell` | Interactive Mapbox GL map of Małopolska |
+| `/admin` | `HubShell` | Panel Administratora ROPS Kraków: moderacja, ocena wniosków, trendy, awans innowacji |
 | `/design-system` | None (reference) | Living design-system showcase—not a product route |
 
 ## Backend API integration

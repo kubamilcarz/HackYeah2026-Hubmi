@@ -156,21 +156,21 @@ Aby pogodzić **błyskawiczną prezentację bez wpisywania haseł** z **brakiem 
 ---
 
 ### Faza 8: Moduł VI – Panel Administratora ROPS Kraków (+5%)
-- [ ] **8.1. Kokpit Koordynatora Hubu (`/admin`)**:
+- [x] **8.1. Kokpit Koordynatora Hubu (`/admin`)**:
   - Persona: *Magdalena Kaczmarczyk – Koordynator Małopolskiego Hubu Innowacji Społecznych*.
   - Kafelki KPI w czasie rzeczywistym: liczba zgłoszonych problemów, nowe wnioski grantowe do oceny, aktywne pilotaże, zapytania w toku.
-- [ ] **8.2. Moderacja potrzeb i wykrywanie „Białych plam”**:
+- [x] **8.2. Moderacja potrzeb i wykrywanie „Białych plam”**:
   - Tabela zgłoszeń z Modułu I (Matchmaking): zatwierdzanie dopasowań do innowacji lub oznaczanie jako luka społeczna.
-- [ ] **8.3. Weryfikacja i ocena Wniosków Grantowych FERS (z Modułu III)**:
+- [x] **8.3. Weryfikacja i ocena Wniosków Grantowych FERS (z Modułu III)**:
   - Formularz oceny formalnej i merytorycznej z kryteriami ROPS (deinstytucjonalizacja, budżet do 50k, terminy 3+9 m-cy).
   - Możliwość zmiany statusu na *„Zaakceptowany do inkubacji”* na żywo podczas prezentacji przed jury.
-- [ ] **8.4. Zarządzanie Biblioteką i awans innowacji (z Modułu IV)**:
+- [x] **8.4. Zarządzanie Biblioteką i awans innowacji (z Modułu IV)**:
   - Przegląd raportów ewaluacyjnych z testów.
   - Zmiana statusu innowacji z *„Prototyp w fazie testów”* na *„Sprawdzona / Gotowa do skalowania”* (natychmiastowa dostępność w Middlemanie AI).
-- [ ] **8.5. Moduł analityczny trendów regionalnych**:
+- [x] **8.5. Moduł analityczny trendów regionalnych**:
   - Heatmapa/wykresy zgłoszeń według powiatów Małopolski i 9 kategorii ROPS.
   - Generowanie oficjalnego raportu: przycisk *„Pobierz Raport Trendów dla Województwa Małopolskiego (PDF / Drukuj)”*.
-- [ ] **8.6. Ziarno danych demonstracyjnych (Seed data)**:
+- [x] **8.6. Ziarno danych demonstracyjnych (Seed data)**:
   - 2 zgłoszenia problemów (1 dopasowane, 1 luka),
   - 1 wniosek grantowy oczekujący na zatwierdzenie na żywo,
   - 1 kandydat na testera gotowy do akceptacji.

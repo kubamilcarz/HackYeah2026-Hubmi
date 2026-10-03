@@ -2,11 +2,11 @@ import re
 from decimal import Decimal
 from django.db.models import Count, Q
 from django.utils import timezone
-from rest_framework import status, viewsets
+from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes, inline_serializer
 
 from .models import (
     InnovationCategory,
@@ -130,6 +130,33 @@ class SocialInnovationViewSet(viewsets.ReadOnlyModelViewSet):
         innovation.likes_count += 1
         innovation.save(update_fields=["likes_count"])
         return Response({"status": "liked", "likes_count": innovation.likes_count})
+
+    @extend_schema(
+        summary="Aktualizacja dojrzałości innowacji (Moduł VI: Panel ROPS)",
+        description="Pozwala koordynatorowi ROPS zmienić etap innowacji (np. awansować z testów do sprawdzonej) i zaktualizować wskaźnik replikacji.",
+        request=inline_serializer(
+            name="InnovationStageUpdate",
+            fields={
+                "maturity_stage": serializers.ChoiceField(choices=SocialInnovation.STAGE_CHOICES),
+                "replication_readiness_score": serializers.IntegerField(required=False),
+            },
+        ),
+        responses={200: SocialInnovationDetailSerializer},
+    )
+    @action(detail=True, methods=["patch", "post"], url_path="update-stage")
+    def update_stage(self, request, slug=None):
+        innovation = self.get_object()
+        new_stage = request.data.get("maturity_stage")
+        if new_stage in dict(SocialInnovation.STAGE_CHOICES):
+            innovation.maturity_stage = new_stage
+        readiness = request.data.get("replication_readiness_score")
+        if readiness is not None:
+            try:
+                innovation.replication_readiness_score = int(readiness)
+            except (ValueError, TypeError):
+                pass
+        innovation.save()
+        return Response(SocialInnovationDetailSerializer(innovation).data)
 
 
 class MatchmakingAnalyzeView(APIView):
@@ -322,6 +349,20 @@ class ProblemSubmissionViewSet(viewsets.ModelViewSet):
             qs = qs.filter(county__slug=county)
         if persona:
             qs = qs.filter(persona_key=persona)
+        category = self.request.query_params.get("category")
+        if category:
+            if category.isdigit():
+                qs = qs.filter(category_id=int(category))
+            else:
+                qs = qs.filter(category__code=category)
+        q = self.request.query_params.get("q")
+        if q:
+            qs = qs.filter(
+                Q(title__icontains=q)
+                | Q(description__icontains=q)
+                | Q(reporter_name__icontains=q)
+                | Q(affected_group__icontains=q)
+            )
         return qs
 
 
