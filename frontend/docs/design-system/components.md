@@ -29,6 +29,7 @@ Polish; component APIs and this technical documentation are English.
 | `OrganizationCard` | name, organization type, locality, service tags, action | A responsible organization and its areas of help. |
 | `MatchSummary` | need title, match count, summary, action | A compact explanation of available matches. |
 | `ContactAction` | organization, contact method, safety note, action | A safe, explicit route into organization contact. |
+| `ConnectionList` | aria label, entries with name, organization, tags, and action; optional avatar | Headerless directory for comparable people or organisations. Each semantic list row keeps profile context, areas of activity and one named navigational contact action. |
 | `ModerationStatus` | label, semantic variant, description | ROPS-only status context; never a public-user default. |
 | `QuickAction` | href, label, icon, variant | Prominent resident discovery link with a visible Polish label and supplementary icon. |
 | `ContentSection` | title, action, children; optional description | Section heading, “show all” link, and labelled horizontally scrollable discovery content. |
@@ -59,6 +60,10 @@ focus, and reflow from one column on mobile to richer layouts on wider screens.
   automatic keyboard activation. Test a horizontally overflowing tab list at
   400% zoom with Arrow keys, Home and End, then confirm the visible focus ring,
   selected label and panel relationship in every supported appearance mode.
+- `ConnectionList` is a native list rather than a table because its content
+  has no column headings. Its avatar is decorative when adjacent text names
+  the entry; rows stack profile, tags and action on mobile, then form clear
+  columns on wider screens. Test its action links and tag wrapping at 400% zoom.
 
 ## Accessibility infrastructure
 

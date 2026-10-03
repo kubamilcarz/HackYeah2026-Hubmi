@@ -55,7 +55,7 @@ these components rather than introducing look-alikes.
 | Navigation | `AppNavigation`, `PageNavigationBar`, `Pagination`, `TabSwitcher` | Landmark and current-page state; mobile and desktop expose the same destinations. `TabSwitcher` changes content already present in the current view; it is not URL navigation. |
 | Page composition | `PageHeader`, `SearchFilterBar` | `PageHeader` supplies the route or section heading and plain-language introduction. `SearchFilterBar` composes the labelled `SearchField` with a named action that opens narrowing criteria. |
 | Overlays | `Dialog` | Native modal for an explicit decision with dismissal and focus restoration. |
-| Splot domain | `QuickAction`, `ContentSection`, `ChallengeCard`, `RecommendationCard`, `NeedCard`, `SolutionCard`, `OrganizationCard`, `MatchSummary`, `ContactAction`, `ModerationStatus` | Identify the subject, responsible organization, status, and safe next action without relying on colour. |
+| Splot domain | `QuickAction`, `ContentSection`, `ChallengeCard`, `RecommendationCard`, `NeedCard`, `SolutionCard`, `OrganizationCard`, `MatchSummary`, `ContactAction`, `ConnectionList`, `ModerationStatus` | Identify the subject, responsible organization, status, and safe next action without relying on colour. |
 | Admin and location | `DataTable`, `Map` | Responsive table alternative and map/list pairing; labelled filters and accessible location list. |
 
 ## Adoption rules
