@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Hubmi will target **WCAG 2.2 AA** across the whole product. This includes every
+Splot will target **WCAG 2.2 AA** across the whole product. This includes every
 page, component, and user journey; it is not achieved by adding an accessibility
 toolbar alone. The floating control gives people extra presentation
 preferences, while accessible semantics, keyboard operation, focus behavior,
@@ -24,7 +24,7 @@ accessibility contract to adopt as product components are built.
 - Use semantic design tokens rather than component-specific colors, font sizes,
   or focus styles. A theme is a token mapping, not a collection of overrides.
 - Preserve user choice. Respect browser zoom and operating-system accessibility
-  preferences even when a Hubmi preference has been selected.
+  preferences even when a Splot preference has been selected.
 - Test behavior, not only markup. Automated checks find regressions; keyboard,
   zoom, and screen-reader checks verify the actual experience.
 
@@ -55,7 +55,7 @@ type AccessibilityPreferences = {
 On a first visit, appearance resolves from `prefers-color-scheme` and text
 scale is `100`. Preferences persist locally in the browser once the visitor
 changes them. Account synchronization is deliberately out of scope until
-Hubmi has user profiles; when it is added, it should synchronize this same
+Splot has user profiles; when it is added, it should synchronize this same
 contract rather than introduce a second representation.
 
 The root document is the single application point for preferences. The provider

@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Hubmi",
-  description: "Hubmi",
+  title: "Splot",
+  description: "Splot",
 };
 
 const preferenceScript = `
@@ -27,7 +27,7 @@ const preferenceScript = `
     const defaultPreferences = { appearance: "system", textScale: 100, underlineLinks: false };
 
     try {
-      const stored = window.localStorage.getItem("hubmi-accessibility-preferences");
+      const stored = window.localStorage.getItem("splot-accessibility-preferences");
       const parsed = stored ? JSON.parse(stored) : defaultPreferences;
       const appearance = themes.includes(parsed.appearance)
         ? parsed.appearance
