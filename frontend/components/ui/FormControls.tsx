@@ -7,7 +7,7 @@ import type {
   ReactNode,
   SelectHTMLAttributes,
 } from "react";
-import { CaretDown, MagnifyingGlass, Minus, Plus } from "@phosphor-icons/react";
+import { CaretDown, MagnifyingGlass, Minus, Plus, WarningCircle } from "@phosphor-icons/react";
 
 type FieldProps = {
   className?: string;
@@ -81,15 +81,18 @@ export function TextField({
 
   return (
     <Field className={className} error={error} helperText={helperText} hideLabel={hideLabel} ids={ids} label={label} optional={optional} required={required}>
-      <input
-        aria-describedby={describedBy(ids, helperText, error)}
-        aria-invalid={error ? true : undefined}
-        className="control-input"
-        id={ids.inputId}
-        required={required}
-        type={type}
-        {...props}
-      />
+      <div className="control-input-wrap">
+        <input
+          aria-describedby={describedBy(ids, helperText, error)}
+          aria-invalid={error ? true : undefined}
+          className={`control-input${error ? " control-input--with-trailing-icon" : ""}`}
+          id={ids.inputId}
+          required={required}
+          type={type}
+          {...props}
+        />
+        {error && <WarningCircle aria-hidden="true" className="control-input__error-icon" size={24} weight="fill" />}
+      </div>
     </Field>
   );
 }

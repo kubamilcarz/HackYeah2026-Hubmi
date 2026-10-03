@@ -8,7 +8,7 @@ Polish; component APIs and this technical documentation are English.
 
 | Component | Source | Contract |
 | --- | --- | --- |
-| `Button`, `IconButton` | `ui/Button.tsx` | Native actions; an icon-only action requires a Polish accessible `label`. |
+| `Button`, `ButtonLink`, `IconButton` | `ui/Button.tsx` | `Button` and `IconButton` render native actions; `ButtonLink` renders navigation. All expose `primary`, `secondary`, `tertiary`, and `destructive` variants plus `sm`, `md`, and `lg` sizes. An icon-only action requires a Polish accessible `label`. |
 | `Dialog` | `ui/Dialog.tsx` | Controlled native modal for explicit decisions; Escape/backdrop close it and focus returns to the trigger. |
 | `PageNavigationBar`, `AppNavigation` | `ui/PageNavigationBar.tsx`, `ui/AppNavigation.tsx` | Responsive navigation with landmarks and current-page state. |
 | `TextField`, `SearchField`, `SelectField`, `DateField` | `ui/FormControls.tsx` | Native labelled controls with associated help and error text. |

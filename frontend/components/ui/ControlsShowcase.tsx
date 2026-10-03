@@ -10,7 +10,7 @@ const contactOptions = [
 ];
 
 export function ControlsShowcase() {
-  const [search, setSearch] = useState("opieka nad seniorem");
+  const [search, setSearch] = useState("");
   const [areas, setAreas] = useState(["opieka"]);
   const [view, setView] = useState("lista");
   const [radius, setRadius] = useState(5);
@@ -19,10 +19,10 @@ export function ControlsShowcase() {
   return <section className="mt-10" aria-labelledby="controls-heading">
     <div className="mb-4 max-w-2xl"><h3 className="type-h3" id="controls-heading">Formularz potrzeby</h3><p className="type-caption mt-1 text-[var(--content-muted)]">Widoczne etykiety, podpowiedzi i komunikaty błędów wyjaśniają kolejny krok na telefonie, klawiaturze i z pomocą technologii asystujących.</p></div>
     <div className="controls-showcase">
-      <TextField helperText="Krótko opisz, jakiego wsparcia szukasz." label="Tytuł potrzeby" placeholder="Na przykład: pomoc w opiece nad seniorem" />
-      <TextField error="Podaj poprawny adres e-mail." label="Adres e-mail" type="email" value="kontakt@" readOnly />
-      <SearchField label="Szukaj potrzeb i rozwiązań" onChange={(event) => setSearch(event.target.value)} value={search} />
-      <SelectField defaultValue="opieka" label="Obszar wsparcia" options={[{ label: "Opieka i zdrowie", value: "opieka" }, { label: "Edukacja", value: "edukacja" }, { label: "Integracja społeczna", value: "integracja" }]} placeholder="Wybierz obszar wsparcia" />
+      <TextField helperText="Krótko opisz, jakiego wsparcia szukasz." label="Etykieta" placeholder="Wpisz treść…" />
+      <TextField error="Uzupełnij pole poprawnymi danymi." label="Stan błędu" placeholder="Wpisz poprawne dane" />
+      <SearchField label="Pole z ikoną" onChange={(event) => setSearch(event.target.value)} placeholder="Szukaj rozwiązań…" value={search} />
+      <SelectField defaultValue="" label="Pole z wyborem" options={[{ label: "Opcja pierwsza", value: "pierwsza" }, { label: "Opcja druga", value: "druga" }, { label: "Opcja trzecia", value: "trzecia" }]} placeholder="Wybierz opcję" />
       <DateField helperText="Wybierz orientacyjny termin, jeśli wsparcie jest potrzebne w konkretnym dniu." label="Kiedy potrzebujesz wsparcia?" min="2026-01-01" />
       <TextField disabled label="Status zgłoszenia" value="Dostępny po zapisaniu zgłoszenia" readOnly />
       <RadioGroup label="Preferowany sposób kontaktu" name="contact-method" onValueChange={() => undefined} options={contactOptions} required value="telefon" />

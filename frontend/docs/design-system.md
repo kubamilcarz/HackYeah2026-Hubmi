@@ -12,7 +12,7 @@ step in a social-support journey clear, safe, and understandable.
 - Use semantic CSS tokens from `app/globals.css`; do not introduce raw palette
   values into components. Tokens must work in light, deep-navy dark, grayscale,
   and both high-contrast themes.
-- Splot's palette is navy `#062340`, green `#16A34A`, yellow `#FFC107`, orange
+- Splot's palette is navy `#062340`, deep emerald `#007A55`, yellow `#FFC107`, orange
   `#FF7A00`, white `#FFFFFF`, and the documented blue-gray neutral scale.
   Navy provides structure and headings; accessible green-derived action tokens
   power primary CTAs and selection. Yellow and orange are attention colours,
@@ -29,10 +29,12 @@ step in a social-support journey clear, safe, and understandable.
 ## Typography
 
 Splot uses Geist with a system sans-serif fallback. The web type scale is a
-small, purposeful set of semantic roles: page heading (`.type-h1`), section
-heading (`.type-h2`), card heading (`.type-h3`), body (`.type-body`), caption
-(`.type-caption`), and label (`.type-label`). Use semantic HTML first; these
-classes apply the visual role and do not replace `h1`–`h6`, `p`, or `label`.
+small, purposeful set of semantic roles: display heading (`.type-display`),
+page heading (`.type-h1`), section heading (`.type-h2`), card heading
+(`.type-h3`), body (`.type-body`), caption (`.type-caption`), and label
+(`.type-label`). Use semantic HTML first; these classes apply the visual role
+and do not replace `h1`–`h6`, `p`, or `label`. Use the display role only for a
+public-page hero; it does not permit more than one semantic route `h1`.
 
 All sizes use `rem` tokens and unitless line heights where a component needs a
 custom value. This keeps Splot readable with its text-scale preference and at
@@ -47,7 +49,7 @@ these components rather than introducing look-alikes.
 
 | Group | Components | Required contract |
 | --- | --- | --- |
-| Actions | `Button`, `IconButton` | Native button actions; icon-only controls require an accessible Polish label. |
+| Actions | `Button`, `ButtonLink`, `IconButton` | `Button` and `IconButton` are native actions; `ButtonLink` is navigation. All support `sm`, `md`, and `lg`; icon-only controls require an accessible Polish label. |
 | Forms | `TextField`, `SearchField`, `SelectField`, `DateField`, `RadioGroup`, `CheckboxGroup`, `SegmentedControl`, `Slider`, `Stepper` | Persistent label, hint/error association, validation state, keyboard use, and visible focus. |
 | Feedback | `Alert`, `Banner`, `Toast`, `Tag`, `Badge`, `LinearProgress`, `CircularProgress` | Textual non-colour cue; announce only status changes that need attention. |
 | Navigation | `AppNavigation`, `PageNavigationBar` | Landmark and current-page state; mobile and desktop expose the same destinations. |
@@ -68,5 +70,9 @@ these components rather than introducing look-alikes.
 - Aim for warm civic clarity: quiet neutral canvases, white rounded surfaces,
   gentle borders, generous space, and one visually dominant green action per
   decision point.
+- Use the action hierarchy consistently: dimensional emerald primary actions,
+  green outlined secondary actions, neutral outlined tertiary actions, and
+  pale-red destructive actions. Disabled controls are deliberately quiet and
+  must retain their native disabled state.
 - Before changing foundations, review `accessibility-system.md`; its preference
   contract and semantic-token rules are authoritative.
