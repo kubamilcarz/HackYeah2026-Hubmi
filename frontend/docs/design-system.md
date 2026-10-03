@@ -52,7 +52,7 @@ these components rather than introducing look-alikes.
 | Actions | `Button`, `ButtonLink`, `IconButton` | `Button` and `IconButton` are native actions; `ButtonLink` is navigation. All support `sm`, `md`, and `lg`; icon-only controls require an accessible Polish label. |
 | Forms | `TextField`, `SearchField`, `SelectField`, `DateField`, `RadioGroup`, `CheckboxGroup`, `SegmentedControl`, `Slider`, `Stepper` | Persistent label, hint/error association, validation state, keyboard use, and visible focus. |
 | Feedback | `Alert`, `Banner`, `Toast`, `Tag`, `Badge`, `LinearProgress`, `CircularProgress` | Textual non-colour cue; use alerts for changed status, contextual banners for persistent guidance, tags for metadata, and badges for compact named status. |
-| Navigation | `AppNavigation`, `PageNavigationBar` | Landmark and current-page state; mobile and desktop expose the same destinations. |
+| Navigation | `AppNavigation`, `PageNavigationBar`, `Pagination` | Landmark and current-page state; mobile and desktop expose the same destinations. |
 | Overlays | `Dialog` | Native modal for an explicit decision with dismissal and focus restoration. |
 | Splot domain | `NeedCard`, `SolutionCard`, `OrganizationCard`, `MatchSummary`, `ContactAction`, `ModerationStatus` | Identify the subject, responsible organization, status, and safe next action without relying on colour. |
 | Admin and location | `DataTable`, `Map` | Responsive table alternative and map/list pairing; labelled filters and accessible location list. |
@@ -107,3 +107,14 @@ these components rather than introducing look-alikes.
 - A column with `cellKind: "status"` renders the existing `Badge` component.
   Map visible status text to a semantic variant through `statusVariants`; do
   not make the colour or indicator its sole meaning.
+
+## Pagination
+
+- `Pagination` renders a named `nav` with an ordered page list, current-page
+  state, previous/next controls, and non-interactive ellipses for omitted page
+  ranges. It uses either `onPageChange` for in-place content updates or
+  `getPageHref` for URL navigation.
+- The current page uses `aria-current="page"`; every control has a Polish
+  accessible name. Boundary controls are visibly and programmatically disabled.
+- Keep the control group horizontally scrollable at narrow widths and enlarged
+  text. Do not remove the current page or previous/next controls on mobile.
