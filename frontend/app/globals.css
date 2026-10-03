@@ -3882,6 +3882,503 @@ a.app-navigation__link {
 }
 
 /* ==========================================================================
+   Moduł II: Kondycja Małopolski, Wyzwania i Analityka Trendów (.challenges-view)
+   ========================================================================== */
+
+.challenges-view {
+  margin-top: var(--space-4);
+}
+
+.challenges-view__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.challenges-view__intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 52rem;
+}
+
+.challenges-view__intro h2,
+.challenges-view__intro h3 {
+  color: var(--content-primary);
+  margin: 0;
+}
+
+.challenges-view__intro p {
+  color: var(--content-secondary);
+  line-height: var(--line-height-body);
+  margin: 0;
+}
+
+/* Split view (Master - Detail) */
+.challenges-view__split {
+  display: grid;
+  gap: var(--space-6);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 60rem) {
+  .challenges-view__split {
+    grid-template-columns: minmax(18rem, 22rem) minmax(0, 1fr);
+  }
+}
+
+/* Sidebar lists (Powiaty / Wyzwania) */
+.challenges-view__sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.challenges-view__sidebar-filter {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  padding: var(--space-3);
+}
+
+.challenges-view__selector-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: calc(100dvh - 16rem);
+  overflow-y: auto;
+  padding-right: var(--space-1);
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+.challenges-view__selector-item {
+  align-items: stretch;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  color: var(--content-primary);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+  width: 100%;
+}
+
+.challenges-view__selector-item:hover {
+  background: var(--surface-subtle);
+  border-color: var(--border-strong);
+}
+
+.challenges-view__selector-item:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.challenges-view__selector-item.is-selected {
+  background: var(--surface-raised);
+  border-color: var(--action-primary);
+  border-left: 4px solid var(--action-primary);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
+}
+
+.challenges-view__selector-item-header {
+  align-items: center;
+  display: flex;
+  gap: var(--space-2);
+  justify-content: space-between;
+}
+
+.challenges-view__selector-item-name {
+  color: var(--content-primary);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
+}
+
+.challenges-view__selector-item-meta {
+  color: var(--content-muted);
+  font-size: var(--font-size-caption);
+  margin: 0;
+}
+
+/* Detail article card */
+.challenges-view__detail-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-6);
+}
+
+@media (min-width: 48rem) {
+  .challenges-view__detail-card {
+    padding: var(--space-8);
+  }
+}
+
+.challenges-view__detail-header {
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-bottom: var(--space-5);
+}
+
+.challenges-view__detail-header-tags {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.challenges-view__detail-title {
+  color: var(--content-primary);
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-h2);
+  margin: 0;
+}
+
+.challenges-view__detail-lead {
+  color: var(--content-secondary);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  margin: 0;
+}
+
+/* Section inside detail */
+.challenges-view__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.challenges-view__section-title {
+  color: var(--content-primary);
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-h3);
+  margin: 0;
+}
+
+.challenges-view__section-body {
+  color: var(--content-secondary);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  margin: 0;
+}
+
+/* Stats grid */
+.challenges-view__stats-grid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 36rem) {
+  .challenges-view__stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  }
+}
+
+.challenges-view__stat-card {
+  background: var(--surface-canvas);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4);
+}
+
+.challenges-view__stat-label {
+  color: var(--content-muted);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  margin: 0;
+}
+
+.challenges-view__stat-value {
+  color: var(--content-primary);
+  font-size: 1.75rem;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.2;
+}
+
+.challenges-view__stat-value--accent {
+  color: var(--action-primary);
+}
+
+.challenges-view__stat-hint {
+  color: var(--content-muted);
+  font-size: 0.75rem;
+  margin: 0;
+}
+
+/* Municipalities grid */
+.challenges-view__municipalities-grid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 36rem) {
+  .challenges-view__municipalities-grid {
+    grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  }
+}
+
+.challenges-view__municipality-item {
+  align-items: center;
+  background: var(--surface-canvas);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-3);
+}
+
+.challenges-view__municipality-item svg {
+  color: var(--action-primary);
+  flex-shrink: 0;
+}
+
+.challenges-view__municipality-name {
+  color: var(--content-primary);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+}
+
+.challenges-view__municipality-kind {
+  color: var(--content-muted);
+  font-size: 0.75rem;
+}
+
+/* Key needs checkmarks list */
+.challenges-view__needs-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.challenges-view__need-item {
+  align-items: flex-start;
+  background: var(--surface-canvas);
+  border-left: 3px solid var(--action-primary);
+  border-radius: 0 var(--radius-control) var(--radius-control) 0;
+  color: var(--content-primary);
+  display: flex;
+  font-size: var(--font-size-body);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+}
+
+.challenges-view__need-item svg {
+  color: var(--action-primary);
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+/* Innovations cards list */
+.challenges-view__innovations-list {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 44rem) {
+  .challenges-view__innovations-list {
+    grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  }
+}
+
+.challenges-view__inn-card {
+  align-items: stretch;
+  background: var(--surface-canvas);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: var(--space-4);
+  transition: border-color 0.15s ease;
+}
+
+.challenges-view__inn-card:hover {
+  border-color: var(--border-strong);
+}
+
+.challenges-view__inn-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.challenges-view__inn-title {
+  color: var(--content-primary);
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-semibold);
+  margin: 0;
+}
+
+.challenges-view__inn-title a {
+  color: var(--content-primary);
+  text-decoration: none;
+}
+
+.challenges-view__inn-title a:hover {
+  color: var(--content-link);
+}
+
+.challenges-view__inn-summary {
+  color: var(--content-secondary);
+  font-size: var(--font-size-caption);
+  line-height: 1.45;
+  margin: 0;
+}
+
+/* KPI Grid in Trends */
+.challenges-view__kpi-grid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+}
+
+.challenges-view__kpi-card {
+  align-items: center;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  display: flex;
+  gap: var(--space-4);
+  padding: var(--space-5);
+}
+
+.challenges-view__kpi-icon {
+  align-items: center;
+  background: var(--feedback-success-background);
+  border-radius: var(--radius-control);
+  color: var(--feedback-success-foreground);
+  display: inline-flex;
+  flex-shrink: 0;
+  height: 3.25rem;
+  justify-content: center;
+  width: 3.25rem;
+}
+
+.challenges-view__kpi-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.challenges-view__kpi-number {
+  color: var(--content-primary);
+  font-size: var(--font-size-h1);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.1;
+}
+
+.challenges-view__kpi-label {
+  color: var(--content-muted);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  margin: 0;
+}
+
+/* White spots section */
+.challenges-view__white-spots-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.challenges-view__white-spots-header {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  justify-content: space-between;
+}
+
+.challenges-view__white-spots-list {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 52rem) {
+  .challenges-view__white-spots-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.challenges-view__white-spot-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: var(--space-5);
+  transition: border-color 0.15s ease;
+}
+
+.challenges-view__white-spot-card:hover {
+  border-color: var(--border-strong);
+}
+
+.challenges-view__white-spot-meta {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.challenges-view__white-spot-title {
+  color: var(--content-primary);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.35;
+  margin: var(--space-2) 0;
+}
+
+.challenges-view__white-spot-desc {
+  color: var(--content-secondary);
+  font-size: var(--font-size-caption);
+  line-height: 1.4;
+  margin: 0 0 var(--space-4);
+}
+
+.challenges-view__white-spot-action {
+  margin-top: auto;
+}
+
+/* High contrast and dark theme overrides */
+:root[data-theme="dark"] .challenges-view__selector-item.is-selected {
+  background: var(--surface-subtle);
+  box-shadow: none;
+}
+
+:root[data-theme="dark"] .challenges-view__kpi-icon {
+  background: var(--feedback-success-background);
+  color: var(--feedback-success-foreground);
+}
+
+:root[data-theme="hc-black-white"] .challenges-view__selector-item.is-selected,
+:root[data-theme="hc-black-yellow"] .challenges-view__selector-item.is-selected {
+  border-left-width: 6px;
+}
+
+/* ==========================================================================
    Druk i eksport PDF (Moduł III & dokumenty urzędowe ROPS)
    ========================================================================== */
 @media print {
