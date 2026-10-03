@@ -3,6 +3,10 @@
 import { useState, type MouseEvent } from "react";
 import {
   Bell,
+  BookOpen,
+  CalendarDots,
+  Flag,
+  Lightbulb,
   DotsThree,
   House,
   MapTrifold,
@@ -14,15 +18,23 @@ import { AppNavigation, type NavigationItem } from "@/components/ui/AppNavigatio
 import { PageNavigationBar } from "@/components/ui/PageNavigationBar";
 
 const desktopItems: NavigationItem[] = [
+  { id: "home", label: "Strona główna", href: "#strona-glowna", icon: House },
+  { id: "report-need", label: "Zgłoś potrzebę", href: "#zglos-potrzebe", icon: HandHeart },
+  { id: "solutions", label: "Rozwiązania", href: "#rozwiazania", icon: Lightbulb },
+  { id: "challenges", label: "Wyzwania", href: "#wyzwania", icon: Flag },
+  { id: "community", label: "Społeczność", href: "#spolecznosc", icon: UsersThree },
+  { id: "knowledge", label: "Zasoby wiedzy", href: "#zasoby-wiedzy", icon: BookOpen },
+  { id: "events", label: "Wydarzenia", href: "#wydarzenia", icon: CalendarDots },
+];
+
+const mobileItems: NavigationItem[] = [
   { id: "start", label: "Start", href: "#start", icon: House },
   { id: "needs", label: "Potrzeby", href: "#potrzeby", icon: UsersThree },
   { id: "solutions", label: "Rozwiązania", href: "#rozwiazania", icon: HandHeart },
   { id: "map", label: "Mapa", href: "#mapa", icon: MapTrifold },
   { id: "organizations", label: "Organizacje", href: "#organizacje", icon: Buildings },
   { id: "alerts", label: "Powiadomienia", href: "#powiadomienia", icon: Bell },
-];
-
-const mobileItems = desktopItems.filter(({ id }) => id !== "organizations" && id !== "alerts");
+].filter(({ id }) => id !== "organizations" && id !== "alerts");
 
 type PreviewProps = {
   mode: "desktop" | "mobile";
@@ -30,7 +42,7 @@ type PreviewProps = {
 };
 
 function NavigationPreview({ mode, title }: PreviewProps) {
-  const [activeItem, setActiveItem] = useState("needs");
+  const [activeItem, setActiveItem] = useState(mode === "desktop" ? "solutions" : "needs");
 
   function handleClick(event: MouseEvent<HTMLElement>) {
     const link = (event.target as Element).closest<HTMLAnchorElement>("a");

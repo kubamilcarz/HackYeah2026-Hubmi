@@ -49,7 +49,7 @@ function NavigationLinks({
               <Icon
                 aria-hidden="true"
                 className="app-navigation__icon"
-                size={variant === "mobile" ? 24 : 20}
+                size={24}
                 weight={isActive ? "fill" : "regular"}
               />
               <span>{label}</span>
@@ -80,7 +80,7 @@ export function AppNavigation({
       {mode !== "mobile" && (
         <aside className="app-navigation__desktop">
           <Link aria-label={brandLabel} className="app-navigation__brand" href={brandHref}>
-            <Image alt="" className="app-navigation__brand-logo app-navigation__brand-logo--color" height={80} src="/logo-color.svg" width={80} />
+            <Image alt="" className="app-navigation__brand-logo" height={80} src="/logo-color.svg" width={80} />
           </Link>
           <nav aria-label="Główna nawigacja">
             <NavigationLinks activeItem={activeItem} items={desktopItems} variant="desktop" />
