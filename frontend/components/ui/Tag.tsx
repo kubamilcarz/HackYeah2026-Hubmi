@@ -40,5 +40,10 @@ export function Tag({
 }
 
 export function Badge({ className, label, variant = "neutral" }: SharedTagProps) {
-  return <span className={`badge badge--${variant}${className ? ` ${className}` : ""}`}>{label}</span>;
+  return (
+    <span className={`badge badge--${variant}${className ? ` ${className}` : ""}`}>
+      <span aria-hidden="true" className="badge__indicator" />
+      <span>{label}</span>
+    </span>
+  );
 }

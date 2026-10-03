@@ -14,8 +14,8 @@ Polish; component APIs and this technical documentation are English.
 | `TextField`, `SearchField`, `SelectField`, `DateField` | `ui/FormControls.tsx` | Native labelled controls with associated help and error text. |
 | `RadioGroup`, `CheckboxGroup`, `SegmentedControl` | `ui/FormControls.tsx` | Native grouped choices with fieldset/legend semantics. |
 | `Slider`, `Stepper` | `ui/FormControls.tsx` | Labelled numeric controls with visible value and keyboard operation. |
-| `Alert`, `Banner`, `Toast`, `ToastViewport` | `ui/Alert.tsx`, `ui/Toast.tsx` | Textual, icon-supported feedback; use live announcements only for changed status. |
-| `Tag`, `Badge`, `LinearProgress`, `CircularProgress` | `ui/Tag.tsx`, `ui/Progress.tsx` | Status/category display always paired with textual meaning. |
+| `Alert`, `Banner`, `Toast`, `ToastViewport` | `ui/Alert.tsx`, `ui/Toast.tsx` | `Alert` is a live changed-status update; `Banner` is persistent contextual guidance and may link to a next step; `Toast` is transient. All have textual, icon-supported variants. `dismissible` is opt-in and exposes a named native button. |
+| `Tag`, `Badge`, `LinearProgress`, `CircularProgress` | `ui/Tag.tsx`, `ui/Progress.tsx` | `Tag` is category/metadata display and can have an optional remove button. `Badge` is compact named status with a decorative semantic indicator. Both retain visible textual meaning and use `neutral`, `success`, `info`, `warning`, or `danger` variants. |
 
 ## Splot domain components
 

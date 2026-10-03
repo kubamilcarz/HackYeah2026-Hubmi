@@ -51,7 +51,7 @@ these components rather than introducing look-alikes.
 | --- | --- | --- |
 | Actions | `Button`, `ButtonLink`, `IconButton` | `Button` and `IconButton` are native actions; `ButtonLink` is navigation. All support `sm`, `md`, and `lg`; icon-only controls require an accessible Polish label. |
 | Forms | `TextField`, `SearchField`, `SelectField`, `DateField`, `RadioGroup`, `CheckboxGroup`, `SegmentedControl`, `Slider`, `Stepper` | Persistent label, hint/error association, validation state, keyboard use, and visible focus. |
-| Feedback | `Alert`, `Banner`, `Toast`, `Tag`, `Badge`, `LinearProgress`, `CircularProgress` | Textual non-colour cue; announce only status changes that need attention. |
+| Feedback | `Alert`, `Banner`, `Toast`, `Tag`, `Badge`, `LinearProgress`, `CircularProgress` | Textual non-colour cue; use alerts for changed status, contextual banners for persistent guidance, tags for metadata, and badges for compact named status. |
 | Navigation | `AppNavigation`, `PageNavigationBar` | Landmark and current-page state; mobile and desktop expose the same destinations. |
 | Overlays | `Dialog` | Native modal for an explicit decision with dismissal and focus restoration. |
 | Splot domain | `NeedCard`, `SolutionCard`, `OrganizationCard`, `MatchSummary`, `ContactAction`, `ModerationStatus` | Identify the subject, responsible organization, status, and safe next action without relying on colour. |
@@ -76,3 +76,22 @@ these components rather than introducing look-alikes.
   must retain their native disabled state.
 - Before changing foundations, review `accessibility-system.md`; its preference
   contract and semantic-token rules are authoritative.
+
+## Feedback and status patterns
+
+- `Alert` is a short, icon-supported status update. Use `success`, `info`,
+  `warning`, or `danger` with a concrete Polish title and explanation. It uses
+  a polite live region by default and an assertive one for errors; use it only
+  when the content has changed and needs attention.
+- `Banner` is persistent, in-context guidance rather than a routine live
+  announcement. It can include one navigational action. Both feedback
+  components may expose an opt-in, named dismiss button; do not make required
+  task information dismissible by default.
+- `Tag` labels a category or feature. It supports the same semantic variants
+  plus an optional native remove button. `Badge` names a compact status and
+  adds a decorative variant indicator; the visible Polish label remains the
+  meaning. Neither component is interactive unless its explicit control is
+  rendered.
+- Feedback and status patterns stack and wrap without clipping at enlarged text
+  or 400% zoom. Verify a dismissible alert with keyboard focus and each pattern
+  in light, dark, grayscale, high-contrast, and forced-colors modes.
