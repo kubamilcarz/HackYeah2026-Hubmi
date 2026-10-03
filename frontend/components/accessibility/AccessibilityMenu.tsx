@@ -10,12 +10,12 @@ import {
 } from "./AccessibilityProvider";
 
 const appearanceLabels: Record<AppearancePreference, string> = {
-  system: "Use device setting",
-  light: "Light",
-  dark: "Dark",
-  "hc-black-white": "High contrast — black / white",
-  "hc-black-yellow": "High contrast — black / yellow",
-  grayscale: "Grayscale",
+  system: "Użyj ustawień urządzenia",
+  light: "Jasny",
+  dark: "Ciemny",
+  "hc-black-white": "Wysoki kontrast — czerń / biel",
+  "hc-black-yellow": "Wysoki kontrast — czerń / żółć",
+  grayscale: "Skala szarości",
 };
 
 function subscribeToSpeechSupport() {
@@ -49,7 +49,7 @@ export function AccessibilityMenu() {
   );
   const [isReading, setIsReading] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [speechStatus, setSpeechStatus] = useState("Ready to read this page aloud.");
+  const [speechStatus, setSpeechStatus] = useState("Strona jest gotowa do odczytania.");
   const rootRef = useRef<HTMLDivElement>(null);
   const launcherRef = useRef<HTMLButtonElement>(null);
   const panelId = useId();
@@ -125,18 +125,18 @@ export function AccessibilityMenu() {
       if (isPaused) {
         window.speechSynthesis.resume();
         setIsPaused(false);
-        setSpeechStatus("Reading this page aloud.");
+        setSpeechStatus("Trwa odczytywanie strony.");
       } else {
         window.speechSynthesis.pause();
         setIsPaused(true);
-        setSpeechStatus("Reading paused.");
+        setSpeechStatus("Odczytywanie wstrzymane.");
       }
       return;
     }
 
     const readableContent = document.querySelector("main")?.textContent?.trim();
     if (!readableContent) {
-      setSpeechStatus("No readable page content was found.");
+      setSpeechStatus("Nie znaleziono treści do odczytania.");
       return;
     }
 
@@ -145,25 +145,25 @@ export function AccessibilityMenu() {
     utterance.onend = () => {
       setIsReading(false);
       setIsPaused(false);
-      setSpeechStatus("Finished reading this page.");
+      setSpeechStatus("Odczytywanie strony zakończone.");
     };
     utterance.onerror = () => {
       setIsReading(false);
       setIsPaused(false);
-      setSpeechStatus("Read aloud is unavailable right now.");
+      setSpeechStatus("Odczytywanie na głos jest teraz niedostępne.");
     };
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
     setIsReading(true);
     setIsPaused(false);
-    setSpeechStatus("Reading this page aloud.");
+    setSpeechStatus("Trwa odczytywanie strony.");
   }
 
   function stopReading() {
     window.speechSynthesis.cancel();
     setIsReading(false);
     setIsPaused(false);
-    setSpeechStatus("Read aloud stopped.");
+    setSpeechStatus("Odczytywanie na głos zatrzymane.");
   }
 
   return (
@@ -171,7 +171,7 @@ export function AccessibilityMenu() {
       <button
         aria-controls={panelId}
         aria-expanded={isOpen}
-        aria-label="Accessibility preferences"
+        aria-label="Ustawienia dostępności"
         className="accessibility-launcher"
         onClick={handleLauncherClick}
         ref={launcherRef}
@@ -193,7 +193,7 @@ export function AccessibilityMenu() {
           <path d="M12 9v6" />
           <path d="m7.5 21 4.5-6 4.5 6" />
         </svg>
-        <span>Accessibility</span>
+        <span>Dostępność</span>
       </button>
 
       {isOpen ? (
@@ -205,9 +205,9 @@ export function AccessibilityMenu() {
           role="dialog"
         >
           <div className="accessibility-panel-header">
-            <h2 id={titleId}>Accessibility</h2>
+            <h2 id={titleId}>Dostępność</h2>
             <button
-              aria-label="Close accessibility preferences"
+              aria-label="Zamknij ustawienia dostępności"
               className="accessibility-close"
               onClick={closeAndRestoreFocus}
               type="button"
@@ -217,7 +217,7 @@ export function AccessibilityMenu() {
           </div>
 
           <fieldset className="accessibility-fieldset">
-            <legend className="sr-only">Display mode</legend>
+            <legend className="sr-only">Tryb wyświetlania</legend>
             <div className="accessibility-options">
               {APPEARANCE_PREFERENCES.map((option) => (
                 <label className="accessibility-option" key={option}>
@@ -234,33 +234,33 @@ export function AccessibilityMenu() {
             </div>
           </fieldset>
 
-          <section aria-label="Text size">
+          <section aria-label="Rozmiar tekstu">
             <div className="accessibility-text-controls">
               <button
-                aria-label="Decrease text size"
+                aria-label="Zmniejsz rozmiar tekstu"
                 className="accessibility-text-action"
                 disabled={!canDecrease}
                 onClick={decreaseTextSize}
                 type="button"
               >
                 <span aria-hidden="true">A−</span>
-                <span className="sr-only">Decrease text size</span>
+                <span className="sr-only">Zmniejsz rozmiar tekstu</span>
               </button>
               <output aria-atomic="true" aria-live="polite" className="accessibility-text-value">
                 <span aria-hidden="true" className="accessibility-text-preview">
                   Aa
                 </span>
-                <span>Text size: {textScale}%</span>
+                <span>Rozmiar tekstu: {textScale}%</span>
               </output>
               <button
-                aria-label="Increase text size"
+                aria-label="Zwiększ rozmiar tekstu"
                 className="accessibility-text-action"
                 disabled={!canIncrease}
                 onClick={increaseTextSize}
                 type="button"
               >
                 <span aria-hidden="true">A+</span>
-                <span className="sr-only">Increase text size</span>
+                <span className="sr-only">Zwiększ rozmiar tekstu</span>
               </button>
             </div>
             <button
@@ -269,13 +269,13 @@ export function AccessibilityMenu() {
               onClick={resetTextScale}
               type="button"
             >
-              Reset text size
+              Przywróć rozmiar tekstu
             </button>
           </section>
 
           <label className="accessibility-switch">
             <span>
-              <strong>Underline links</strong>
+              <strong>Podkreślaj linki</strong>
             </span>
             <input
               checked={underlineLinks}
@@ -286,7 +286,7 @@ export function AccessibilityMenu() {
             <span aria-hidden="true" className="accessibility-switch-track" />
           </label>
 
-          <section aria-label="Read aloud" className="accessibility-read-aloud">
+          <section aria-label="Odczytywanie na głos" className="accessibility-read-aloud">
             <div className="accessibility-read-actions">
               <button
                 disabled={!isSpeechSupported}
@@ -302,17 +302,17 @@ export function AccessibilityMenu() {
                     <path d="m8 5 11 7-11 7z" />
                   </svg>
                 )}
-                <span>{isReading ? (isPaused ? "Resume" : "Pause") : "Read this page"}</span>
+                <span>{isReading ? (isPaused ? "Wznów" : "Wstrzymaj") : "Odczytaj tę stronę"}</span>
               </button>
-              <button aria-label="Stop reading" disabled={!isReading} onClick={stopReading} type="button">
+              <button aria-label="Zatrzymaj odczytywanie" disabled={!isReading} onClick={stopReading} type="button">
                 <svg aria-hidden="true" fill="currentColor" viewBox="0 0 24 24">
                   <rect height="12" rx="1" width="12" x="6" y="6" />
                 </svg>
-                <span>Stop</span>
+                <span>Zatrzymaj</span>
               </button>
             </div>
             <p aria-atomic="true" aria-live="polite" className="accessibility-status sr-only">
-              {isSpeechSupported ? speechStatus : "Read aloud is not supported by this browser."}
+              {isSpeechSupported ? speechStatus : "Ta przeglądarka nie obsługuje odczytywania na głos."}
             </p>
           </section>
 
@@ -329,7 +329,7 @@ export function AccessibilityMenu() {
               <path d="M3 12a9 9 0 1 0 3-6.7" />
               <path d="M3 4v5h5" />
             </svg>
-            <span>Reset settings</span>
+            <span>Przywróć ustawienia</span>
           </button>
         </section>
       ) : null}

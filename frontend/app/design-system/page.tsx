@@ -1,0 +1,72 @@
+import type { Metadata } from "next";
+import Image from "next/image";
+import type { ReactNode } from "react";
+import { ArrowRight, Heart, MagnifyingGlass, Users } from "@phosphor-icons/react/ssr";
+import { Alert, Banner } from "@/components/ui/Alert";
+import { Button, IconButton } from "@/components/ui/Button";
+import { ContactAction, MatchSummary, ModerationStatus, NeedCard, OrganizationCard, SolutionCard } from "@/components/ui/Cards";
+import { ControlsShowcase } from "@/components/ui/ControlsShowcase";
+import { DataTable } from "@/components/ui/DataTable";
+import { FeedbackShowcase } from "@/components/ui/FeedbackShowcase";
+import { Map } from "@/components/ui/Map";
+import { NavigationShowcase } from "@/components/ui/NavigationShowcase";
+import { LinearProgress } from "@/components/ui/Progress";
+import { Badge, Tag } from "@/components/ui/Tag";
+
+export const metadata: Metadata = {
+  title: "System projektowy | Splot",
+  description: "Komponenty interfejsu Splotu.",
+};
+
+const palette = [
+  ["Granat", "#062340", "var(--surface-inverse)"],
+  ["Zielony działania", "#16A34A", "var(--action-primary)"],
+  ["Żółty uwagi", "#FFC107", "var(--feedback-warning-background)"],
+  ["Pomarańczowy", "#FF7A00", "var(--feedback-warning-foreground)"],
+  ["Biały", "#FFFFFF", "var(--surface-raised)"],
+  ["Szary tła", "#F1F5F9", "var(--surface-subtle)"],
+] as const;
+
+const typeRows = [
+  ["Nagłówek strony", "type-h1", "Łączymy potrzeby z rozwiązaniami"],
+  ["Tytuł sekcji", "type-h2", "Pomoc zaczyna się lokalnie"],
+  ["Nagłówek karty", "type-h3", "Wsparcie w opiece nad seniorem"],
+  ["Treść", "type-body", "Jasna informacja pomaga bezpiecznie zrobić kolejny krok."],
+  ["Opis pomocniczy", "type-caption", "Aktualizacja: dzisiaj, 10:45"],
+  ["Etykieta", "type-label", "Obszar wsparcia"],
+] as const;
+
+const moderationRows = [
+  { id: "1", need: "Wsparcie w opiece nad seniorem", organization: "Fundacja Sąsiedzi", status: "Do weryfikacji" },
+  { id: "2", need: "Warsztaty języka polskiego", organization: "Centrum Integracji", status: "Opublikowane" },
+  { id: "3", need: "Transport na rehabilitację", organization: "Stowarzyszenie Razem", status: "Wymaga uzupełnienia" },
+];
+
+function Section({ children, id, number, title }: { children: ReactNode; id: string; number: string; title: string }) {
+  return <section className="scroll-mt-8 border-t border-[var(--border-subtle)] py-10 sm:py-14" id={id}><p className="mb-2 font-mono text-xs font-semibold uppercase tracking-[0.16em] text-[var(--content-muted)]">{number}</p><h2 className="type-h2">{title}</h2>{children}</section>;
+}
+
+export default function DesignSystemPage() {
+  return <main className="min-h-screen bg-[var(--surface-canvas)] px-4 py-6 text-[var(--content-primary)] sm:px-8 sm:py-10 lg:px-12"><div className="mx-auto max-w-6xl">
+    <header className="mb-12 grid gap-7 border-b border-[var(--border-subtle)] pb-10 lg:grid-cols-[1fr_auto] lg:items-end">
+      <div className="max-w-3xl"><div className="mb-5 flex items-center gap-3"><Image alt="Splot" height={42} priority src="/logo-color.svg" width={42} /><span className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-[var(--content-link)]">System projektowy</span></div><h1 className="type-h1">Interfejs, który pomaga działać razem.</h1><p className="type-body mt-4 max-w-2xl text-[var(--content-secondary)]">Komponenty Splotu pomagają mieszkańcom, organizacjom i samorządom odnajdywać potrzeby, rozwiązania i bezpieczne kolejne kroki.</p></div>
+      <nav aria-label="Sekcje systemu" className="flex flex-wrap gap-x-4 gap-y-2 text-sm font-semibold"><a href="#fundamenty">Fundamenty</a><a href="#typografia">Typografia</a><a href="#formularze">Formularze</a><a href="#splot">Splot</a><a href="#nawigacja">Nawigacja</a><a href="#administracja">ROPS</a></nav>
+    </header>
+
+    <Section id="fundamenty" number="01 / Fundamenty" title="Kolor prowadzi, nie zastępuje informacji"><p className="type-body mt-3 max-w-2xl text-[var(--content-secondary)]">Granat buduje zaufanie, a zielony wskazuje główny następny krok. Każdy status ma również nazwę i ikonę.</p><div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{palette.map(([name, value, color]) => <article className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-raised)] p-4" key={name}><div aria-hidden="true" className="h-20 rounded-xl border border-[var(--border-subtle)]" style={{ backgroundColor: color }} /><h3 className="type-h3 mt-4">{name}</h3><code className="mt-1 block font-mono text-xs text-[var(--content-muted)]">{value}</code></article>)}</div><div className="mt-6 grid gap-3 md:grid-cols-3"><div className="rounded-2xl bg-[var(--feedback-success-background)] p-4 text-[var(--feedback-success-foreground)]"><strong>Opublikowane</strong><p className="type-caption mt-1">Rozwiązanie jest widoczne dla mieszkańców.</p></div><div className="rounded-2xl bg-[var(--feedback-warning-background)] p-4 text-[var(--feedback-warning-foreground)]"><strong>Wymaga uzupełnienia</strong><p className="type-caption mt-1">Brakuje informacji potrzebnych do dopasowania.</p></div><div className="rounded-2xl bg-[var(--feedback-danger-background)] p-4 text-[var(--feedback-danger-foreground)]"><strong>Nie udało się zapisać</strong><p className="type-caption mt-1">Spróbuj ponownie za chwilę.</p></div></div></Section>
+
+    <Section id="typografia" number="02 / Czytelność" title="Typografia i rytm"><div className="mt-8 overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-raised)]">{typeRows.map(([label, className, example]) => <div className="grid gap-2 border-b border-[var(--border-subtle)] p-5 last:border-0 sm:grid-cols-[10rem_1fr] sm:items-center" key={label}><span className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-[var(--content-muted)]">{label}</span><p className={className}>{example}</p></div>)}</div></Section>
+
+    <Section id="formularze" number="03 / Formularze" title="Jedna jasna decyzja na raz"><div className="mt-8 grid gap-6 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-raised)] p-5 sm:p-6 lg:grid-cols-2"><div><h3 className="type-h3">Akcje i kategorie</h3><p className="type-caption mt-1 text-[var(--content-muted)]">Główna akcja jest widoczna, a dodatkowe kroki nie konkurują z nią wizualnie.</p><div className="mt-5 flex flex-wrap gap-3"><Button leadingIcon={Heart}>Zgłoś potrzebę</Button><Button variant="secondary">Zobacz rozwiązania</Button><Button variant="tertiary">Zapisz szkic</Button><IconButton icon={MagnifyingGlass} label="Szukaj potrzeb i rozwiązań" variant="secondary" /></div></div><div><h3 className="type-h3">Kategorie i postęp</h3><p className="type-caption mt-1 text-[var(--content-muted)]">Etykiety nazywają znaczenie, zamiast przekazywać je wyłącznie kolorem.</p><div className="mt-5 flex flex-wrap items-center gap-2"><Tag label="Opieka i zdrowie" variant="success" /><Tag label="Integracja społeczna" variant="info" /><Badge label="Nowe" variant="success" /></div><div className="mt-6"><LinearProgress label="Uzupełnienie zgłoszenia" max={4} value={3} variant="success" /></div></div></div><div className="mt-6 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-raised)] p-5 sm:p-6"><ControlsShowcase /></div></Section>
+
+    <Section id="splot" number="04 / Splot" title="Potrzeba, rozwiązanie i partner"><p className="type-body mt-3 max-w-2xl text-[var(--content-secondary)]">Przykłady pokazują wystarczający kontekst, właściciela informacji, status oraz kolejny bezpieczny krok.</p><div className="cards-showcase mt-8"><NeedCard action={{ href: "#splot", label: "Zobacz potrzebę" }} category="Opieka i zdrowie" locality="Kraków, Podgórze" status={{ label: "Oczekuje na odpowiedź", variant: "warning" }} summary="Potrzebne jest wsparcie w codziennych sprawach dla osoby starszej." title="Wsparcie w opiece nad seniorem" updatedAt="dzisiaj, 10:45" /><SolutionCard action={{ href: "#splot", label: "Zobacz rozwiązanie" }} availability="Zapisy są otwarte" category="Opieka i zdrowie" organization="Fundacja Sąsiedzi" summary="Bezpłatne konsultacje i pomoc w organizacji wsparcia w domu." title="Konsultacja opiekuna" /><OrganizationCard action={{ href: "#splot", label: "Poznaj organizację" }} locality="Kraków" name="Fundacja Sąsiedzi" organizationType="Organizacja pozarządowa" services={[{ label: "Wsparcie opiekunów", variant: "success" }, { label: "Integracja", variant: "info" }]} /><MatchSummary action={{ href: "#splot", label: "Zobacz 3 rozwiązania" }} matchCount={3} needTitle="Wsparcie w opiece nad seniorem" summary="Znaleźliśmy organizacje działające w Twojej okolicy." /></div><ContactAction action={{ href: "#splot", label: "Przejdź do kontaktu" }} className="mt-4" contactMethod="formularz kontaktowy" organization="Fundacja Sąsiedzi" safetyNote="Decyzja o przekazaniu danych zawsze należy do Ciebie." /></Section>
+
+    <Section id="nawigacja" number="05 / Nawigacja" title="Te same cele na telefonie i komputerze"><p className="type-body mt-3 max-w-2xl text-[var(--content-secondary)]">Nawigacja prowadzi do potrzeb, rozwiązań i organizacji niezależnie od szerokości ekranu.</p><div className="mt-8 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-raised)] p-5 sm:p-6"><NavigationShowcase /></div><div className="mt-6 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-raised)] p-5 sm:p-6"><Map ariaLabel="Mapa organizacji oferujących wsparcie" markers={[{ id: "sasiedzi", position: { lat: 50.047, lng: 19.944 }, title: "Fundacja Sąsiedzi", description: "Wsparcie opiekunów i sąsiedzkie." }, { id: "integracja", position: { lat: 50.061, lng: 19.937 }, title: "Centrum Integracji", description: "Doradztwo i kursy językowe." }]} /></div></Section>
+
+    <Section id="informacja" number="06 / Informacja zwrotna" title="Stan jest konkretny i zrozumiały"><div className="mt-8 grid gap-4 lg:grid-cols-2"><Alert description="Twoje zgłoszenie jest gotowe do przekazania organizacjom, które mogą pomóc." title="Potrzeba została zapisana" variant="success" /><Banner actionHref="#formularze" actionLabel="Uzupełnij zgłoszenie" description="Dodaj obszar wsparcia, aby zobaczyć lepiej dopasowane rozwiązania." title="Doprecyzuj potrzebę" variant="info" /></div><div className="mt-6 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-raised)] p-5 sm:p-6"><FeedbackShowcase /></div></Section>
+
+    <Section id="administracja" number="07 / ROPS" title="Moderacja ma własny, wyraźnie oznaczony kontekst"><p className="type-body mt-3 max-w-2xl text-[var(--content-secondary)]">Ten przykład jest przeznaczony dla osób administrujących platformą — nie jest elementem publicznej ścieżki mieszkańca.</p><div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_19rem]"><div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-raised)] p-5 sm:p-6"><DataTable caption="Przykładowe zgłoszenia do moderacji" columns={[{ key: "need", label: "Potrzeba", sortable: true }, { key: "organization", label: "Organizacja", sortable: true }, { key: "status", label: "Status", sortable: true }]} heading="Zgłoszenia do moderacji" rowKey="id" rows={moderationRows} /></div><ModerationStatus description="Przed publikacją sprawdź, czy opis i sposób kontaktu są kompletne." label="Do weryfikacji" variant="warning" /></div></Section>
+
+    <section className="border-t border-[var(--border-subtle)] py-10 sm:py-14"><div className="rounded-3xl bg-[var(--surface-inverse)] p-6 text-[var(--content-inverse)] sm:p-10"><Users aria-hidden="true" size={32} weight="fill" /><h2 className="type-h2 mt-5 text-[var(--content-inverse)]">Projektujemy dla współpracy.</h2><p className="type-body mt-3 max-w-2xl text-[var(--content-inverse)]">Każdy wzorzec pozostaje zrozumiały na telefonie, przy większym tekście i bez rozróżniania kolorów.</p><a className="mt-6 inline-flex items-center gap-2 font-semibold" href="#fundamenty">Wróć do fundamentów <ArrowRight aria-hidden="true" size={18} weight="bold" /></a></div></section>
+  </div></main>;
+}
