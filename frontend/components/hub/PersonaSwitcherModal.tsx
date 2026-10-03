@@ -31,7 +31,8 @@ export function PersonaSwitcherModal({ onPersonaChanged }: PersonaSwitcherModalP
       open={isPersonaModalOpen}
       title="Profile demonstracyjne"
     >
-      <div className="persona-switcher-grid">
+      <fieldset className="persona-switcher-grid">
+        <legend className="sr-only">Wybierz aktywny profil demonstracyjny</legend>
         {personas.map((persona) => {
           const isActive = persona.key === activePersonaKey;
           const locationOrOrg = persona.organization
@@ -43,28 +44,29 @@ export function PersonaSwitcherModal({ onPersonaChanged }: PersonaSwitcherModalP
               : null;
 
           return (
-            <button
-              aria-pressed={isActive}
+            <label
               className={`persona-card${isActive ? " persona-card--active" : ""}`}
               key={persona.key}
-              onClick={() => handleSelect(persona.key)}
-              type="button"
             >
               <div className="persona-card__header">
+                <input
+                  checked={isActive}
+                  className="persona-card__control"
+                  name="demo-persona"
+                  onChange={() => handleSelect(persona.key)}
+                  type="radio"
+                  value={persona.key}
+                />
                 <div className="persona-card__avatar" aria-hidden="true">
                   <span>{persona.initials}</span>
                 </div>
                 <div className="persona-card__titles">
                   <div className="persona-card__title-row">
                     <span className="persona-card__name">{persona.name}</span>
-                    {isActive ? (
-                      <span className="persona-card__status-pill persona-card__status-pill--active">
+                    {isActive && (
+                      <span className="persona-card__status-pill">
                         <Check aria-hidden="true" size={13} weight="bold" />
-                        Aktywny
-                      </span>
-                    ) : (
-                      <span className="persona-card__status-pill persona-card__status-pill--idle">
-                        Wybierz
+                        Aktywny profil
                       </span>
                     )}
                   </div>
@@ -78,10 +80,10 @@ export function PersonaSwitcherModal({ onPersonaChanged }: PersonaSwitcherModalP
               </div>
 
               <p className="persona-card__desc">{persona.description}</p>
-            </button>
+            </label>
           );
         })}
-      </div>
+      </fieldset>
 
       <p className="persona-switcher__hint">
         Wybór profilu automatycznie uzupełnia formularze przykładowymi danymi testowymi.

@@ -15,7 +15,6 @@ import {
   Lightbulb,
   MapTrifold,
   Sparkle,
-  ArrowsClockwise,
   ShieldCheck,
 } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
@@ -24,7 +23,6 @@ import { PageNavigationBar } from "@/components/ui/PageNavigationBar";
 import { Toast, ToastViewport } from "@/components/ui/Toast";
 import { usePersona } from "@/contexts/PersonaContext";
 import { PersonaSwitcherModal } from "@/components/hub/PersonaSwitcherModal";
-import { Badge } from "@/components/ui/Tag";
 
 const baseNavigationItems: NavigationItem[] = [
   { id: "start", label: "Strona główna", href: "/start", icon: House },
@@ -51,14 +49,14 @@ export function HubShell({ activeItem, children }: HubShellProps) {
   const [toast, setToast] = useState<{ description: string; title: string } | null>(null);
 
   const navigationItems = useMemo(() => {
-    if (activePersona.roleType === "admin" || activeItem === "admin") {
+    if (activePersona.roleType === "admin") {
       return [
         ...baseNavigationItems,
         { id: "admin", label: "Panel ROPS", href: "/admin", icon: ShieldCheck },
       ];
     }
     return baseNavigationItems;
-  }, [activePersona.roleType, activeItem]);
+  }, [activePersona.roleType]);
 
   return (
     <div className="hub-shell">
@@ -93,26 +91,6 @@ export function HubShell({ activeItem, children }: HubShellProps) {
           }}
           search={{ action: "/solutions", placeholder: "Szukaj rozwiązań, tematów, osób..." }}
         />
-
-        <div className="hub-shell__persona-bar" role="region" aria-label="Aktywny profil demonstracyjny">
-          <div className="hub-shell__persona-info">
-            <span className="hub-shell__persona-label">Profil demo:</span>
-            <strong className="hub-shell__persona-name">{activePersona.name}</strong>
-            <Badge label={activePersona.role} variant={activePersona.roleBadge} />
-            {activePersona.organization && (
-              <span className="hub-shell__persona-sub">{activePersona.organization}</span>
-            )}
-          </div>
-          <button
-            className="hub-shell__persona-switch-btn"
-            onClick={openPersonaModal}
-            type="button"
-            aria-label="Zmień profil demonstracyjny persony"
-          >
-            <ArrowsClockwise aria-hidden="true" size={14} />
-            <span>Zmień profil</span>
-          </button>
-        </div>
 
         <main className="hub-shell__main">{children}</main>
       </div>

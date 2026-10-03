@@ -3471,72 +3471,13 @@ a.app-navigation__link {
    Persona Switcher & Demo Profiles
    ========================================================================== */
 
-.hub-shell__persona-bar {
-  align-items: center;
-  background: var(--surface-raised);
-  border-bottom: 1px solid var(--border-subtle);
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  justify-content: space-between;
-  padding: var(--space-2) var(--space-6);
-}
-
-.hub-shell__persona-info {
-  align-items: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
-
-.hub-shell__persona-label {
-  color: var(--content-muted);
-  font-size: var(--font-size-caption);
-}
-
-.hub-shell__persona-name {
-  color: var(--content-primary);
-  font-size: var(--font-size-body);
-  font-weight: var(--font-weight-semibold);
-}
-
-.hub-shell__persona-sub {
-  color: var(--content-muted);
-  font-size: var(--font-size-caption);
-}
-
-.hub-shell__persona-switch-btn {
-  align-items: center;
-  background: transparent;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-control);
-  color: var(--action-primary);
-  cursor: pointer;
-  display: inline-flex;
-  font-size: var(--font-size-caption);
-  font-weight: var(--font-weight-semibold);
-  gap: var(--space-1);
-  min-height: 2rem;
-  padding: 0 var(--space-3);
-  transition: all 150ms ease;
-}
-
-.hub-shell__persona-switch-btn:hover {
-  background: var(--surface-subtle);
-  border-color: var(--border-strong);
-}
-
-.hub-shell__persona-switch-btn:focus-visible {
-  outline: 3px solid var(--focus-ring);
-  outline-offset: 2px;
-}
-
 .persona-modal .dialog__surface {
   max-width: 54rem;
   width: 100%;
 }
 
 .persona-switcher-grid {
+  border: 0;
   display: grid;
   gap: var(--space-3);
   grid-template-columns: 1fr;
@@ -3575,9 +3516,17 @@ a.app-navigation__link {
   border-color: var(--border-strong);
 }
 
-.persona-card:focus-visible {
+.persona-card:has(.persona-card__control:focus-visible) {
   outline: 3px solid var(--focus-ring);
   outline-offset: 2px;
+}
+
+.persona-card__control {
+  accent-color: var(--action-primary);
+  flex: 0 0 auto;
+  height: 1.25rem;
+  margin: 0;
+  width: 1.25rem;
 }
 
 .persona-card--active {
@@ -3650,21 +3599,9 @@ a.app-navigation__link {
   white-space: nowrap;
 }
 
-.persona-card__status-pill--active {
+.persona-card__status-pill {
   background: var(--feedback-success-background);
   color: var(--feedback-success-foreground);
-}
-
-.persona-card__status-pill--idle {
-  background: var(--surface-subtle);
-  color: var(--content-muted);
-  opacity: 0;
-  transition: opacity 120ms ease;
-}
-
-.persona-card:hover .persona-card__status-pill--idle,
-.persona-card:focus-visible .persona-card__status-pill--idle {
-  opacity: 1;
 }
 
 .persona-card__meta {
@@ -4419,6 +4356,5 @@ a.app-navigation__link {
     margin-bottom: 1rem !important;
   }
 }
-
 
 
