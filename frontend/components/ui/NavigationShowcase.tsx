@@ -2,11 +2,13 @@
 
 import { useState, type MouseEvent } from "react";
 import {
+  Bell,
   BookOpen,
+  Briefcase,
   CalendarDots,
+  Compass,
   Flag,
   Lightbulb,
-  DotsThree,
   House,
   HandHeart,
   UsersThree,
@@ -63,14 +65,15 @@ function PageNavigationPreview({ title }: PreviewProps) {
         <code>desktop</code>
       </div>
       <PageNavigationBar
-        action={{
-          icon: DotsThree,
-          label: "Więcej opcji",
-          onClick: () => setLastAction("Wybrano więcej opcji"),
-        }}
+        actions={[
+          { icon: Compass, label: "Odkrywaj", onClick: () => setLastAction("Wybrano odkrywanie") },
+          { icon: Bell, label: "Powiadomienia", onClick: () => setLastAction("Wybrano powiadomienia") },
+          { icon: Briefcase, label: "Moje działania", onClick: () => setLastAction("Wybrano moje działania") },
+        ]}
         className="page-navigation-bar--preview-desktop"
         onBack={() => setLastAction("Wybrano powrót")}
-        title="Szczegóły potrzeby"
+        profile={{ href: "#profil", initials: "AK", label: "Profil Anny Kowalskiej" }}
+        search={{ action: "#wyszukaj" }}
       />
       <p aria-live="polite" className="page-navigation-showcase__status">{lastAction}</p>
     </section>
