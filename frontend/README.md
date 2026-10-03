@@ -1,38 +1,45 @@
-# Splot
+# Splot frontend
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Splot is a mobile-first PWA social hub for connecting residents, NGOs, and
+local-government units with needs and solutions. ROPS staff have dedicated
+administrative workflows; public routes must not expose that complexity by
+default.
 
-## Getting Started
+## Interface source of truth
 
-First, run the development server:
+- [Design-system overview](docs/design-system.md) — foundations, visual voice,
+  adoption rules, and responsive composition guidance.
+- [Component catalog](docs/design-system/components.md) — every shared public
+  component and its contract.
+- [Accessibility system](docs/accessibility-system.md) — WCAG 2.2 AA baseline,
+  theme/text preferences, semantics, and validation requirements.
+- [`/design-system`](app/design-system/page.tsx) — live component reference.
+
+Use the existing component catalog and semantic tokens before building a new
+pattern. The desired Splot feel is warm civic clarity: quiet blue-gray canvas,
+white rounded surfaces, gentle borders, generous space, trustworthy navy
+structure, and a single clear emerald action at each decision point.
+
+For AI-assisted UI changes, also follow
+[`../skills/splot-design-system/SKILL.md`](../skills/splot-design-system/SKILL.md).
+
+## Development
+
+Install dependencies and run the local application:
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). Use `npm run lint` before
+handing off a frontend change.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The app uses Next.js 16, React 19, Tailwind CSS 4, Geist, Phosphor icons, and
+Mapbox GL. Review the current Next.js guidance in `node_modules/next/dist/docs/`
+before changing framework-sensitive code; the version has breaking changes from
+earlier Next.js releases.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` is optional in local development. When it is
+not configured, `Map` shows its accessible list fallback rather than hiding
+location results.

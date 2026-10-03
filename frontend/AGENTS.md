@@ -17,10 +17,34 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Use Polish for customer-facing copy unless the route establishes another
   locale. Keep source code and technical documentation in English.
 - Read `docs/design-system.md` before adding or changing shared UI. Reuse its
-  components and semantic tokens; update the inventory when a shared component
-  or its public contract changes.
+  components and semantic tokens; use `docs/design-system/components.md` for
+  the complete component catalog and public contracts. Update the catalog when
+  a shared component or its public contract changes.
 - Read `docs/accessibility-system.md` before modifying UI, layout, theme,
   interaction, or accessibility preferences. WCAG 2.2 AA is the baseline.
+- Preserve Splot’s warm civic clarity: blue-gray canvas, white rounded
+  surfaces, gentle borders, generous spacing, navy structure, and one
+  dimensionally emerald primary action per decision. The UI should help people
+  act together—not resemble a generic dashboard, a government form, or a
+  consumer-growth product.
+- Reuse the appropriate inventory group before creating a new component:
+  actions (`Button`, `ButtonLink`, `IconButton`); fields and choices
+  (`TextField`, `TextAreaField`, `SearchField`, `SelectField`, `DateField`,
+  `RadioGroup`, `CheckboxGroup`, `CheckboxChipGroup`, `SegmentedControl`,
+  `Slider`, `Stepper`, `StepProgress`); feedback (`Alert`, `Banner`, `Toast`,
+  `ToastViewport`, `Tag`, `Badge`, `LinearProgress`, `CircularProgress`);
+  navigation (`AppNavigation`, `PageNavigationBar`, `Pagination`,
+  `TabSwitcher`); page/overlay (`PageHeader`, `SearchFilterBar`, `Dialog`);
+  domain (`QuickAction`, `ContentSection`, `ChallengeCard`,
+  `RecommendationCard`, `NeedCard`, `SolutionCard`, `OrganizationCard`,
+  `MatchSummary`, `ContactAction`, `ModerationStatus`, `ConnectionList`,
+  `SolutionDetailHero`, `ExpandableDescription`,
+  `SolutionInterestActions`, `FavoriteButton`, `DetailMetadataSection`,
+  `SolutionDetailSidebar`, `KnowledgeResourceBrowser`); ROPS/location
+  (`DataTable`, `Map`); and root accessibility (`AccessibilityProvider`,
+  `useAccessibilityPreferences`, `AccessibilityMenu`).
+- For AI-assisted UI work, follow the repository-local
+  `../skills/splot-design-system/SKILL.md` alongside these rules.
 - Prefer server components. Add `"use client"` only for browser APIs or actual
   client interaction, and keep client boundaries narrow.
 - Preserve native HTML semantics. Choose a link for navigation and a button for

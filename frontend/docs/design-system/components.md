@@ -1,8 +1,10 @@
 # Splot component catalog
 
-This is the source of truth for shared UI primitives in `frontend/components/`.
-The live reference is `/design-system`. Public copy and accessible names are
-Polish; component APIs and this technical documentation are English.
+This is the source of truth for all shared UI components in
+`frontend/components/`. The live reference is `/design-system`. Public copy and
+accessible names are Polish; component APIs and this technical documentation
+are English. Files ending in `Showcase` demonstrate the system and are not
+public primitives to compose in product routes.
 
 ## Actions, forms, and feedback
 
@@ -53,6 +55,10 @@ focus, and reflow from one column on mobile to richer layouts on wider screens.
 
 ## Knowledge resource patterns
 
+| Component | Source | Contract |
+| --- | --- | --- |
+| `KnowledgeResourceBrowser` | `ui/KnowledgeResourceBrowser.tsx` | Client-side knowledge-hub composition of `PageHeader`, `SearchFilterBar`, `TabSwitcher`, `Dialog`, `CheckboxChipGroup`, `Button`, and `Tag`. Its current in-memory resources are reference data; product routes provide real data and persistence outside this component. |
+
 - `PageHeader` is a static semantic `header`; use its default `h1` once per
   route. Set `headingLevel` only when demonstrating it inside an existing
   heading hierarchy. Its title and description wrap naturally at enlarged text.
@@ -75,3 +81,10 @@ focus, and reflow from one column on mobile to richer layouts on wider screens.
 | --- | --- | --- |
 | `AccessibilityProvider`, `useAccessibilityPreferences` | `accessibility/AccessibilityProvider.tsx` | Sole owner of appearance, text-scale, and link-underlining persistence. |
 | `AccessibilityMenu` | `accessibility/AccessibilityMenu.tsx` | Polish global preference launcher; preserve documented keyboard, focus, speech, and reset behavior. |
+
+## Reference-only compositions
+
+`ControlsShowcase`, `DiscoveryShowcase`, `FeedbackShowcase`, `NavigationShowcase`,
+`PaginationShowcase`, and `SolutionDetailShowcase` exist only to demonstrate
+the public primitives on `/design-system`. Do not import them into product
+routes; use the components they compose instead.
