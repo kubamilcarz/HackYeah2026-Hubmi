@@ -1,3 +1,4 @@
+from django.db import models
 from rest_framework import serializers
 from .models import (
     InnovationCategory,
@@ -269,14 +270,19 @@ class IdeaSubmissionSerializer(serializers.ModelSerializer):
 
 
 class PilotEvaluationSerializer(serializers.ModelSerializer):
+    pilot_title = serializers.CharField(source="pilot.title", read_only=True)
+    evaluator_role_display = serializers.CharField(source="get_evaluator_role_display", read_only=True)
+
     class Meta:
         model = PilotEvaluation
         fields = [
             "id",
             "pilot",
+            "pilot_title",
             "evaluator_persona_key",
             "evaluator_name",
             "evaluator_role",
+            "evaluator_role_display",
             "evaluator_institution",
             "usability_score",
             "effectiveness_score",
@@ -288,6 +294,14 @@ class PilotEvaluationSerializer(serializers.ModelSerializer):
             "created_at",
         ]
 
+    def to_internal_value(self, data):
+        mutable_data = data.copy() if hasattr(data, "copy") else dict(data)
+        if "accessibility_wcag_score" in mutable_data and "accessibility_score" not in mutable_data:
+            mutable_data["accessibility_score"] = mutable_data.pop("accessibility_wcag_score")
+        if "comments" in mutable_data and "proposed_improvements" not in mutable_data:
+            mutable_data["proposed_improvements"] = mutable_data.pop("comments")
+        return super().to_internal_value(mutable_data)
+
 
 class PilotProjectSerializer(serializers.ModelSerializer):
     innovation_title = serializers.CharField(source="innovation.title", read_only=True)
@@ -295,6 +309,19 @@ class PilotProjectSerializer(serializers.ModelSerializer):
     county_name = serializers.CharField(source="county.name", read_only=True)
     evaluations = PilotEvaluationSerializer(many=True, read_only=True)
     evaluations_count = serializers.IntegerField(source="evaluations.count", read_only=True)
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
+
+    # Aliases for frontend convenience
+    target_testers_count = serializers.IntegerField(source="max_testers", read_only=True)
+    description = serializers.CharField(source="summary", read_only=True)
+    municipality = serializers.CharField(source="municipality_name", read_only=True)
+
+    # Computed metrics
+    average_usability_score = serializers.SerializerMethodField()
+    average_effectiveness_score = serializers.SerializerMethodField()
+    average_accessibility_score = serializers.SerializerMethodField()
+    average_overall_score = serializers.SerializerMethodField()
+    recommendation_rate = serializers.SerializerMethodField()
 
     class Meta:
         model = PilotProject
@@ -305,19 +332,79 @@ class PilotProjectSerializer(serializers.ModelSerializer):
             "innovation_slug",
             "title",
             "status",
+            "status_display",
             "county",
             "county_name",
             "municipality_name",
+            "municipality",
             "max_testers",
+            "target_testers_count",
             "current_testers_count",
             "eligible_roles_description",
             "summary",
+            "description",
             "instructions",
             "start_date",
             "end_date",
             "evaluations_count",
             "evaluations",
+            "average_usability_score",
+            "average_effectiveness_score",
+            "average_accessibility_score",
+            "average_overall_score",
+            "recommendation_rate",
         ]
+
+    def to_internal_value(self, data):
+        mutable_data = data.copy() if hasattr(data, "copy") else dict(data)
+        if "county" in mutable_data and isinstance(mutable_data["county"], str):
+            county_val = mutable_data["county"].strip()
+            if county_val.isdigit():
+                mutable_data["county"] = int(county_val)
+            elif county_val:
+                from .models import County
+                county_obj = County.objects.filter(
+                    models.Q(slug=county_val) | models.Q(name__icontains=county_val)
+                ).first()
+                if county_obj:
+                    mutable_data["county"] = county_obj.id
+                else:
+                    mutable_data.pop("county", None)
+            else:
+                mutable_data.pop("county", None)
+        return super().to_internal_value(mutable_data)
+
+    def get_average_usability_score(self, obj) -> float | None:
+        evals = obj.evaluations.all()
+        if not evals:
+            return None
+        return round(sum(e.usability_score or 0 for e in evals) / len(evals), 1)
+
+    def get_average_effectiveness_score(self, obj) -> float | None:
+        evals = obj.evaluations.all()
+        if not evals:
+            return None
+        return round(sum(e.effectiveness_score or 0 for e in evals) / len(evals), 1)
+
+    def get_average_accessibility_score(self, obj) -> float | None:
+        evals = obj.evaluations.all()
+        if not evals:
+            return None
+        return round(sum(e.accessibility_score or 0 for e in evals) / len(evals), 1)
+
+    def get_average_overall_score(self, obj) -> float | None:
+        evals = obj.evaluations.all()
+        if not evals:
+            return None
+        total = sum((e.usability_score or 0) + (e.effectiveness_score or 0) + (e.accessibility_score or 0) for e in evals)
+        return round(total / (len(evals) * 3), 1)
+
+    def get_recommendation_rate(self, obj) -> int | None:
+        evals = obj.evaluations.all()
+        if not evals:
+            return None
+        recs = sum(1 for e in evals if e.recommend_to_scale)
+        return round((recs / len(evals)) * 100)
 
 
 class PartnershipPostSerializer(serializers.ModelSerializer):

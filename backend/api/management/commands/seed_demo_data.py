@@ -476,6 +476,23 @@ class Command(BaseCommand):
             },
         )
 
+        PilotEvaluation.objects.get_or_create(
+            pilot=pilot_bawita,
+            evaluator_persona_key="marek_wisniewski",
+            defaults={
+                "evaluator_name": "Marek Wiśniewski",
+                "evaluator_role": "pracownik_instytucji",
+                "evaluator_institution": "Dyrektor CUS Myślenice",
+                "usability_score": 5,
+                "effectiveness_score": 4,
+                "accessibility_score": 5,
+                "barriers_encountered": "Niewielkie trudności z transportem tablicy między odległymi sołectwami.",
+                "proposed_improvements": "Wdrożenie dedykowanego pokrowca transportowego ułatwiającego pracę mobilnego asystenta.",
+                "recommend_to_scale": True,
+                "test_environment_notes": "Pilotaż w ramach wizyt środowiskowych asystentów CUS. Bardzo wysoka ocena seniorów.",
+            },
+        )
+
         # Pilotaż Merkury z otwartym naborem testerów
         PilotProject.objects.update_or_create(
             innovation=innovations_map["merkury-symulator-samoobslugowy"],
@@ -491,6 +508,59 @@ class Command(BaseCommand):
                 "instructions": "Tester otrzymuje tablet ze scenariuszami na 14 dni. Po testach wypełnia krótką 5-minutową ankietę.",
                 "start_date": timezone.now().date(),
                 "end_date": timezone.now().date() + timezone.timedelta(days=45),
+            },
+        )
+
+        # Pilotaż Senior CUDER w toku (Piwniczna-Zdrój)
+        pilot_cuder, _ = PilotProject.objects.update_or_create(
+            innovation=innovations_map["senior-cuder-gra-integracyjna"],
+            title="Wdrożenie testowe gry integracyjnej Senior CUDER w 3 klubach seniora",
+            defaults={
+                "status": "in_progress",
+                "county": counties_map["nowosadecki"],
+                "municipality_name": "Piwniczna-Zdrój",
+                "max_testers": 30,
+                "current_testers_count": 22,
+                "eligible_roles_description": "Seniorzy 60+, animatorzy klubów seniora, pracownicy socjalni",
+                "summary": "Pilotaż w 3 klubach seniora i Dziennym Domu Pobytu. Ewaluacja przystępności zasad oraz wpływu na aktywizację społeczną.",
+                "instructions": "Rozegranie minimum 4 partii gry w zespołach 4-6 osobowych, obserwacja zaangażowania i wypełnienie ankiety WCAG.",
+                "start_date": timezone.now().date() - timezone.timedelta(days=30),
+                "end_date": timezone.now().date() + timezone.timedelta(days=30),
+            },
+        )
+
+        PilotEvaluation.objects.get_or_create(
+            pilot=pilot_cuder,
+            evaluator_persona_key="anna_nowak",
+            defaults={
+                "evaluator_name": "Anna Nowak",
+                "evaluator_role": "opiekun",
+                "evaluator_institution": "Klub Seniora Dolina Popradu",
+                "usability_score": 4,
+                "effectiveness_score": 5,
+                "accessibility_score": 5,
+                "barriers_encountered": "Karty z zadaniami mogłyby mieć jeszcze większy kontrast dla osób z jaskrą.",
+                "proposed_improvements": "Dołączenie lupy powiększającej do każdego pudełka z grą.",
+                "recommend_to_scale": True,
+                "test_environment_notes": "Testowano podczas cotygodniowych spotkań klubu. Uczestnicy byli zachwyceni dynamiką rozgrywki.",
+            },
+        )
+
+        # Pilotaż Modularne Łazienki (rekrutacja)
+        PilotProject.objects.update_or_create(
+            innovation=innovations_map["modularne-lazienki-dostepne"],
+            title="Pilotaż adaptacji modułowych łazienek w domach seniorów na wsi",
+            defaults={
+                "status": "recruiting",
+                "county": counties_map["tarnowski"],
+                "municipality_name": "Żabno",
+                "max_testers": 8,
+                "current_testers_count": 3,
+                "eligible_roles_description": "Osoby z niepełnosprawnością ruchową, seniorzy niesamodzielni, architekci dostępności",
+                "summary": "Montaż prototypowych modułów poręczy, bezprogowych brodzików i antypoślizgowych paneli ściennych w budynkach wiejskich.",
+                "instructions": "Bezpłatny montaż zestawu testowego na 6 miesięcy z comiesięcznym audytem bezpieczeństwa i ankietą satysfakcji.",
+                "start_date": timezone.now().date() + timezone.timedelta(days=14),
+                "end_date": timezone.now().date() + timezone.timedelta(days=180),
             },
         )
 

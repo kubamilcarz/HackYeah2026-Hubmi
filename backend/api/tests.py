@@ -267,13 +267,18 @@ class BackendFullTestSuite(TestCase):
         self.assertGreaterEqual(len(res_diag_concept.data["steps"]), 4)
 
     def test_pilot_apply_and_evaluation(self):
-        """Test zapisu na testy oraz złożenia formularza ewaluacji"""
-        # Zgłoszenie kandydata na testera
-        apply_res = self.client.post(f"/api/pilots/{self.pilot.id}/apply/")
+        """Test zapisu na testy, formularza ewaluacji z aliasami oraz filtrowania i wskaźników"""
+        # Zgłoszenie kandydata na testera z danymi
+        apply_res = self.client.post(
+            f"/api/pilots/{self.pilot.id}/apply/",
+            {"applicant_name": "Anna Nowak", "applicant_role": "opiekun"},
+            format="json",
+        )
         self.assertEqual(apply_res.status_code, status.HTTP_200_OK)
         self.assertEqual(apply_res.data["current_testers_count"], 2)
+        self.assertIn("Anna Nowak", apply_res.data["message"])
 
-        # Wypełnienie ewaluacji
+        # Wypełnienie ewaluacji z aliasami pol (accessibility_wcag_score i comments)
         eval_payload = {
             "pilot": self.pilot.id,
             "evaluator_persona_key": "anna_nowak",
@@ -281,13 +286,48 @@ class BackendFullTestSuite(TestCase):
             "evaluator_role": "opiekun",
             "usability_score": 5,
             "effectiveness_score": 4,
-            "accessibility_score": 5,
+            "accessibility_wcag_score": 5,
             "barriers_encountered": "Brak",
-            "proposed_improvements": "Dodanie większych uchwytów",
+            "comments": "Dodanie większych uchwytów",
             "recommend_to_scale": True,
         }
         eval_res = self.client.post("/api/evaluations/", eval_payload, format="json")
         self.assertEqual(eval_res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(eval_res.data["accessibility_score"], 5)
+        self.assertEqual(eval_res.data["proposed_improvements"], "Dodanie większych uchwytów")
+
+        # Sprawdzenie wskaźników obliczeniowych pilotażu
+        pilot_res = self.client.get(f"/api/pilots/{self.pilot.id}/")
+        self.assertEqual(pilot_res.status_code, status.HTTP_200_OK)
+        self.assertEqual(pilot_res.data["evaluations_count"], 1)
+        self.assertEqual(pilot_res.data["average_usability_score"], 5.0)
+        self.assertEqual(pilot_res.data["average_effectiveness_score"], 4.0)
+        self.assertEqual(pilot_res.data["average_accessibility_score"], 5.0)
+        self.assertEqual(pilot_res.data["average_overall_score"], 4.7)
+        self.assertEqual(pilot_res.data["recommendation_rate"], 100)
+
+        # Sprawdzenie filtrowania listy pilotaży
+        filter_res = self.client.get("/api/pilots/?status=recruiting")
+        self.assertEqual(filter_res.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(len(filter_res.data), 1)
+
+        # Sprawdzenie tworzenia nowego pilotażu ze stringowym slugiem powiatu
+        create_res = self.client.post(
+            "/api/pilots/",
+            {
+                "innovation": self.innovation.id,
+                "title": "Nowy pilotaż w Grybowie",
+                "county": self.county.slug,
+                "municipality_name": "Grybów",
+                "max_testers": 6,
+                "eligible_roles_description": "Seniorzy i opiekunowie",
+                "summary": "Weryfikacja mobilnego sprzętu.",
+            },
+            format="json",
+        )
+        self.assertEqual(create_res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(create_res.data["county"], self.county.id)
+        self.assertEqual(create_res.data["county_name"], self.county.name)
 
     def test_partnership_and_inquiry_flow(self):
         """Test giełdy partnerstw i panelu komunikacji z ROPS"""

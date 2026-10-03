@@ -513,9 +513,34 @@ class IdeaSubmissionViewSet(viewsets.ModelViewSet):
         return Response(IdeaSubmissionSerializer(idea).data)
 
 
-class PilotProjectViewSet(viewsets.ReadOnlyModelViewSet):
+class PilotProjectViewSet(viewsets.ModelViewSet):
     queryset = PilotProject.objects.select_related("innovation", "county").prefetch_related("evaluations").all()
     serializer_class = PilotProjectSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        status_param = self.request.query_params.get("status")
+        county_param = self.request.query_params.get("county")
+        innovation_param = self.request.query_params.get("innovation")
+        q = self.request.query_params.get("q")
+
+        if status_param:
+            qs = qs.filter(status=status_param)
+        if county_param:
+            qs = qs.filter(county__slug=county_param)
+        if innovation_param:
+            if innovation_param.isdigit():
+                qs = qs.filter(innovation_id=int(innovation_param))
+            else:
+                qs = qs.filter(innovation__slug=innovation_param)
+        if q:
+            qs = qs.filter(
+                models.Q(title__icontains=q)
+                | models.Q(summary__icontains=q)
+                | models.Q(municipality_name__icontains=q)
+                | models.Q(innovation__title__icontains=q)
+            )
+        return qs
 
     @action(detail=True, methods=["post"], url_path="apply")
     def apply_as_tester(self, request, pk=None):
@@ -527,9 +552,11 @@ class PilotProjectViewSet(viewsets.ReadOnlyModelViewSet):
             )
         pilot.current_testers_count += 1
         pilot.save(update_fields=["current_testers_count"])
+        applicant_name = request.data.get("applicant_name", "")
+        name_part = f" {applicant_name}" if applicant_name else ""
         return Response({
             "status": "applied",
-            "message": "Zgłoszenie do udziału w testach zostało przyjęte.",
+            "message": f"Dziękujemy{name_part}! Twoje zgłoszenie do udziału w testach zostało pomyślnie przyjęte. Koordynator ROPS skontaktuje się z Tobą.",
             "current_testers_count": pilot.current_testers_count,
             "max_testers": pilot.max_testers,
         })

@@ -1051,83 +1051,250 @@ export async function generateMiddlemanPackage(payload: MiddlemanPackagePayload)
   }
 }
 
+export type PilotEvaluationItem = {
+  id?: number;
+  pilot?: number;
+  pilot_title?: string;
+  evaluator_persona_key?: string;
+  evaluator_name: string;
+  evaluator_role: string;
+  evaluator_role_display?: string;
+  evaluator_institution?: string;
+  usability_score: number;
+  effectiveness_score: number;
+  accessibility_score: number;
+  barriers_encountered?: string;
+  proposed_improvements?: string;
+  recommend_to_scale?: boolean;
+  test_environment_notes?: string;
+  created_at?: string;
+};
+
 export type PilotProjectItem = {
   id: number;
+  innovation?: number;
   title: string;
   innovation_title: string;
   innovation_slug: string;
-  municipality: string;
+  municipality_name?: string;
+  municipality?: string;
+  county?: number;
   county_name: string;
-  status: "rekrutacja" | "w_trakcie" | "zakonczony";
+  status: "recruiting" | "in_progress" | "completed" | "rekrutacja" | "w_trakcie" | "zakonczony";
+  status_display?: string;
+  max_testers: number;
   target_testers_count: number;
   current_testers_count: number;
+  eligible_roles_description?: string;
+  summary: string;
   description: string;
+  instructions?: string;
+  start_date?: string | null;
+  end_date?: string | null;
+  evaluations_count?: number;
+  evaluations?: PilotEvaluationItem[];
+  average_usability_score?: number | null;
+  average_effectiveness_score?: number | null;
+  average_accessibility_score?: number | null;
+  average_overall_score?: number | null;
+  recommendation_rate?: number | null;
 };
 
 export const FALLBACK_PILOTS: PilotProjectItem[] = [
   {
     id: 1,
-    title: "Pilotaż terenowy: BaWita – mobilna sala zabaw i animacji",
-    innovation_title: "BaWita – mobilna integracja sensoryczna",
-    innovation_slug: "bawita-mobilna-sala-zabaw",
+    title: "Pilotaż BaWita w środowisku domowym – gmina Grybów",
+    innovation_title: "BaWita – mobilna tablica sensoryczna",
+    innovation_slug: "bawita-tablica-sensoryczna",
     municipality: "Grybów",
+    municipality_name: "Grybów",
     county_name: "Powiat nowosądecki",
-    status: "rekrutacja",
-    target_testers_count: 25,
-    current_testers_count: 14,
-    description: "Testy mobilnej sali zabaw u dzieci z niepełnosprawnościami na terenach podgórskich. Poszukujemy rodziców, opiekunów i animatorów lokalnych.",
+    status: "completed",
+    status_display: "Pilotaż zakończony / Ewaluacja",
+    max_testers: 5,
+    target_testers_count: 5,
+    current_testers_count: 5,
+    eligible_roles_description: "Opiekunowie rodzinni, kadra CUS, pracownicy socjalni",
+    summary: "3-miesięczny pilotaż mobilnej tablicy sensorycznej u 5 podopiecznych z wczesnym otępieniem.",
+    description: "3-miesięczny pilotaż mobilnej tablicy sensorycznej u 5 podopiecznych z wczesnym otępieniem.",
+    instructions: "Prosimy o sesje 3 razy w tygodniu po 30 minut oraz odnotowywanie czasu skupienia uwagi podopiecznego.",
+    start_date: "2026-07-01",
+    end_date: "2026-09-30",
+    evaluations_count: 3,
+    average_usability_score: 5.0,
+    average_effectiveness_score: 4.7,
+    average_accessibility_score: 4.7,
+    average_overall_score: 4.8,
+    recommendation_rate: 100,
+    evaluations: [
+      {
+        id: 101,
+        pilot: 1,
+        evaluator_persona_key: "anna_nowak",
+        evaluator_name: "Anna Nowak",
+        evaluator_role: "opiekun",
+        evaluator_role_display: "Opiekun osoby zależnej",
+        evaluator_institution: "Opiekunka rodzinna (mama 78 lat)",
+        usability_score: 5,
+        effectiveness_score: 5,
+        accessibility_score: 4,
+        barriers_encountered: "Zapięcie walizki wymagało użycia większej siły przez osobę z artretyzmem dłoni.",
+        proposed_improvements: "Zastąpienie metalowych zatrzasków walizki miękkimi pasami z rzepem magnetycznym.",
+        recommend_to_scale: true,
+        test_environment_notes: "Testowano w domu jednorodzinnym w Grybowie. Mama chętnie wracała do labiryntów dotykowych.",
+        created_at: "2026-09-28T14:30:00Z",
+      },
+      {
+        id: 102,
+        pilot: 1,
+        evaluator_persona_key: "piotr_adamski",
+        evaluator_name: "dr Piotr Adamski",
+        evaluator_role: "ekspert",
+        evaluator_role_display: "Ekspert branżowy",
+        evaluator_institution: "Uniwersytet Pedagogiczny / Ekspert ds. deinstytucjonalizacji",
+        usability_score: 5,
+        effectiveness_score: 5,
+        accessibility_score: 5,
+        barriers_encountered: "Brak uwag krytycznych. Znakomity poziom bezpieczeństwa materiałów naturalnych.",
+        proposed_improvements: "Wydanie krótkiego wideo-przewodnika dla personelu CUS.",
+        recommend_to_scale: true,
+        test_environment_notes: "Ocena ekspercka w warunkach środowiskowych. Pełna zgodność z celami deinstytucjonalizacji.",
+        created_at: "2026-09-29T10:15:00Z",
+      },
+      {
+        id: 103,
+        pilot: 1,
+        evaluator_persona_key: "marek_wisniewski",
+        evaluator_name: "Marek Wiśniewski",
+        evaluator_role: "pracownik_instytucji",
+        evaluator_role_display: "Pracownik CUS / OPS / DPS",
+        evaluator_institution: "Dyrektor CUS Myślenice",
+        usability_score: 5,
+        effectiveness_score: 4,
+        accessibility_score: 5,
+        barriers_encountered: "Niewielkie trudności z transportem tablicy między odległymi sołectwami.",
+        proposed_improvements: "Wdrożenie dedykowanego pokrowca transportowego ułatwiającego pracę mobilnego asystenta.",
+        recommend_to_scale: true,
+        test_environment_notes: "Pilotaż w ramach wizyt środowiskowych asystentów CUS. Bardzo wysoka ocena seniorów.",
+        created_at: "2026-09-30T16:00:00Z",
+      },
+    ],
   },
   {
     id: 2,
-    title: "Wdrożenie testowe: Senior CUDER – gra wspierająca pamięć",
-    innovation_title: "Senior CUDER – gra planszowa integracji",
-    innovation_slug: "senior-cuder-gra-planszowa",
-    municipality: "Piwniczna-Zdrój",
-    county_name: "Powiat nowosądecki",
-    status: "w_trakcie",
-    target_testers_count: 30,
-    current_testers_count: 22,
-    description: "Pilotaż w 3 klubach seniora i Dziennym Domu Pobytu. Ewaluacja przystępności zasad oraz wpływu na aktywizację społeczną.",
+    title: "Otwarty nabór testerów symulatora kas i biletomatów Merkury",
+    innovation_title: "Merkury – dotykowy trenażer cyfrowy",
+    innovation_slug: "merkury-symulator-samoobslugowy",
+    municipality: "Myślenice",
+    municipality_name: "Myślenice",
+    county_name: "Powiat myślenicki",
+    status: "recruiting",
+    status_display: "Trwa nabór testerów",
+    max_testers: 12,
+    target_testers_count: 12,
+    current_testers_count: 7,
+    eligible_roles_description: "Uczestnicy WTZ, osoby w spektrum autyzmu, instruktorzy terapii zajęciowej",
+    summary: "Zapraszamy instytucje i mieszkańców do testowania nowej wersji scenariuszy zakupowych w biletomatach miejskich.",
+    description: "Zapraszamy instytucje i mieszkańców do testowania nowej wersji scenariuszy zakupowych w biletomatach miejskich.",
+    instructions: "Tester otrzymuje tablet ze scenariuszami na 14 dni. Po testach wypełnia krótką 5-minutową ankietę.",
+    start_date: "2026-10-01",
+    end_date: "2026-11-15",
+    evaluations_count: 0,
+    evaluations: [],
   },
   {
     id: 3,
-    title: "Testy użytkowe: Merkury – trenażer cyfrowy",
-    innovation_title: "Merkury – trenażer dotykowy dla seniorów",
-    innovation_slug: "merkury-trenazer-cyfrowy",
-    municipality: "Gorlice",
-    county_name: "Powiat gorlicki",
-    status: "rekrutacja",
-    target_testers_count: 20,
-    current_testers_count: 8,
-    description: "Badanie barier technologicznych u osób 70+ korzystających z symulatora kasy samoobsługowej i e-recepty.",
+    title: "Wdrożenie testowe gry integracyjnej Senior CUDER w 3 klubach seniora",
+    innovation_title: "Senior CUDER – gra planszowa integracji międzypokoleniowej",
+    innovation_slug: "senior-cuder-gra-integracyjna",
+    municipality: "Piwniczna-Zdrój",
+    municipality_name: "Piwniczna-Zdrój",
+    county_name: "Powiat nowosądecki",
+    status: "in_progress",
+    status_display: "Pilotaż w toku",
+    max_testers: 30,
+    target_testers_count: 30,
+    current_testers_count: 22,
+    eligible_roles_description: "Seniorzy 60+, animatorzy klubów seniora, pracownicy socjalni",
+    summary: "Pilotaż w 3 klubach seniora i Dziennym Domu Pobytu. Ewaluacja przystępności zasad oraz wpływu na aktywizację społeczną.",
+    description: "Pilotaż w 3 klubach seniora i Dziennym Domu Pobytu. Ewaluacja przystępności zasad oraz wpływu na aktywizację społeczną.",
+    instructions: "Rozegranie minimum 4 partii gry w zespołach 4-6 osobowych, obserwacja zaangażowania i wypełnienie ankiety WCAG.",
+    start_date: "2026-09-15",
+    end_date: "2026-11-30",
+    evaluations_count: 1,
+    average_usability_score: 4.0,
+    average_effectiveness_score: 5.0,
+    average_accessibility_score: 5.0,
+    average_overall_score: 4.7,
+    recommendation_rate: 100,
+    evaluations: [
+      {
+        id: 104,
+        pilot: 3,
+        evaluator_persona_key: "anna_nowak",
+        evaluator_name: "Anna Nowak",
+        evaluator_role: "opiekun",
+        evaluator_role_display: "Opiekun osoby zależnej",
+        evaluator_institution: "Klub Seniora Dolina Popradu",
+        usability_score: 4,
+        effectiveness_score: 5,
+        accessibility_score: 5,
+        barriers_encountered: "Karty z zadaniami mogłyby mieć jeszcze większy kontrast dla osób z jaskrą.",
+        proposed_improvements: "Dołączenie lupy powiększającej do każdego pudełka z grą.",
+        recommend_to_scale: true,
+        test_environment_notes: "Testowano podczas cotygodniowych spotkań klubu. Uczestnicy byli zachwyceni dynamiką rozgrywki.",
+        created_at: "2026-09-25T11:00:00Z",
+      },
+    ],
+  },
+  {
+    id: 4,
+    title: "Pilotaż adaptacji modułowych łazienek w domach seniorów na wsi",
+    innovation_title: "Modularne łazienki dostępne w 48 godzin",
+    innovation_slug: "modularne-lazienki-dostepne",
+    municipality: "Żabno",
+    municipality_name: "Żabno",
+    county_name: "Powiat tarnowski",
+    status: "recruiting",
+    status_display: "Trwa nabór testerów",
+    max_testers: 8,
+    target_testers_count: 8,
+    current_testers_count: 3,
+    eligible_roles_description: "Osoby z niepełnosprawnością ruchową, seniorzy niesamodzielni, architekci dostępności",
+    summary: "Montaż prototypowych modułów poręczy, bezprogowych brodzików i antypoślizgowych paneli ściennych w budynkach wiejskich.",
+    description: "Montaż prototypowych modułów poręczy, bezprogowych brodzików i antypoślizgowych paneli ściennych w budynkach wiejskich.",
+    instructions: "Bezpłatny montaż zestawu testowego na 6 miesięcy z comiesięcznym audytem bezpieczeństwa i ankietą satysfakcji.",
+    start_date: "2026-10-15",
+    end_date: "2027-04-15",
+    evaluations_count: 0,
+    evaluations: [],
   },
 ];
 
-export async function getPilots(): Promise<PilotProjectItem[]> {
+export async function getPilots(params?: {
+  status?: string;
+  county?: string;
+  innovation?: string | number;
+  q?: string;
+}): Promise<PilotProjectItem[]> {
   try {
-    const list = await apiFetch<Array<{
-      id: number;
-      title: string;
-      innovation_details?: { title: string; slug: string };
-      municipality: string;
-      county_name?: string;
-      status: "rekrutacja" | "w_trakcie" | "zakonczony";
-      target_testers_count: number;
-      current_testers_count: number;
-      description: string;
-    }>>("/pilots/");
+    const searchParams = new URLSearchParams();
+    if (params?.status && params.status !== "all") searchParams.set("status", params.status);
+    if (params?.county && params.county !== "all") searchParams.set("county", params.county);
+    if (params?.innovation) searchParams.set("innovation", String(params.innovation));
+    if (params?.q) searchParams.set("q", params.q);
+    const queryString = searchParams.toString() ? `?${searchParams.toString()}` : "";
+
+    const list = await apiFetch<PilotProjectItem[]>(`/pilots/${queryString}`);
     if (list && list.length > 0) {
       return list.map((p) => ({
-        id: p.id,
-        title: p.title,
-        innovation_title: p.innovation_details?.title || "Innowacja ROPS",
-        innovation_slug: p.innovation_details?.slug || "bawita-mobilna-sala-zabaw",
-        municipality: p.municipality,
-        county_name: p.county_name || "Małopolska",
-        status: p.status,
-        target_testers_count: p.target_testers_count,
-        current_testers_count: p.current_testers_count,
-        description: p.description,
+        ...p,
+        target_testers_count: p.target_testers_count ?? p.max_testers ?? 10,
+        max_testers: p.max_testers ?? p.target_testers_count ?? 10,
+        description: p.description || p.summary || "",
+        summary: p.summary || p.description || "",
+        municipality: p.municipality || p.municipality_name || "",
+        municipality_name: p.municipality_name || p.municipality || "",
       }));
     }
     return FALLBACK_PILOTS;
@@ -1136,39 +1303,71 @@ export async function getPilots(): Promise<PilotProjectItem[]> {
   }
 }
 
+export type CreatePilotPayload = {
+  innovation: number;
+  title: string;
+  status?: "recruiting" | "in_progress" | "completed";
+  county?: number | string;
+  municipality_name: string;
+  max_testers: number;
+  eligible_roles_description: string;
+  summary: string;
+  instructions?: string;
+  start_date?: string;
+  end_date?: string;
+};
+
+export async function createPilot(payload: CreatePilotPayload): Promise<PilotProjectItem> {
+  return await apiFetch<PilotProjectItem>("/pilots/", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function applyToPilot(pilotId: number | string, data: {
   applicant_name: string;
   applicant_email: string;
   applicant_phone?: string;
   applicant_role?: string;
   motivation?: string;
-}): Promise<{ status: string; message: string }> {
+}): Promise<{ status: string; message: string; current_testers_count?: number; max_testers?: number }> {
   try {
-    return await apiFetch<{ status: string; message: string }>(`/pilots/${pilotId}/apply/`, {
+    return await apiFetch<{ status: string; message: string; current_testers_count?: number; max_testers?: number }>(`/pilots/${pilotId}/apply/`, {
       method: "POST",
       body: JSON.stringify(data),
     });
   } catch {
     return {
-      status: "success",
-      message: "Twoje zgłoszenie do testów zostało zarejestrowane. Koordynator ROPS skontaktuje się z Tobą.",
+      status: "applied",
+      message: `Dziękujemy ${data.applicant_name}! Twoje zgłoszenie do udziału w testach zostało przyjęte. Koordynator ROPS skontaktuje się z Tobą.`,
     };
   }
 }
 
 export async function submitEvaluation(data: {
   pilot: number;
+  evaluator_persona_key?: string;
   evaluator_name: string;
   evaluator_role: string;
+  evaluator_institution?: string;
   usability_score: number;
   effectiveness_score: number;
-  accessibility_wcag_score: number;
+  accessibility_score?: number;
+  accessibility_wcag_score?: number;
+  barriers_encountered?: string;
+  proposed_improvements?: string;
   comments?: string;
-}): Promise<{ id: number; status: string }> {
+  recommend_to_scale?: boolean;
+  test_environment_notes?: string;
+}): Promise<{ id: number; status?: string }> {
   try {
-    return await apiFetch<{ id: number; status: string }>("/evaluations/", {
+    return await apiFetch<{ id: number; status?: string }>("/evaluations/", {
       method: "POST",
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        ...data,
+        accessibility_score: data.accessibility_score ?? data.accessibility_wcag_score ?? 5,
+        proposed_improvements: data.proposed_improvements ?? data.comments ?? "",
+      }),
     });
   } catch {
     return { id: 1, status: "zapisano" };
