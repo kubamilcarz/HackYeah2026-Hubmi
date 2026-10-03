@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { CheckboxGroup, DateField, RadioGroup, SearchField, SegmentedControl, SelectField, Slider, Stepper, TextField } from "@/components/ui/FormControls";
+import { Heart, Users } from "@phosphor-icons/react";
+import { CheckboxChipGroup, CheckboxGroup, DateField, RadioGroup, SearchField, SegmentedControl, SelectField, Slider, StepProgress, Stepper, TextAreaField, TextField } from "@/components/ui/FormControls";
 
 const contactOptions = [
   { label: "Telefon", value: "telefon" },
@@ -15,10 +16,14 @@ export function ControlsShowcase() {
   const [view, setView] = useState("lista");
   const [radius, setRadius] = useState(5);
   const [people, setPeople] = useState(1);
+  const [needAreas, setNeedAreas] = useState(["zdrowie-psychiczne"]);
 
   return <section className="mt-10" aria-labelledby="controls-heading">
     <div className="mb-4 max-w-2xl"><h3 className="type-h3" id="controls-heading">Formularz potrzeby</h3><p className="type-caption mt-1 text-[var(--content-muted)]">Widoczne etykiety, podpowiedzi i komunikaty błędów wyjaśniają kolejny krok na telefonie, klawiaturze i z pomocą technologii asystujących.</p></div>
     <div className="controls-showcase">
+      <StepProgress className="controls-showcase__full-width" currentStep={1} label="Postęp zgłoszenia potrzeby" steps={[{ label: "Opis potrzeby" }, { label: "Kontakt" }, { label: "Potwierdzenie" }]} />
+      <TextAreaField className="controls-showcase__full-width" label="Z jakim wyzwaniem się mierzysz?" maxLength={500} placeholder="Opisz krótko problem lub potrzebę…" required rows={5} showCharacterCount />
+      <CheckboxChipGroup className="controls-showcase__full-width" label="Wybierz obszar" name="need-areas" onValueChange={setNeedAreas} options={[{ icon: Heart, label: "Zdrowie psychiczne", value: "zdrowie-psychiczne" }, { icon: Users, label: "Seniorzy", value: "seniorzy" }, { label: "Dostępność", value: "dostepnosc" }, { label: "Integracja społeczna", value: "integracja" }, { label: "Usługi społeczne", value: "uslugi-spoleczne" }, { label: "Edukacja", value: "edukacja" }, { label: "Cyfryzacja", value: "cyfryzacja" }, { label: "Inne", value: "inne" }]} value={needAreas} />
       <TextField helperText="Krótko opisz, jakiego wsparcia szukasz." label="Etykieta" placeholder="Wpisz treść…" />
       <TextField error="Uzupełnij pole poprawnymi danymi." label="Stan błędu" placeholder="Wpisz poprawne dane" />
       <SearchField label="Pole z ikoną" onChange={(event) => setSearch(event.target.value)} placeholder="Szukaj rozwiązań…" value={search} />

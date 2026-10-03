@@ -6,8 +6,10 @@ import type {
   InputHTMLAttributes,
   ReactNode,
   SelectHTMLAttributes,
+  TextareaHTMLAttributes,
 } from "react";
 import { CaretDown, MagnifyingGlass, Minus, Plus, WarningCircle } from "@phosphor-icons/react";
+import type { Icon } from "@phosphor-icons/react/lib";
 
 type FieldProps = {
   className?: string;
@@ -93,6 +95,57 @@ export function TextField({
         />
         {error && <WarningCircle aria-hidden="true" className="control-input__error-icon" size={24} weight="fill" />}
       </div>
+    </Field>
+  );
+}
+
+export type TextAreaFieldProps = FieldProps & Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, "className"> & {
+  showCharacterCount?: boolean;
+};
+
+export function TextAreaField({
+  className,
+  defaultValue,
+  error,
+  helperText,
+  hideLabel,
+  id,
+  label,
+  maxLength,
+  onChange,
+  optional,
+  required,
+  showCharacterCount = false,
+  value,
+  ...props
+}: TextAreaFieldProps) {
+  const ids = useFieldIds(id);
+  const isControlled = value !== undefined;
+  const [internalValue, setInternalValue] = useState(String(defaultValue ?? ""));
+  const currentValue = isControlled ? String(value ?? "") : internalValue;
+  const counterId = `${ids.inputId}-count`;
+  const description = [describedBy(ids, helperText, error), showCharacterCount && maxLength !== undefined ? counterId : undefined].filter(Boolean).join(" ") || undefined;
+
+  function handleChange(event: ChangeEvent<HTMLTextAreaElement>) {
+    if (!isControlled) setInternalValue(event.target.value);
+    onChange?.(event);
+  }
+
+  return (
+    <Field className={className} error={error} helperText={helperText} hideLabel={hideLabel} ids={ids} label={label} optional={optional} required={required}>
+      <textarea
+        aria-describedby={description}
+        aria-invalid={error ? true : undefined}
+        className="control-input control-textarea"
+        defaultValue={isControlled ? undefined : defaultValue}
+        id={ids.inputId}
+        maxLength={maxLength}
+        onChange={handleChange}
+        required={required}
+        value={isControlled ? value : undefined}
+        {...props}
+      />
+      {showCharacterCount && maxLength !== undefined && <p className="field__character-count" id={counterId}>{currentValue.length}/{maxLength}</p>}
     </Field>
   );
 }
@@ -271,6 +324,96 @@ export function CheckboxGroup({ className, defaultValue = [], error, helperText,
       </div>
       <ChoiceMessages error={error} helperText={helperText} ids={ids} />
     </fieldset>
+  );
+}
+
+export type ChipOption = {
+  disabled?: boolean;
+  icon?: Icon;
+  label: string;
+  value: string;
+};
+
+export type CheckboxChipGroupProps = FieldProps & {
+  defaultValue?: string[];
+  name: string;
+  onValueChange?: (value: string[]) => void;
+  options: ChipOption[];
+  required?: boolean;
+  value?: string[];
+};
+
+export function CheckboxChipGroup({ className, defaultValue = [], error, helperText, label, name, onValueChange, options, required, value }: CheckboxChipGroupProps) {
+  const ids = useFieldIds();
+  const isControlled = value !== undefined;
+  const [internalValue, setInternalValue] = useState(defaultValue);
+  const selectedValues = isControlled ? value : internalValue;
+
+  function toggle(optionValue: string, checked: boolean) {
+    const next = checked ? [...selectedValues, optionValue] : selectedValues.filter((item) => item !== optionValue);
+    if (!isControlled) setInternalValue(next);
+    onValueChange?.(next);
+  }
+
+  return (
+    <fieldset aria-describedby={describedBy(ids, helperText, error)} aria-invalid={error ? true : undefined} className={`field chip-group${error ? " field--error" : ""}${className ? ` ${className}` : ""}`}>
+      <legend className="field__label">{label}{required ? " (wymagane)" : ""}</legend>
+      <div className="chip-group__options">
+        {options.map((option, index) => {
+          const Icon = option.icon;
+          const selected = selectedValues.includes(option.value);
+
+          return (
+            <label className="chip-group__option" key={option.value}>
+              <input
+                checked={selected}
+                className="chip-group__input"
+                disabled={option.disabled}
+                name={name}
+                onChange={(event) => toggle(option.value, event.target.checked)}
+                required={required && index === 0}
+                type="checkbox"
+                value={option.value}
+              />
+              {Icon && <Icon aria-hidden="true" className="chip-group__icon" size={20} weight="fill" />}
+              {selected && <span aria-hidden="true" className="chip-group__check">✓</span>}
+              <span>{option.label}</span>
+            </label>
+          );
+        })}
+      </div>
+      <ChoiceMessages error={error} helperText={helperText} ids={ids} />
+    </fieldset>
+  );
+}
+
+export type StepProgressStep = { label: string };
+
+export type StepProgressProps = {
+  className?: string;
+  currentStep: number;
+  label: string;
+  steps: StepProgressStep[];
+};
+
+export function StepProgress({ className, currentStep, label, steps }: StepProgressProps) {
+  const safeCurrentStep = Math.min(Math.max(Math.round(currentStep), 1), Math.max(steps.length, 1));
+
+  return (
+    <ol aria-label={label} className={`step-progress${className ? ` ${className}` : ""}`}>
+      {steps.map((step, index) => {
+        const stepNumber = index + 1;
+        const status = stepNumber < safeCurrentStep ? "ukończony" : stepNumber === safeCurrentStep ? "bieżący" : "kolejny";
+
+        return (
+          <li aria-current={stepNumber === safeCurrentStep ? "step" : undefined} className={`step-progress__step step-progress__step--${status}`} key={step.label}>
+            <span aria-hidden="true" className="step-progress__number">{stepNumber}</span>
+            <span className="step-progress__label">{step.label}</span>
+            <span className="step-progress__status">{status === "ukończony" ? "Ukończony" : status === "bieżący" ? "Bieżący krok" : "Kolejny krok"}</span>
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 

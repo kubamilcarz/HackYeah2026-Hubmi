@@ -50,7 +50,7 @@ these components rather than introducing look-alikes.
 | Group | Components | Required contract |
 | --- | --- | --- |
 | Actions | `Button`, `ButtonLink`, `IconButton` | `Button` and `IconButton` are native actions; `ButtonLink` is navigation. All support `sm`, `md`, and `lg`; icon-only controls require an accessible Polish label. |
-| Forms | `TextField`, `SearchField`, `SelectField`, `DateField`, `RadioGroup`, `CheckboxGroup`, `SegmentedControl`, `Slider`, `Stepper` | Persistent label, hint/error association, validation state, keyboard use, and visible focus. |
+| Forms | `TextField`, `TextAreaField`, `SearchField`, `SelectField`, `DateField`, `RadioGroup`, `CheckboxGroup`, `CheckboxChipGroup`, `SegmentedControl`, `Slider`, `Stepper`, `StepProgress` | Persistent label, hint/error association, validation state, keyboard use, and visible focus. `StepProgress` communicates form state only; it is not step navigation. |
 | Feedback | `Alert`, `Banner`, `Toast`, `Tag`, `Badge`, `LinearProgress`, `CircularProgress` | Textual non-colour cue; use alerts for changed status, contextual banners for persistent guidance, tags for metadata, and badges for compact named status. |
 | Navigation | `AppNavigation`, `PageNavigationBar`, `Pagination` | Landmark and current-page state; mobile and desktop expose the same destinations. |
 | Overlays | `Dialog` | Native modal for an explicit decision with dismissal and focus restoration. |
