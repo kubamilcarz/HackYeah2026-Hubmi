@@ -1,5 +1,6 @@
-import { ArrowRight, CheckCircle, HandHeart, MapPin, ShieldCheck, UsersThree } from "@phosphor-icons/react/ssr";
-import { Tag, type TagVariant } from "@/components/ui/Tag";
+import Image from "next/image";
+import { ArrowRight, CheckCircle, HandHeart, Heart, MapPin, ShieldCheck, Sparkle, UsersThree } from "@phosphor-icons/react/ssr";
+import { Badge, Tag, type TagVariant } from "@/components/ui/Tag";
 
 export type CardAction = { href: string; label: string };
 export type CardStatus = { label: string; variant?: TagVariant };
@@ -14,7 +15,7 @@ function CardActionLink({ action, primary = false }: { action: CardAction; prima
 }
 
 function Status({ status }: { status: CardStatus }) {
-  return <Tag label={status.label} variant={status.variant ?? "neutral"} />;
+  return <Badge label={status.label} variant={status.variant ?? "neutral"} />;
 }
 
 export type NeedCardProps = CardClassName & {
@@ -31,15 +32,25 @@ export function NeedCard({ action, category, className, locality, status, summar
 }
 
 export type SolutionCardProps = CardClassName & {
-  action: CardAction; availability: string; category: string; organization: string; summary: string; title: string;
+  action: CardAction;
+  availability: string;
+  category: string;
+  engagement?: { likes: number; matches: number };
+  image?: { alt: string; src: string };
+  organization: string;
+  summary: string;
+  title: string;
 };
 
-export function SolutionCard({ action, availability, category, className, organization, summary, title }: SolutionCardProps) {
+export function SolutionCard({ action, availability, category, className, engagement, image, organization, summary, title }: SolutionCardProps) {
   return <article className={cardClassName("card card--solution", className)}>
-    <div className="card__media" aria-hidden="true"><HandHeart size={36} weight="duotone" /></div>
+    <div className="card__media">{image ? <Image alt={image.alt} className="card__image" fill sizes="(min-width: 40rem) 50vw, 100vw" src={image.src} /> : <HandHeart aria-hidden="true" size={48} weight="duotone" />}
+      <Badge className="card__kind" label="Rozwiązanie" variant="success" />
+    </div>
     <div className="card__content"><span className="card__availability"><CheckCircle aria-hidden="true" size={16} weight="fill" />{availability}</span>
       <h3 className="card__title">{title}</h3><p className="card__organization">{organization}</p><p className="card__summary">{summary}</p><Tag label={category} variant="success" />
-    </div><CardActionLink action={action} primary />
+      {engagement && <div aria-label={`Reakcje: ${engagement.likes}; dopasowania: ${engagement.matches}`} className="card__engagement"><span><Heart aria-hidden="true" size={20} weight="bold" />{engagement.likes}</span><span><Sparkle aria-hidden="true" size={20} weight="bold" />{engagement.matches}</span></div>}
+    </div><CardActionLink action={action} />
   </article>;
 }
 

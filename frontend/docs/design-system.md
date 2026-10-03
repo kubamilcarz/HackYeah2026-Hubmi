@@ -118,3 +118,16 @@ these components rather than introducing look-alikes.
   accessible name. Boundary controls are visibly and programmatically disabled.
 - Keep the control group horizontally scrollable at narrow widths and enlarged
   text. Do not remove the current page or previous/next controls on mobile.
+
+## Splot cards
+
+- Domain cards identify the subject, owner, plain-language status, useful
+  context, and one safe next action. Status always has a text label; its badge
+  indicator is supplementary.
+- `SolutionCard` supports an optional meaningful `image` (`src` and Polish
+  `alt`) and optional `engagement` counts for likes and matches. Use the image
+  only when it helps a visitor assess the offer; it must not replace the title
+  or summary.
+- Card actions are links because they lead to details or contact. The outlined
+  action treatment remains at least 44 CSS pixels tall and the card reflows as
+  a single column at narrow widths and enlarged text.

@@ -22,7 +22,7 @@ Polish; component APIs and this technical documentation are English.
 | Component | Required public data | Purpose |
 | --- | --- | --- |
 | `NeedCard` | title, summary, category, locality, update time, status, action | A resident need with enough context to assess and open it. |
-| `SolutionCard` | title, summary, organization, category, availability, action | An NGO or public-service offer and its next step. |
+| `SolutionCard` | title, summary, organization, category, availability, action; optional image and engagement | An NGO or public-service offer and its next step. Optional image requires meaningful Polish alt text; optional engagement exposes likes and matches as labelled context. |
 | `OrganizationCard` | name, organization type, locality, service tags, action | A responsible organization and its areas of help. |
 | `MatchSummary` | need title, match count, summary, action | A compact explanation of available matches. |
 | `ContactAction` | organization, contact method, safety note, action | A safe, explicit route into organization contact. |
