@@ -27,7 +27,7 @@ public primitives to compose in product routes.
 | Component | Required public data | Purpose |
 | --- | --- | --- |
 | `NeedCard` | title, summary, category, locality, update time, status, action | A resident need with enough context to assess and open it. |
-| `SolutionCard` | title, summary, organization, category, availability, action; optional image and engagement | An NGO or public-service offer and its next step. Optional image requires meaningful Polish alt text; optional engagement exposes likes and matches as labelled context. |
+| `SolutionCard` | title, summary, organization, category, availability, action; optional image, engagement, and match label | An NGO or public-service offer and its next step. Optional image requires meaningful Polish alt text; optional engagement exposes likes and matches as labelled context. An optional match label makes a local relevance score explicit in matching flows. |
 | `SolutionDetailHero` | image, title, summary; optional match label and heading level | Detail-page hero with one meaningful image, heading and plain-language introduction. It stacks on mobile and becomes two columns on wide screens. |
 | `ExpandableDescription` | description; optional preview length and Polish labels | Client-side in-place disclosure for longer supporting descriptions. The native button exposes its expanded state and controls the description paragraph. |
 | `SolutionInterestActions`, `FavoriteButton` | optional default local state | Local-only demo controls for interest and saved state. `FavoriteButton` is a named icon button and both controls expose `aria-pressed`; persistence is intentionally outside these primitives. |

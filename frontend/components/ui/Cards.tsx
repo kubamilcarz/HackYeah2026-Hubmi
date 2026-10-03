@@ -37,15 +37,16 @@ export type SolutionCardProps = CardClassName & {
   category: string;
   engagement?: { likes: number; matches: number };
   image?: { alt: string; src: string };
+  match?: { label: string; score: number };
   organization: string;
   summary: string;
   title: string;
 };
 
-export function SolutionCard({ action, availability, category, className, engagement, image, organization, summary, title }: SolutionCardProps) {
+export function SolutionCard({ action, availability, category, className, engagement, image, match, organization, summary, title }: SolutionCardProps) {
   return <article className={cardClassName("card card--solution", className)}>
     <div className="card__media">{image ? <Image alt={image.alt} className="card__image" fill sizes="(min-width: 40rem) 50vw, 100vw" src={image.src} /> : <HandHeart aria-hidden="true" size={48} weight="duotone" />}
-      <Badge className="card__kind" label="Rozwiązanie" variant="success" />
+      {match ? <Badge className="card__match" label={match.label} variant="success" /> : <Badge className="card__kind" label="Rozwiązanie" variant="success" />}
     </div>
     <div className="card__content"><span className="card__availability"><CheckCircle aria-hidden="true" size={16} weight="fill" />{availability}</span>
       <h3 className="card__title">{title}</h3><p className="card__organization">{organization}</p><p className="card__summary">{summary}</p><Tag label={category} variant="success" />
