@@ -89,16 +89,16 @@ export default function StartPage() {
 
           <section aria-label="Szybkie działania" className="quick-actions">
             <QuickAction href="/needs/new" icon={Plus} label="Zgłoś potrzebę" variant="primary" />
-            <QuickAction href="/solutions" icon={MagnifyingGlass} label="Znajdź rozwiązanie" variant="search" />
+            <QuickAction href="/solutions" icon={MagnifyingGlass} label="Dopasuj pomoc" variant="search" />
             <QuickAction href="/map" icon={UsersThree} label="Poznaj partnerów" variant="partners" />
-            <QuickAction href="/solutions" icon={BookOpen} label="Przeglądaj wiedzę" variant="knowledge" />
+            <QuickAction href="/innowacje" icon={BookOpen} label="Przeglądaj innowacje" variant="knowledge" />
           </section>
 
-          <ContentSection action={{ href: "/solutions", label: "Zobacz wszystkie" }} className="start-page__section" title="Aktualne wyzwania w Małopolsce">
+          <ContentSection action={{ href: "/wyzwania", label: "Zobacz wszystkie wyzwania" }} className="start-page__section" title="Aktualne wyzwania w Małopolsce">
             {challenges.map((challenge) => <ChallengeCard key={challenge.title} {...challenge} />)}
           </ContentSection>
 
-          <ContentSection action={{ href: "/solutions", label: "Zobacz wszystkie" }} className="start-page__section" title="Polecane rozwiązania">
+          <ContentSection action={{ href: "/innowacje", label: "Zobacz całą bibliotekę" }} className="start-page__section" title="Polecane innowacje ROPS">
             {recommendations.map((recommendation) => <RecommendationCard key={recommendation.title} {...recommendation} />)}
           </ContentSection>
         </div>

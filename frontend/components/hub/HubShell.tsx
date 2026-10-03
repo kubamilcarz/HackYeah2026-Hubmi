@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Bell, Briefcase, Compass, HandHeart, House, Lightbulb, MapTrifold, ArrowsClockwise } from "@phosphor-icons/react";
+import { Bell, BookOpen, Briefcase, ChartLineUp, Compass, HandHeart, House, Lightbulb, MapTrifold, ArrowsClockwise } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { AppNavigation, type NavigationItem } from "@/components/ui/AppNavigation";
 import { PageNavigationBar } from "@/components/ui/PageNavigationBar";
@@ -13,8 +13,10 @@ import { Badge } from "@/components/ui/Tag";
 const navigationItems: NavigationItem[] = [
   { id: "start", label: "Strona główna", href: "/start", icon: House },
   { id: "report-need", label: "Zgłoś potrzebę", href: "/needs/new", icon: HandHeart },
+  { id: "innowacje", label: "Biblioteka Innowacji", href: "/innowacje", icon: BookOpen },
+  { id: "wyzwania", label: "Wyzwania Regionu", href: "/wyzwania", icon: ChartLineUp },
+  { id: "solutions", label: "Dopasuj pomoc", href: "/solutions", icon: Lightbulb },
   { id: "map", label: "Mapa inicjatyw", href: "/map", icon: MapTrifold },
-  { id: "solutions", label: "Rozwiązania", href: "/solutions", icon: Lightbulb },
 ];
 
 type HubShellProps = {

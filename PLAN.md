@@ -58,13 +58,13 @@ Aby pogodzić **błyskawiczną prezentację bez wpisywania haseł** z **brakiem 
 ---
 
 ### Faza 3: Moduł II – Zasobnik Wiedzy i Trendy (+5%)
-- [ ] **3.1. Biblioteka Innowacji Społecznych ROPS (`/innowacje`)**:
+- [x] **3.1. Biblioteka Innowacji Społecznych ROPS (`/innowacje`)**:
   - Katalog innowacji z filtrami według 9 oficjalnych kategorii ROPS, stopnia dojrzałości i formy (usługa, produkt, metoda).
   - Karta innowacji: opis, instrukcja wdrożenia, wideo z transkrypcją tekstową WCAG, metryka, materiały do pobrania.
-- [ ] **3.2. Kondycja Małopolski & Mapa Wyzwań (`/wyzwania`)**:
+- [x] **3.2. Kondycja Małopolski & Mapa Wyzwań (`/wyzwania`)**:
   - Prezentacja kluczowych wyzwań regionu na bazie raportów ROPS.
   - Dostępna, klawiaturowo sterowana mapa/lista powiatów Małopolski z powiązanymi innowacjami.
-- [ ] **3.3. Moduł analityczny dla administratora (Wykrywanie trendów)**:
+- [x] **3.3. Moduł analityczny dla administratora (Wykrywanie trendów)**:
   - Endpoint `GET /api/admin/trends/` dynamicznie agregujący zgłoszone potrzeby wg powiatów i 9 kategorii.
   - Wykrywanie „Białych plam” (luki w innowacjach) jako baza pod nowe nabory grantowe.
 

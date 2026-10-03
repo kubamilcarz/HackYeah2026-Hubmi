@@ -1,5 +1,6 @@
 /**
  * Klient API platformy Splot do komunikacji z backendem Django REST Framework.
+ * Obsługuje Moduł I (Matchmaking), Moduł II (Zasobnik Wiedzy i Trendy) oraz pozostałe moduły.
  */
 
 export type InnovationCategory = {
@@ -14,7 +15,7 @@ export type InnovationCategory = {
 export type Municipality = {
   id: number;
   name: string;
-  kind: "miejska" | "wiejska" | "miejsko_wiejska";
+  kind: "miejska" | "wiejska" | "miejsko-wiejska" | "miejsko_wiejska";
   has_cus: boolean;
 };
 
@@ -22,8 +23,12 @@ export type County = {
   id: number;
   name: string;
   slug: string;
-  senior_ratio: string;
-  unemployment_rate: string;
+  teryt?: string;
+  population?: number;
+  senior_ratio: string | number;
+  unemployment_rate?: string | number;
+  summary?: string;
+  main_challenges?: string[];
   challenges_count?: number;
   innovations_count?: number;
   municipalities?: Municipality[];
@@ -38,7 +43,7 @@ export type SocialInnovation = {
   category_code?: string;
   secondary_categories?: InnovationCategory[];
   maturity_stage: "koncepcja" | "prototyp" | "testy" | "sprawdzona";
-  innovation_type: "usluga" | "produkt" | "metoda" | "narzedzie_cyfrowe";
+  innovation_type: "usluga" | "produkt" | "metoda" | "technologia" | "narzedzie_cyfrowe";
   short_summary: string;
   full_description?: string;
   target_audience: string;
@@ -48,10 +53,63 @@ export type SocialInnovation = {
   handbook_pdf_url?: string;
   author_name?: string;
   author_organization?: string;
+  author_email?: string;
   replication_readiness_score: number;
   likes_count: number;
   matches_count: number;
   tags: string[];
+};
+
+export type RegionalChallenge = {
+  id: number;
+  title: string;
+  slug: string;
+  category?: number | InnovationCategory;
+  category_name?: string;
+  category_code?: string;
+  county?: number | County;
+  county_name?: string;
+  county_slug?: string;
+  summary: string;
+  full_analysis: string;
+  statistical_data: Record<string, string | number>;
+  key_needs: string[];
+  related_innovations?: SocialInnovation[];
+};
+
+export type CategoryTrend = {
+  category_id: number;
+  category_name: string;
+  category_code: string;
+  submissions_count: number;
+  innovations_count: number;
+};
+
+export type CountyTrend = {
+  county_id: number;
+  county_name: string;
+  population: number;
+  senior_ratio: number;
+  submissions_count: number;
+};
+
+export type WhiteSpotItem = {
+  submission_id: number;
+  title: string;
+  category_name: string;
+  county_name: string;
+  affected_group: string;
+  reported_at: string;
+};
+
+export type AdminTrendsResponse = {
+  total_submissions: number;
+  total_ideas: number;
+  total_pilots: number;
+  total_partnerships: number;
+  by_category: CategoryTrend[];
+  by_county: CountyTrend[];
+  white_spots: WhiteSpotItem[];
 };
 
 export type MatchResultItem = {
@@ -107,73 +165,382 @@ export const FALLBACK_CATEGORIES: InnovationCategory[] = [
 export const FALLBACK_COUNTIES: County[] = [
   {
     id: 1,
-    name: "nowosądecki",
+    name: "Powiat nowosądecki",
     slug: "nowosadecki",
-    senior_ratio: "21.4",
+    population: 217000,
+    senior_ratio: "22.8",
     unemployment_rate: "7.8",
+    summary: "Powiat o charakterze podgórskim ze znacznym rozproszeniem osadniczym. Wyzwania: dojazd do usług medycznych, samotność seniorów w sołectwach.",
+    main_challenges: ["Dostępność transportowa", "Samotność seniorów na terenach wiejskich", "Opieka wytchnieniowa"],
     municipalities: [
-      { id: 1, name: "Grybów", kind: "miejsko_wiejska", has_cus: false },
-      { id: 2, name: "Stary Sącz", kind: "miejsko_wiejska", has_cus: true },
-      { id: 3, name: "Krynica-Zdrój", kind: "miejsko_wiejska", has_cus: false },
+      { id: 1, name: "Grybów", kind: "wiejska", has_cus: false },
+      { id: 2, name: "Krynica-Zdrój", kind: "miejsko-wiejska", has_cus: true },
+      { id: 3, name: "Stary Sącz", kind: "miejsko-wiejska", has_cus: false },
     ],
   },
   {
     id: 2,
-    name: "myślenicki",
+    name: "Powiat myślenicki",
     slug: "myslenicki",
+    population: 129000,
     senior_ratio: "19.8",
     unemployment_rate: "5.2",
+    summary: "Dynamicznie rozwijający się powiat podmiejski ze wzorcowymi Centrami Usług Społecznych.",
+    main_challenges: ["Koordynacja usług deinstytucjonalnych", "Wypalenie opiekunów nieformalnych"],
     municipalities: [
-      { id: 4, name: "Myślenice", kind: "miejsko_wiejska", has_cus: true },
-      { id: 5, name: "Dobczyce", kind: "miejsko_wiejska", has_cus: false },
+      { id: 4, name: "Myślenice", kind: "miejsko-wiejska", has_cus: true },
+      { id: 5, name: "Dobczyce", kind: "miejsko-wiejska", has_cus: false },
     ],
   },
   {
     id: 3,
-    name: "tarnowski",
+    name: "Powiat tarnowski",
     slug: "tarnowski",
+    population: 202000,
     senior_ratio: "24.2",
     unemployment_rate: "8.5",
+    summary: "Obszar o wysokim odsetku gospodarstw rolnych. Zapotrzebowanie na usługi mobilne.",
+    main_challenges: ["Wykluczenie komunikacyjne sołectw", "Bariery architektoniczne w starym budownictwie"],
     municipalities: [
       { id: 6, name: "Tarnów", kind: "miejska", has_cus: true },
-      { id: 7, name: "Żabno", kind: "miejsko_wiejska", has_cus: false },
+      { id: 7, name: "Żabno", kind: "miejsko-wiejska", has_cus: false },
     ],
   },
   {
     id: 4,
-    name: "krakowski",
+    name: "Powiat krakowski",
     slug: "krakowski",
+    population: 285000,
     senior_ratio: "25.1",
     unemployment_rate: "3.1",
+    summary: "Obszar metropolitalny. Silne zróżnicowanie między dynamicznymi gminami a tradycyjnymi wsiami.",
+    main_challenges: ["Kryzys zdrowia psychicznego dzieci i młodzieży", "Integracja migrantów"],
     municipalities: [
       { id: 8, name: "Kraków", kind: "miejska", has_cus: true },
-      { id: 9, name: "Wieliczka", kind: "miejsko_wiejska", has_cus: false },
-      { id: 10, name: "Skawina", kind: "miejsko_wiejska", has_cus: true },
+      { id: 9, name: "Wieliczka", kind: "miejsko-wiejska", has_cus: false },
+      { id: 10, name: "Skawina", kind: "miejsko-wiejska", has_cus: true },
     ],
   },
   {
     id: 5,
-    name: "gorlicki",
+    name: "Powiat gorlicki",
     slug: "gorlicki",
-    senior_ratio: "26.3",
+    population: 107000,
+    senior_ratio: "25.1",
     unemployment_rate: "9.1",
+    summary: "Teren peryferyjny z najwyższym wskaźnikiem starości demograficznej i zagrożenia ubóstwem energetycznym.",
+    main_challenges: ["Depopulacja", "Ubóstwo energetyczne seniorów", "Brak kadr opiekuńczych"],
     municipalities: [
       { id: 11, name: "Gorlice", kind: "miejska", has_cus: false },
-      { id: 12, name: "Biecz", kind: "miejsko_wiejska", has_cus: false },
+      { id: 12, name: "Biecz", kind: "miejsko-wiejska", has_cus: true },
     ],
   },
   {
     id: 6,
-    name: "tatrzański",
+    name: "Powiat tatrzański",
     slug: "tatrzanski",
+    population: 68000,
     senior_ratio: "22.0",
     unemployment_rate: "6.4",
+    summary: "Specyfika turystyczna i sezonowość zatrudnienia.",
+    main_challenges: ["Sezonowość potrzeb społecznych", "Dostępność mieszkań dla osób zależnych"],
     municipalities: [
       { id: 13, name: "Zakopane", kind: "miejska", has_cus: false },
       { id: 14, name: "Poronin", kind: "wiejska", has_cus: false },
     ],
   },
 ];
+
+export const FALLBACK_INNOVATIONS: SocialInnovation[] = [
+  {
+    id: 1,
+    title: "BaWita – Mobilna sensoryczna tablica aktywizująca",
+    slug: "bawita-tablica-sensoryczna",
+    category: 1,
+    category_name: "Dla seniorów",
+    category_code: "seniors",
+    maturity_stage: "testy",
+    innovation_type: "produkt",
+    short_summary: "Przenośny zestaw stymulacji sensorycznej i pamięciowej dla seniorów i osób z demencją w placówkach i środowisku domowym.",
+    full_description: "BaWita to innowacyjny zestaw modułowych elementów sensoryczno-manualnych, zaprojektowany z myślą o osobach z otępieniem, chorobą Alzheimera oraz seniorach doświadczających izolacji. Może być transportowany w poręcznej walizce do domu podopiecznego lub świetlicy wiejskiej przez asystenta CUS.",
+    target_audience: "Seniorzy 65+, osoby z chorobami otępiennymi, opiekunowie rodzinni",
+    implementation_guide: "Krok 1: Zamówienie certyfikowanego zestawu od producenta społecznego.\nKrok 2: 4-godzinny instruktaż opiekunów i asystentów CUS.\nKrok 3: Włączenie tablicy w harmonogram wizyt domowych (2-3 razy w tygodniu po 45 min).",
+    video_url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    video_transcript: "[0:00 - 0:45] Lektor: Prezentujemy BaWita – zestaw sensoryczny opracowany w Małopolskim Inkubatorze Innowacji Społecznych ROPS Kraków. Widzimy drewnianą tablicę z bezpiecznymi elementami manipulacyjnymi: zamki, przełączniki, labirynty dotykowe.\n[0:45 - 1:30] Terapeuta zajęciowy: Narzędzie pozwala na ćwiczenie motoryki małej i pobudzanie wspomnień u osób z zaawansowaną demencją bez konieczności opuszczania domu.\n[1:30 - 2:00] Lektor: Zestaw jest lekki, w pełni zmywalny i bezpieczny zgodnie z normami medycznymi WCAG i PFRON.",
+    handbook_pdf_url: "/documents/podrecznik_bawita_rops.pdf",
+    author_name: "Zespół Terapeutyczny Inkubatora ROPS",
+    author_organization: "Fundacja Rozwoju Terapii Zajęciowej (Nowy Sącz)",
+    author_email: "kontakt@bawita-innowacje.pl",
+    replication_readiness_score: 92,
+    likes_count: 48,
+    matches_count: 31,
+    tags: ["seniorzy", "demencja", "terapia sensoryczna", "opieka domowa", "CUS", "wieś"],
+  },
+  {
+    id: 2,
+    title: "Senior CUDER – Gra integracyjno-aktywizująca dla osób starszych",
+    slug: "senior-cuder-gra-integracyjna",
+    category: 1,
+    category_name: "Dla seniorów",
+    category_code: "seniors",
+    maturity_stage: "sprawdzona",
+    innovation_type: "metoda",
+    short_summary: "Planszowa i plenerowa metoda integracji międzypokoleniowej oraz przeciwdziałania depresji i osamotnieniu seniorów.",
+    full_description: "Senior CUDER (Ciało, Umysł, Duch, Emocje, Relacje) to holistyczna metoda pracy grupowej. Pozwala osobom starszym w bezpieczny sposób rozmawiać o trudnych emocjach, stracie, samotności, jednocześnie budując nowe relacje sąsiedzkie w klubach seniora i sołectwach.",
+    target_audience: "Samotni seniorzy, kluby seniora, koła gospodyń wiejskich, wolontariusze",
+    implementation_guide: "Szkolenie lidera klubu seniora trwa 1 dzień. Zestaw gry zawiera planszę, karty pytań, żetony relacji i podręcznik facylitatora.",
+    video_url: "https://www.youtube.com/watch?v=sample_cuder",
+    video_transcript: "Transkrypcja WCAG 2.2 AA:\n[0:00 - 0:30] Facylitator: Witamy na międzypokoleniowej rozgrywce Senior CUDER. Uczestnicy losują kartę z obszaru 'Emocje'.\n[0:30 - 1:15] Uczestniczka (72 lata): 'Co dodaje mi otuchy w trudnym dniu? Rozmowa z sąsiadką i chwila przy herbacie.' Grupa dzieli się swoimi doświadczeniami.\n[1:15 - 2:00] Podsumowanie: Gra nie tworzy rywalizacji, lecz przestrzeń głębokiego wzajemnego zrozumienia i przełamywania izolacji.",
+    handbook_pdf_url: "/documents/senior_cuder_zasady.pdf",
+    author_name: "Dr Joanna Kowalska",
+    author_organization: "Stowarzyszenie Dialog Społeczny Kraków",
+    author_email: "cuder@dialogspoleczny.pl",
+    replication_readiness_score: 96,
+    likes_count: 65,
+    matches_count: 42,
+    tags: ["seniorzy", "grywalizacja", "integracja", "zdrowie psychiczne", "samotność"],
+  },
+  {
+    id: 3,
+    title: "Modularne łazienki – Likwidacja barier architektonicznych",
+    slug: "modularne-lazienki-dla-seniorow",
+    category: 3,
+    category_name: "Dla osób o ograniczonej mobilności",
+    category_code: "mobility",
+    maturity_stage: "sprawdzona",
+    innovation_type: "produkt",
+    short_summary: "System bezinwazyjnych, demontowalnych uchwytów i podestów likwidujących bariery w wiejskich domach seniorów.",
+    full_description: "Wielu seniorów w Małopolsce mieszka w domach z głębokimi wannami i wysokimi progami. Modularny pakiet pozwala w 3 godziny przekształcić łazienkę bez kucia płytek i kosztownych remontów, z możliwością późniejszego przeniesienia lub zwrotu do wypożyczalni CUS.",
+    target_audience: "Osoby o ograniczonej mobilności, poruszające się o kulach lub wózkach, seniorzy 70+",
+    implementation_guide: "Montaż przez gminnego konserwatora lub wolontariusza NGO na podstawie prostego szablonu miarowego w czasie poniżej 3 godzin.",
+    video_url: "https://www.youtube.com/watch?v=sample_lazienki",
+    video_transcript: "Transkrypcja WCAG 2.2 AA:\n[0:00 - 0:45] Montażysta: Prezentujemy bezinwazyjny montaż modularnej ławeczki nawannowej i profilowanych poręczy ściennych z atestem udźwigu do 150 kg.\n[0:45 - 1:30] Demonstracja: Poręcze mocowane są za pomocą szybkozłączek rozporowych, bez uszkodzenia kafelków.\n[1:30 - 2:00] Podsumowanie: Bezpieczna toaleta i kąpiel bez asysty osób trzecich.",
+    handbook_pdf_url: "/documents/katalog_lazienki_dostepne.pdf",
+    author_name: "Inż. Andrzej Mazur",
+    author_organization: "Fundacja Architektura Bez Barier",
+    author_email: "kontakt@dostepnelazienki.pl",
+    replication_readiness_score: 94,
+    likes_count: 91,
+    matches_count: 44,
+    tags: ["łazienka", "dostępność", "mieszkanie", "senior", "bariery architektoniczne"],
+  },
+  {
+    id: 4,
+    title: "Organizator Społeczności Lokalnej (OSL) w CUS",
+    slug: "organizator-spolecznosci-lokalnej-cus",
+    category: 2,
+    category_name: "Dla dzieci, młodzieży i rodziny",
+    category_code: "youth_family",
+    maturity_stage: "sprawdzona",
+    innovation_type: "usluga",
+    short_summary: "Metoda animacji sąsiedzkiej aktywizująca mieszkańców do samopomocy i tworzenia lokalnych grup wsparcia.",
+    full_description: "Model wdrożony i przetestowany m.in. w Centrum Usług Społecznych w Myślenicach. Zamiast czekać na zgłoszenia zasiłkowe, organizator wychodzi w teren, mapuje potencjał sołectw i wspiera powstawanie oddolnych inicjatyw sąsiedzkich.",
+    target_audience: "Mieszkańcy gmin wiejskich i małych miast, samorządy, liderzy lokalni",
+    implementation_guide: "Standard procedur dla CUS, opisy stanowisk pracy i zestaw narzędzi mapowania zasobów sołeckich.",
+    video_url: "https://www.youtube.com/watch?v=sample_osl",
+    video_transcript: "Transkrypcja WCAG 2.2 AA:\n[0:00 - 0:45] OSL Marek Wiśniewski: Witamy w Myślenicach. Rola Organizatora Społeczności Lokalnej polega na słuchaniu mieszkańców w ich naturalnym środowisku.\n[0:45 - 1:30] Ujęcia z sołectwa: Mieszkańcy organizują wspólnie przestrzeń dla dzieci i punkt wymiany książek.\n[1:30 - 2:00] Marek Wiśniewski: CUS daje impuls i ubezpieczenie, a mieszkańcy tworzą trwałą sieć samopomocy.",
+    handbook_pdf_url: "/documents/standard_osl_rops.pdf",
+    author_name: "Marek Wiśniewski i Zespół ROPS",
+    author_organization: "Centrum Usług Społecznych w Myślenicach",
+    author_email: "cus@myslenice.pl",
+    replication_readiness_score: 97,
+    likes_count: 115,
+    matches_count: 67,
+    tags: ["CUS", "animacja", "samorząd", "JST", "samopomoc", "sołectwo"],
+  },
+  {
+    id: 5,
+    title: "Kawiarenka Naprawcza – Międzypokoleniowy punkt wymiany umiejętności",
+    slug: "kawiarenka-naprawcza",
+    category: 6,
+    category_name: "Dla rynku pracy",
+    category_code: "labor",
+    maturity_stage: "sprawdzona",
+    innovation_type: "metoda",
+    short_summary: "Otwarte warsztaty, gdzie seniorzy-majsterkowicze uczą młodzież naprawy sprzętu, budując relacje i redukując odpady.",
+    full_description: "Kawiarenka Naprawcza (Repair Cafe) łączy cele ekologiczne z włączeniem społecznym i reintegracją zawodową. Seniorzy odzyskują poczucie sprawczości i wartości, a młodzież zdobywa praktyczne kompetencje techniczne i rzemieślnicze.",
+    target_audience: "Seniorzy rzemieślnicy, młodzież szkolna, rodziny z dziećmi",
+    implementation_guide: "Zestaw narzędzi w skrzynce, regulamin BHP punktu naprawczego i wzory plakatów promocyjnych.",
+    video_url: "https://www.youtube.com/watch?v=sample_kawiarenka",
+    video_transcript: "Transkrypcja WCAG 2.2 AA:\n[0:00 - 0:45] Katarzyna Zielińska: Kawiarenka Naprawcza to nie tylko serwis, to przede wszystkim spotkanie pokoleń przy stole warsztatowym.\n[0:45 - 1:30] Senior (68 lat) instruuje nastolatka, jak wymienić bezpiecznik i przylutować kabel w zabytkowej lampce.\n[1:30 - 2:00] Efekt: Sprzęt działa, a uczestnicy umawiają się na kolejne spotkanie w świetlicy.",
+    handbook_pdf_url: "/documents/kawiarenka_naprawcza_poradnik.pdf",
+    author_name: "Katarzyna Zielińska",
+    author_organization: "Fundacja Aktywna Małopolska (Tarnów)",
+    author_email: "kontakt@aktywna-malopolska.pl",
+    replication_readiness_score: 90,
+    likes_count: 73,
+    matches_count: 28,
+    tags: ["naprawy", "majsterkowanie", "ekologia", "międzypokoleniowe", "NGO"],
+  },
+  {
+    id: 6,
+    title: "Merkury – Symulator samoobsługowy dla seniorów i osób z niepełnosprawnościami",
+    slug: "merkury-symulator-samoobslugowy",
+    category: 4,
+    category_name: "Dla osób z niepełnosprawnością sensoryczną",
+    category_code: "sensory",
+    maturity_stage: "prototyp",
+    innovation_type: "technologia",
+    short_summary: "Dotykowy trenażer ułatwiający naukę korzystania z biletomatów, bankomatów i kas samoobsługowych bez stresu.",
+    full_description: "Symulator Merkury wiernie odtwarza ekrany powszechnych urządzeń samoobsługowych w bezpiecznych warunkach biblioteki lub klubu seniora. Posiada audiodeskrypcję, tryb wysokiego kontrastu oraz regulację tempa komunikatów głosowych.",
+    target_audience: "Osoby starsze z lękiem technologicznym, osoby niedowidzące, podopieczni WTZ",
+    implementation_guide: "Instalacja oprogramowania na tablecie lub monitorze dotykowym w bibliotece gminnej wraz ze scenariuszami lekcji.",
+    video_url: "https://www.youtube.com/watch?v=sample_merkury",
+    video_transcript: "Transkrypcja WCAG 2.2 AA:\n[0:00 - 0:45] Prezenter: Przedstawiamy aplikację Merkury, która krok po kroku uczy zakupu biletu kolejowego i płatności kartą.\n[0:45 - 1:30] Użytkownik ćwiczy na dużym ekranie. Asystent cyfrowy podpowiada kolejne kroki głosem syntetycznym.\n[1:30 - 2:00] Podsumowanie: Po trzech treningach 90% badanych seniorów samodzielnie skorzystało z biletomatu na dworcu.",
+    handbook_pdf_url: "/documents/instrukcja_merkury_trener.pdf",
+    author_name: "Dr Piotr Adamski",
+    author_organization: "Politechnika Krakowska & ROPS",
+    author_email: "ekspert@innowacjespoleczne.pl",
+    replication_readiness_score: 85,
+    likes_count: 54,
+    matches_count: 36,
+    tags: ["cyfryzacja", "dostępność", "seniorzy", "sensoryka", "samoobsługa"],
+  },
+];
+
+export const FALLBACK_CHALLENGES: RegionalChallenge[] = [
+  {
+    id: 1,
+    title: "Samotność seniorów w rozproszonych sołectwach górskich",
+    slug: "samotnosc-seniorow-w-solectwach",
+    category_name: "Dla seniorów",
+    category_code: "seniors",
+    county_name: "Powiat nowosądecki",
+    county_slug: "nowosadecki",
+    summary: "Ponad 35% seniorów w małych wsiach powiatu nowosądeckiego mieszka samotnie, z dala od przystanków autobusowych i placówek opieki.",
+    full_analysis: "Analiza ROPS Kraków wskazuje na dynamiczny wzrost zjawiska izolacji geograficzno-społecznej. Osoby 75+ w okresie zimowym bywają odcięte od pomocy sąsiedzkiej. Niezbędne jest wprowadzenie mobilnych usług asystenckich i narzędzi stymulacji poznawczej (takich jak BaWita czy Senior CUDER).",
+    statistical_data: {
+      "Liczba samotnych seniorów": 7450,
+      "Gospodarstwa 1-osobowe 65+": "34.8%",
+      "Średni czas dojazdu do OPS": "42 minuty",
+      "Wskaźnik deinstytucjonalizacji": "18.2%",
+    },
+    key_needs: [
+      "Mobilne wizyty asystentów domowych",
+      "Pakiety stymulacji sensorycznej BaWita",
+      "Transport na życzenie (door-to-door)",
+    ],
+    related_innovations: [FALLBACK_INNOVATIONS[0], FALLBACK_INNOVATIONS[1]],
+  },
+  {
+    id: 2,
+    title: "Kryzys dobrostanu psychicznego dzieci i młodzieży",
+    slug: "kryzys-dobrostanu-psychicznego-mlodziezy",
+    category_name: "Dla dzieci, młodzieży i rodziny",
+    category_code: "youth_family",
+    county_name: "Powiat krakowski",
+    county_slug: "krakowski",
+    summary: "Nasilenie zaburzeń nastroju i stanów lękowych u nastolatków w gminach podmiejskich przy niewystarczającej liczbie poradni psychologiczno-pedagogicznych.",
+    full_analysis: "Z danych ROPS Kraków wynika, że czas oczekiwania na konsultację psychiatryczną dzieci w aglomeracji krakowskiej przekracza 8 miesięcy. Kluczowe jest wdrożenie środowiskowych form wczesnej interwencji oraz punktów wsparcia rówieśniczego.",
+    statistical_data: {
+      "Wzrost zgłoszeń kryzysowych": "+42% r/r",
+      "Dostępność psychologów szkolnych": "0.6 etatu/szkołę",
+      "Młodzież objęta pomocą CUS": 1820,
+    },
+    key_needs: [
+      "Środowiskowe kluby młodzieżowe",
+      "Szkolenia rówieśniczych liderów wsparcia",
+      "Metody animacji sąsiedzkiej OSL",
+    ],
+    related_innovations: [FALLBACK_INNOVATIONS[3]],
+  },
+  {
+    id: 3,
+    title: "Bariery architektoniczne i wykluczenie mobilnościowe w starym budownictwie wiejskim",
+    slug: "bariery-architektoniczne-w-budownictwie-wiejskim",
+    category_name: "Dla osób o ograniczonej mobilności",
+    category_code: "mobility",
+    county_name: "Powiat tarnowski",
+    county_slug: "tarnowski",
+    summary: "Tysiące domów jednorodzinnych z lat 70. i 80. uniemożliwia osobom z niepełnosprawnościami i seniorom bezpieczne korzystanie z łazienki.",
+    full_analysis: "Brak środków na kapitalne remonty powoduje tzw. uwięzienie domowe seniorów. Niezbędne jest upowszechnienie tanich, modularnych rozwiązań montowanych bezinwazyjnie przez gminne Centra Usług Społecznych.",
+    statistical_data: {
+      "Osoby z orzeczeniem o niepełnosprawności": "13.4%",
+      "Domy bez podjazdu / windy": "78%",
+      "Średni koszt adaptacji łazienki tradycyjnej": "28 000 PLN",
+    },
+    key_needs: [
+      "Modularne pakiety łazienkowe",
+      "Wypożyczalnie sprzętu rehabilitacyjnego",
+      "Doradztwo architektoniczne dla gmin",
+    ],
+    related_innovations: [FALLBACK_INNOVATIONS[2]],
+  },
+  {
+    id: 4,
+    title: "Wykluczenie cyfrowe i brak dostępu do e-usług w gminach peryferyjnych",
+    slug: "wykluczenie-cyfrowe-w-gminach-peryferyjnych",
+    category_name: "Dla osób z niepełnosprawnością sensoryczną",
+    category_code: "sensory",
+    county_name: "Powiat gorlicki",
+    county_slug: "gorlicki",
+    summary: "Wysoki odsetek seniorów niepotrafiących samodzielnie zrealizować e-recepty czy załatwić sprawy urzędowej przez internet.",
+    full_analysis: "Bariera lęku technologicznego oraz skomplikowane interfejsy kas samoobsługowych pogłębiają zależność osób starszych od opiekunów. Rozwiązaniem są trenażery i bezpieczne punkty edukacji cyfrowej.",
+    statistical_data: {
+      "Osoby 65+ bez smartfona/internetu": "46.2%",
+      "Odległość do najbliższego bankomatu": "9.4 km",
+      "Kluby seniora z salą komputerową": 4,
+    },
+    key_needs: [
+      "Trenażery samoobsługowe Merkury",
+      "Wolontariat cyfrowy w sołectwach",
+      "Mobilne punkty e-administracji",
+    ],
+    related_innovations: [FALLBACK_INNOVATIONS[5], FALLBACK_INNOVATIONS[4]],
+  },
+];
+
+export const FALLBACK_ADMIN_TRENDS: AdminTrendsResponse = {
+  total_submissions: 18,
+  total_ideas: 7,
+  total_pilots: 3,
+  total_partnerships: 5,
+  by_category: [
+    { category_id: 1, category_name: "Dla seniorów", category_code: "seniors", submissions_count: 8, innovations_count: 2 },
+    { category_id: 2, category_name: "Dla dzieci, młodzieży i rodziny", category_code: "youth_family", submissions_count: 3, innovations_count: 1 },
+    { category_id: 3, category_name: "Dla osób o ograniczonej mobilności", category_code: "mobility", submissions_count: 4, innovations_count: 1 },
+    { category_id: 4, category_name: "Dla osób z niepełnosprawnością sensoryczną", category_code: "sensory", submissions_count: 2, innovations_count: 2 },
+    { category_id: 5, category_name: "Dla zdrowia i medycyny", category_code: "health", submissions_count: 5, innovations_count: 0 },
+    { category_id: 6, category_name: "Dla rynku pracy", category_code: "labor", submissions_count: 1, innovations_count: 1 },
+    { category_id: 7, category_name: "Dla cudzoziemców", category_code: "foreigners", submissions_count: 1, innovations_count: 0 },
+    { category_id: 8, category_name: "Dla osób w kryzysie bezdomności", category_code: "homelessness", submissions_count: 2, innovations_count: 0 },
+    { category_id: 9, category_name: "Dla osób z niepełnosprawnością intelektualną", category_code: "intellectual", submissions_count: 2, innovations_count: 0 },
+  ],
+  by_county: [
+    { county_id: 1, county_name: "Powiat nowosądecki", population: 217000, senior_ratio: 22.8, submissions_count: 6 },
+    { county_id: 2, county_name: "Powiat myślenicki", population: 129000, senior_ratio: 19.8, submissions_count: 4 },
+    { county_id: 3, county_name: "Powiat tarnowski", population: 202000, senior_ratio: 24.2, submissions_count: 3 },
+    { county_id: 4, county_name: "Powiat krakowski", population: 285000, senior_ratio: 25.1, submissions_count: 3 },
+    { county_id: 5, county_name: "Powiat gorlicki", population: 107000, senior_ratio: 25.1, submissions_count: 2 },
+    { county_id: 6, county_name: "Powiat tatrzański", population: 68000, senior_ratio: 22.0, submissions_count: 1 },
+  ],
+  white_spots: [
+    {
+      submission_id: 101,
+      title: "Brak całodobowej opieki wytchnieniowej w powiecie gorlickim",
+      category_name: "Dla zdrowia i medycyny",
+      county_name: "Powiat gorlicki",
+      affected_group: "Rodzice i opiekunowie osób z niepełnosprawnościami sprzężonymi",
+      reported_at: "2026-09-28T10:15:00Z",
+    },
+    {
+      submission_id: 102,
+      title: "Luka w asystencji mieszkaniowej dla usamodzielniających się osób w kryzysie",
+      category_name: "Dla osób w kryzysie bezdomności",
+      county_name: "Powiat tarnowski",
+      affected_group: "Młodzi dorośli opuszczający pieczę zastępczą",
+      reported_at: "2026-10-01T14:30:00Z",
+    },
+    {
+      submission_id: 103,
+      title: "Brak wsparcia logopedycznego AAC dla dorosłych po udarach na wsi",
+      category_name: "Dla osób z niepełnosprawnością intelektualną",
+      county_name: "Powiat nowosądecki",
+      affected_group: "Pacjenci po udarach mózgu w podeszłym wieku",
+      reported_at: "2026-10-02T09:00:00Z",
+    },
+  ],
+};
 
 async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const url = `${API_BASE_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
@@ -225,6 +592,7 @@ export async function getInnovations(params?: {
   category?: string;
   county?: string;
   stage?: string;
+  type?: string;
   q?: string;
 }): Promise<SocialInnovation[]> {
   try {
@@ -232,22 +600,115 @@ export async function getInnovations(params?: {
     if (params?.category) searchParams.set("category", params.category);
     if (params?.county) searchParams.set("county", params.county);
     if (params?.stage) searchParams.set("stage", params.stage);
+    if (params?.type) searchParams.set("type", params.type);
     if (params?.q) searchParams.set("q", params.q);
 
     const query = searchParams.toString();
     const endpoint = `/innovations/${query ? `?${query}` : ""}`;
-    return await apiFetch<SocialInnovation[]>(endpoint);
+    const data = await apiFetch<SocialInnovation[]>(endpoint);
+    return data && data.length > 0 ? data : filterFallbackInnovations(params);
   } catch {
-    return [];
+    return filterFallbackInnovations(params);
   }
+}
+
+function filterFallbackInnovations(params?: {
+  category?: string;
+  stage?: string;
+  type?: string;
+  q?: string;
+}): SocialInnovation[] {
+  let list = [...FALLBACK_INNOVATIONS];
+  if (params?.category) {
+    list = list.filter((item) => item.category_code === params.category || String(item.category) === params.category);
+  }
+  if (params?.stage) {
+    list = list.filter((item) => item.maturity_stage === params.stage);
+  }
+  if (params?.type) {
+    list = list.filter((item) => item.innovation_type === params.type);
+  }
+  if (params?.q) {
+    const query = params.q.toLowerCase();
+    list = list.filter(
+      (item) =>
+        item.title.toLowerCase().includes(query) ||
+        item.short_summary.toLowerCase().includes(query) ||
+        item.target_audience.toLowerCase().includes(query) ||
+        item.tags.some((tag) => tag.toLowerCase().includes(query))
+    );
+  }
+  return list;
 }
 
 /** Pobiera szczegóły innowacji po jej unikalnym slugu */
 export async function getInnovationBySlug(slug: string): Promise<SocialInnovation | null> {
   try {
-    return await apiFetch<SocialInnovation>(`/innovations/${slug}/`);
+    const data = await apiFetch<SocialInnovation>(`/innovations/${slug}/`);
+    return data ?? (FALLBACK_INNOVATIONS.find((item) => item.slug === slug) || null);
   } catch {
-    return null;
+    return FALLBACK_INNOVATIONS.find((item) => item.slug === slug) || null;
+  }
+}
+
+/** Rejestruje polubienie innowacji */
+export async function likeInnovation(slug: string): Promise<{ likes_count: number }> {
+  try {
+    return await apiFetch<{ status: string; likes_count: number }>(`/innovations/${slug}/like/`, {
+      method: "POST",
+    });
+  } catch {
+    const found = FALLBACK_INNOVATIONS.find((item) => item.slug === slug);
+    if (found) {
+      found.likes_count += 1;
+      return { likes_count: found.likes_count };
+    }
+    return { likes_count: 1 };
+  }
+}
+
+/** Pobiera listę wyzwań regionalnych Małopolski */
+export async function getChallenges(params?: {
+  category?: string;
+  county?: string;
+}): Promise<RegionalChallenge[]> {
+  try {
+    const searchParams = new URLSearchParams();
+    if (params?.category) searchParams.set("category", params.category);
+    if (params?.county) searchParams.set("county", params.county);
+    const query = searchParams.toString();
+    const endpoint = `/challenges/${query ? `?${query}` : ""}`;
+    const data = await apiFetch<RegionalChallenge[]>(endpoint);
+    return data && data.length > 0 ? data : FALLBACK_CHALLENGES;
+  } catch {
+    let list = [...FALLBACK_CHALLENGES];
+    if (params?.category) {
+      list = list.filter((item) => item.category_code === params.category);
+    }
+    if (params?.county) {
+      list = list.filter((item) => item.county_slug === params.county);
+    }
+    return list;
+  }
+}
+
+/** Pobiera wyzwanie regionalne po slugu */
+export async function getChallengeBySlug(slug: string): Promise<RegionalChallenge | null> {
+  try {
+    const data = await apiFetch<RegionalChallenge>(`/challenges/${slug}/`);
+    return data ?? (FALLBACK_CHALLENGES.find((item) => item.slug === slug) || null);
+  } catch {
+    return FALLBACK_CHALLENGES.find((item) => item.slug === slug) || null;
+  }
+}
+
+/** Pobiera analitykę trendów i Białe Plamy (Moduł VI / Moduł II) */
+export async function getAdminTrends(): Promise<AdminTrendsResponse> {
+  try {
+    const data = await apiFetch<AdminTrendsResponse>("/admin/trends/");
+    return data && data.total_submissions !== undefined ? data : FALLBACK_ADMIN_TRENDS;
+  } catch {
+    return FALLBACK_ADMIN_TRENDS;
   }
 }
 
@@ -272,56 +733,26 @@ export async function analyzeMatchmaking(
         is_gap_identified: false,
         gap_message: "",
         total_matches: 2,
-        top_score: 88.5,
+        top_score: 92.0,
         recommended_action: "Skorzystaj z rekomendowanych innowacji społecznych ROPS Kraków.",
         matches: [
           {
-            similarity_score: 88.5,
+            similarity_score: 92.0,
             justification: "Zbieżność w głównej kategorii ROPS oraz dopasowanie kluczowych zagadnień opieki i włączenia społecznego.",
             suggested_next_step: "middleman",
-            innovation: {
-              id: 1,
-              title: "Senior CUDER – Gra terapeutyczno-integracyjna",
-              slug: "senior-cuder",
-              category: 1,
-              category_name: "Dla seniorów",
-              category_code: "seniors",
-              maturity_stage: "sprawdzona",
-              innovation_type: "produkt",
-              short_summary: "Narzędzie aktywizujące i integrujące osoby starsze w lokalnej społeczności poprzez angażującą formułę gry planszowej.",
-              target_audience: "Seniorzy, kluby seniora, dzienne domy pobytu, opiekunowie",
-              replication_readiness_score: 95,
-              likes_count: 24,
-              matches_count: 18,
-              tags: ["seniorzy", "integracja", "gra", "terapia"],
-            },
+            innovation: FALLBACK_INNOVATIONS[1],
           },
           {
-            similarity_score: 72.0,
+            similarity_score: 84.5,
             justification: "Zgodność w obszarze wsparcia osób z ograniczeniami sensorycznymi i ruchowymi.",
             suggested_next_step: "tester",
-            innovation: {
-              id: 2,
-              title: "BaWita – Mobilna Tablica Sensoryczna",
-              slug: "bawita-tablica-sensoryczna",
-              category: 4,
-              category_name: "Dla osób z niepełnosprawnością sensoryczną",
-              category_code: "sensory",
-              maturity_stage: "testy",
-              innovation_type: "produkt",
-              short_summary: "Mobilny zestaw paneli sensoryczno-stymulacyjnych dla osób z demencją i ograniczeniami poznawczymi.",
-              target_audience: "Osoby starsze z demencją, domy pomocy społecznej, opiekunowie domowi",
-              replication_readiness_score: 80,
-              likes_count: 31,
-              matches_count: 22,
-              tags: ["sensoryka", "demencja", "baWita", "terapia"],
-            },
+            innovation: FALLBACK_INNOVATIONS[0],
           },
         ],
       };
     }
 
-    // Jeśli zapytanie jest egzotyczne lub brak innowacji -> Biała Plama
+    // Jeśli zapytanie jest nietypowe lub brak innowacji -> Biała Plama
     return {
       submission_id: Math.floor(Math.random() * 1000) + 1,
       is_gap_identified: true,
