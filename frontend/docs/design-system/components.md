@@ -27,6 +27,10 @@ Polish; component APIs and this technical documentation are English.
 | `MatchSummary` | need title, match count, summary, action | A compact explanation of available matches. |
 | `ContactAction` | organization, contact method, safety note, action | A safe, explicit route into organization contact. |
 | `ModerationStatus` | label, semantic variant, description | ROPS-only status context; never a public-user default. |
+| `QuickAction` | href, label, icon, variant | Prominent resident discovery link with a visible Polish label and supplementary icon. |
+| `ContentSection` | title, action, children; optional description | Section heading, “show all” link, and labelled horizontally scrollable discovery content. |
+| `ChallengeCard` | href, title, solution count, image | Compact whole-card link for a regional challenge; image needs meaningful Polish alt text. |
+| `RecommendationCard` | href, title, organization, image; optional category | Compact whole-card recommendation link; image needs meaningful Polish alt text. |
 
 All card actions are links because they navigate to a detail or contact route.
 The components render semantic article/aside/status structures, retain visible

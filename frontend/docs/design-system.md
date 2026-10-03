@@ -54,7 +54,7 @@ these components rather than introducing look-alikes.
 | Feedback | `Alert`, `Banner`, `Toast`, `Tag`, `Badge`, `LinearProgress`, `CircularProgress` | Textual non-colour cue; use alerts for changed status, contextual banners for persistent guidance, tags for metadata, and badges for compact named status. |
 | Navigation | `AppNavigation`, `PageNavigationBar`, `Pagination` | Landmark and current-page state; mobile and desktop expose the same destinations. |
 | Overlays | `Dialog` | Native modal for an explicit decision with dismissal and focus restoration. |
-| Splot domain | `NeedCard`, `SolutionCard`, `OrganizationCard`, `MatchSummary`, `ContactAction`, `ModerationStatus` | Identify the subject, responsible organization, status, and safe next action without relying on colour. |
+| Splot domain | `QuickAction`, `ContentSection`, `ChallengeCard`, `RecommendationCard`, `NeedCard`, `SolutionCard`, `OrganizationCard`, `MatchSummary`, `ContactAction`, `ModerationStatus` | Identify the subject, responsible organization, status, and safe next action without relying on colour. |
 | Admin and location | `DataTable`, `Map` | Responsive table alternative and map/list pairing; labelled filters and accessible location list. |
 
 ## Adoption rules
@@ -131,3 +131,16 @@ these components rather than introducing look-alikes.
 - Card actions are links because they lead to details or contact. The outlined
   action treatment remains at least 44 CSS pixels tall and the card reflows as
   a single column at narrow widths and enlarged text.
+
+## Resident discovery
+
+- `QuickAction` is a prominent resident link to a primary discovery task. It
+  pairs a visible Polish label with an icon and uses a semantic visual variant;
+  colour never communicates the action alone.
+- `ContentSection` groups a heading, an explicit “show all” link, and an
+  intentionally horizontally scrollable card strip. The full collection link
+  remains available without horizontal scrolling.
+- `ChallengeCard` names a regional challenge and its visible solution count.
+  `RecommendationCard` names a proposed solution, its organization, and
+  optional category. Both use meaningful local imagery and are whole-card
+  links.

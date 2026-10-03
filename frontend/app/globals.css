@@ -69,6 +69,14 @@
   --action-danger-pressed-content: #ffffff;
   --action-disabled-surface: #eef2f5;
   --action-disabled-content: #94a3b8;
+  --quick-action-primary-surface: var(--action-primary);
+  --quick-action-primary-content: var(--action-primary-content);
+  --quick-action-search-surface: #ffc107;
+  --quick-action-search-content: #062340;
+  --quick-action-partners-surface: var(--feedback-success-background);
+  --quick-action-partners-content: var(--feedback-success-foreground);
+  --quick-action-knowledge-surface: #ffb36e;
+  --quick-action-knowledge-content: #062340;
   --shadow-action: 0 0.5rem 1rem rgb(0 122 85 / 20%);
   --feedback-success-foreground: #087a3a;
   --feedback-success-background: #e6f7ec;
@@ -127,6 +135,14 @@
   --action-danger-pressed-content: #062340;
   --action-disabled-surface: #0f365b;
   --action-disabled-content: #cbd5e1;
+  --quick-action-primary-surface: var(--action-primary);
+  --quick-action-primary-content: var(--action-primary-content);
+  --quick-action-search-surface: #ffc36a;
+  --quick-action-search-content: #062340;
+  --quick-action-partners-surface: var(--feedback-success-background);
+  --quick-action-partners-content: var(--feedback-success-foreground);
+  --quick-action-knowledge-surface: #ff9d4d;
+  --quick-action-knowledge-content: #062340;
   --shadow-action: 0 0.5rem 1rem rgb(0 0 0 / 32%);
   --feedback-success-foreground: #70e69a;
   --feedback-success-background: #123a22;
@@ -176,6 +192,14 @@
   --action-danger-pressed-content: #000000;
   --action-disabled-surface: #000000;
   --action-disabled-content: #ffffff;
+  --quick-action-primary-surface: #ffffff;
+  --quick-action-primary-content: #000000;
+  --quick-action-search-surface: #ffffff;
+  --quick-action-search-content: #000000;
+  --quick-action-partners-surface: #ffffff;
+  --quick-action-partners-content: #000000;
+  --quick-action-knowledge-surface: #ffffff;
+  --quick-action-knowledge-content: #000000;
   --shadow-action: none;
   --feedback-success-foreground: #ffffff;
   --feedback-success-background: #000000;
@@ -225,6 +249,14 @@
   --action-danger-pressed-content: #000000;
   --action-disabled-surface: #000000;
   --action-disabled-content: #ffff00;
+  --quick-action-primary-surface: #ffff00;
+  --quick-action-primary-content: #000000;
+  --quick-action-search-surface: #ffff00;
+  --quick-action-search-content: #000000;
+  --quick-action-partners-surface: #ffff00;
+  --quick-action-partners-content: #000000;
+  --quick-action-knowledge-surface: #ffff00;
+  --quick-action-knowledge-content: #000000;
   --shadow-action: none;
   --feedback-success-foreground: #ffff00;
   --feedback-success-background: #000000;
@@ -274,6 +306,14 @@
   --action-danger-pressed-content: #ffffff;
   --action-disabled-surface: #dedede;
   --action-disabled-content: #575757;
+  --quick-action-primary-surface: #111111;
+  --quick-action-primary-content: #ffffff;
+  --quick-action-search-surface: #dedede;
+  --quick-action-search-content: #111111;
+  --quick-action-partners-surface: #dedede;
+  --quick-action-partners-content: #111111;
+  --quick-action-knowledge-surface: #dedede;
+  --quick-action-knowledge-content: #111111;
   --shadow-action: 0 0.5rem 1rem rgb(17 17 17 / 18%);
   --feedback-success-foreground: #111111;
   --feedback-success-background: #dedede;
@@ -361,6 +401,14 @@
     --action-danger-pressed-content: #062340;
     --action-disabled-surface: #0f365b;
     --action-disabled-content: #cbd5e1;
+    --quick-action-primary-surface: var(--action-primary);
+    --quick-action-primary-content: var(--action-primary-content);
+    --quick-action-search-surface: #ffc36a;
+    --quick-action-search-content: #062340;
+    --quick-action-partners-surface: var(--feedback-success-background);
+    --quick-action-partners-content: var(--feedback-success-foreground);
+    --quick-action-knowledge-surface: #ff9d4d;
+    --quick-action-knowledge-content: #062340;
     --shadow-action: 0 0.5rem 1rem rgb(0 0 0 / 32%);
     --feedback-success-foreground: #70e69a;
     --feedback-success-background: #123a22;
@@ -1763,6 +1811,155 @@ a.app-navigation__link {
 .card__action--primary:active {
   background: var(--action-primary-pressed);
   color: var(--action-primary-pressed-content);
+}
+
+.discovery-showcase { margin-top: var(--space-10); }
+
+.discovery-showcase__welcome p {
+  color: var(--content-secondary);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  margin: var(--space-2) 0 0;
+}
+
+.quick-actions {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: var(--space-6);
+}
+
+.quick-action {
+  align-items: center;
+  background: var(--quick-action-surface);
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  color: var(--quick-action-content);
+  display: flex;
+  flex-direction: column;
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  gap: var(--space-3);
+  justify-content: center;
+  min-height: 9.5rem;
+  padding: var(--space-4);
+  text-align: center;
+  text-decoration: none;
+}
+
+.quick-action__icon {
+  align-items: center;
+  background: color-mix(in srgb, var(--quick-action-content) 10%, var(--surface-raised));
+  border-radius: 50%;
+  display: inline-flex;
+  height: 3rem;
+  justify-content: center;
+  width: 3rem;
+}
+
+.quick-action--primary { --quick-action-surface: var(--quick-action-primary-surface); --quick-action-content: var(--quick-action-primary-content); }
+.quick-action--search { --quick-action-surface: var(--quick-action-search-surface); --quick-action-content: var(--quick-action-search-content); }
+.quick-action--partners { --quick-action-surface: var(--quick-action-partners-surface); --quick-action-content: var(--quick-action-partners-content); }
+.quick-action--knowledge { --quick-action-surface: var(--quick-action-knowledge-surface); --quick-action-content: var(--quick-action-knowledge-content); }
+
+.content-section__header {
+  align-items: end;
+  display: flex;
+  gap: var(--space-4);
+  justify-content: space-between;
+}
+
+.content-section__header p {
+  color: var(--content-muted);
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-caption);
+  margin: var(--space-1) 0 0;
+}
+
+.content-section__action {
+  align-items: center;
+  color: var(--content-link);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-bold);
+  gap: var(--space-2);
+  min-height: var(--control-height-sm);
+}
+
+.content-section__scroll {
+  display: grid;
+  gap: var(--space-4);
+  grid-auto-columns: minmax(15rem, 18rem);
+  grid-auto-flow: column;
+  margin: var(--space-5) calc(var(--space-4) * -1) 0;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  padding: 0 var(--space-4) var(--space-3);
+  scroll-padding-inline: var(--space-4);
+  scroll-snap-type: inline proximity;
+}
+
+.discovery-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  min-width: 0;
+  overflow: hidden;
+  scroll-snap-align: start;
+}
+
+.discovery-card a {
+  color: var(--content-primary);
+  display: block;
+  height: 100%;
+  padding: var(--space-3);
+  text-decoration: none;
+}
+
+.discovery-card__media {
+  aspect-ratio: 16 / 9;
+  border-radius: calc(var(--radius-control) - var(--space-1));
+  overflow: hidden;
+  position: relative;
+}
+
+.discovery-card__media img { object-fit: cover; }
+
+.discovery-card h4,
+.discovery-card p { margin: 0; }
+
+.discovery-card h4 {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.35;
+  margin-top: var(--space-3);
+}
+
+.discovery-card p {
+  color: var(--content-muted);
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-caption);
+  margin-top: var(--space-2);
+}
+
+.discovery-card__category {
+  color: var(--content-link) !important;
+  font-weight: var(--font-weight-semibold);
+}
+
+.discovery-card--recommendation { min-height: 18rem; }
+
+@media (min-width: 48rem) {
+  .quick-actions { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .quick-action { min-height: 10rem; }
+  .content-section__scroll { margin-inline: 0; padding-inline: 0; scroll-padding-inline: 0; }
+}
+
+@media (hover: hover) {
+  .quick-action:hover { background: color-mix(in srgb, var(--quick-action-surface) 88%, var(--surface-raised)); }
+  .discovery-card:hover { border-color: var(--border-strong); }
+  .content-section__action:hover { color: var(--content-primary); }
 }
 
 @media (hover: hover) {
