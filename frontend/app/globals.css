@@ -1445,16 +1445,63 @@ a.app-navigation__link {
 
 @media (min-width: 40rem) {
   .step-progress {
-    align-items: start;
+    align-items: center;
     display: flex;
     gap: 0;
+    overflow-x: auto;
+    padding-bottom: var(--space-1);
+    scrollbar-width: none;
+    width: 100%;
   }
 
-  .step-progress__step { align-items: center; flex: 1 1 0; grid-template-columns: var(--control-height-sm) minmax(0, 1fr); justify-items: start; text-align: start; }
-  .step-progress__step:not(:last-child)::after { background: var(--border-subtle); content: ""; height: 1px; left: calc(var(--control-height-sm) / 2); position: absolute; right: calc(var(--control-height-sm) / -2); top: calc(var(--control-height-sm) / 2); }
-  .step-progress__number, .step-progress__label { position: relative; z-index: 1; }
-  .step-progress__label { background: var(--surface-raised); padding-right: var(--space-3); }
-  .step-progress__status { clip: rect(0, 0, 0, 0); clip-path: inset(50%); height: 1px; overflow: hidden; position: absolute; white-space: nowrap; width: 1px; }
+  .step-progress::-webkit-scrollbar {
+    display: none;
+  }
+
+  .step-progress__step {
+    align-items: center;
+    display: flex;
+    flex: 1 1 0;
+    gap: var(--space-2);
+    min-height: var(--control-height-sm);
+    min-width: 0;
+  }
+
+  .step-progress__step:last-child {
+    flex: 0 0 auto;
+  }
+
+  .step-progress__step:not(:last-child)::after {
+    background: var(--border-subtle);
+    content: "";
+    flex: 1 1 0;
+    height: 1px;
+    margin-inline: var(--space-3);
+    min-width: var(--space-3);
+  }
+
+  .step-progress__step--ukończony:not(:last-child)::after {
+    background: var(--action-primary);
+  }
+
+  .step-progress__number {
+    flex-shrink: 0;
+  }
+
+  .step-progress__label {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .step-progress__status {
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+  }
 }
 
 .slider {
