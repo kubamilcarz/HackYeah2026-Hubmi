@@ -576,10 +576,10 @@ class PilotProjectViewSet(viewsets.ModelViewSet):
                 qs = qs.filter(innovation__slug=innovation_param)
         if q:
             qs = qs.filter(
-                models.Q(title__icontains=q)
-                | models.Q(summary__icontains=q)
-                | models.Q(municipality_name__icontains=q)
-                | models.Q(innovation__title__icontains=q)
+                Q(title__icontains=q)
+                | Q(summary__icontains=q)
+                | Q(municipality_name__icontains=q)
+                | Q(innovation__title__icontains=q)
             )
         return qs
 
