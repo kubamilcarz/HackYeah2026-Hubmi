@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import { AccessibilityMenu } from "@/components/accessibility/AccessibilityMenu";
 import { AccessibilityProvider } from "@/components/accessibility/AccessibilityProvider";
+import { PersonaProvider } from "@/contexts/PersonaContext";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -64,8 +65,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           {preferenceScript}
         </Script>
         <AccessibilityProvider>
-          {children}
-          <AccessibilityMenu />
+          <PersonaProvider>
+            {children}
+            <AccessibilityMenu />
+          </PersonaProvider>
         </AccessibilityProvider>
       </body>
     </html>

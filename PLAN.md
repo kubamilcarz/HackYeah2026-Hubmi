@@ -24,33 +24,33 @@ Aby pogodzić **błyskawiczną prezentację bez wpisywania haseł** z **brakiem 
 ## 2. Podział na etapy i zadania wdrożeniowe
 
 ### Faza 1: Architektura danych, Persony i Design System (Fundamenty)
-- [ ] **1.1. Model danych Django (`backend/api/models.py`)**:
+- [x] **1.1. Model danych Django (`backend/api/models.py`)**:
   - `InnovationCategory`: 9 oficjalnych kategorii ROPS Kraków (*Dla seniorów*, *Dla dzieci, młodzieży i rodziny*, *Dla osób o ograniczonej mobilności*, *Dla osób z niepełnosprawnością sensoryczną*, *Dla zdrowia i medycyny*, *Dla rynku pracy*, *Dla cudzoziemców*, *Dla osób w kryzysie bezdomności*, *Dla osób z niepełnosprawnością intelektualną*).
   - `ReporterType`: *Mieszkaniec*, *Organizacja pozarządowa (NGO)*, *Jednostka Samorządu Terytorialnego (JST)*, *Ekspert branżowy*.
   - `SocialInnovation`: Karta innowacji (tytuł, kategoria, opis, etapy: koncepcja/prototyp/testy/gotowa, wideo demo + transkrypcja WCAG, podręcznik PDF, autor).
   - `ProblemSubmission` & `ProblemMatch`: Zgłoszenie potrzeby z powiązaną personą/kontaktem, powiatem i gminą Małopolski, kategoriami i wyliczonym `similarity_score`.
   - `RegionalChallenge`: Wyzwania Małopolski (depopulacja, starzenie, samotność, zdrowie psychiczne) z danymi powiatowymi.
-- [ ] **1.2. Ziarno danych demonstracyjnych (Seed data Małopolski)**:
+- [x] **1.2. Ziarno danych demonstracyjnych (Seed data Małopolski)**:
   - Komenda `python manage.py seed_demo_data` zasilająca bazę autentycznymi innowacjami ROPS Kraków (*BaWita*, *Senior CUDER*, *Merkury*, *Modularne łazienki*, *Organizator opieki* itp.) z realnymi filmami YouTube i folderami PDF.
   - Zestaw wyzwań dla powiatów Małopolski (krakowski, nowosądecki, tarnowski, gorlicki, tatrzański, myślenicki).
   - Predefiniowane konta 5 person demonstracyjnych.
-- [ ] **1.3. Rozbudowa Design Systemu i Persona Switcher (frontend)**:
+- [x] **1.3. Rozbudowa Design Systemu i Persona Switcher (frontend)**:
   - Spójne komponenty WCAG 2.2 AA zgodne z `frontend/docs/design-system.md`: `AppShell`, `Header`, `BottomNavigation`, `PersonaSwitcher`, `NeedCard`, `SolutionCard`, `StatusBadge`, `Field`, `TextInput`, `Select`.
   - Kontekst React `usePersona()` z persistencją w `localStorage` automatycznie zasilający formularze w całej aplikacji.
 
 ---
 
 ### Faza 2: Moduł I – Matchmaking Społeczny *(Obligatoryjny, 10% bazy)*
-- [ ] **2.1. Formularz zgłoszenia problemu społecznego**:
+- [x] **2.1. Formularz zgłoszenia problemu społecznego**:
   - Automatyczne zaczytanie danych zgłaszającego z aktywnej Persony (z możliwością modyfikacji).
   - Wybór kategorii problemu z oficjalnej listy 9 kategorii ROPS Kraków.
   - Wybór powiatu i gminy Małopolski.
   - Szczegółowy opis sytuacji, grupy dotkniętej problemem i szacowanej skali.
-- [ ] **2.2. Inteligentny silnik kojarzenia (Matching Engine)**:
+- [x] **2.2. Inteligentny silnik kojarzenia (Matching Engine)**:
   - Endpoint API `POST /api/matchmaking/analyze/` wyszukujący powiązane innowacje z bazy oraz podobne zgłoszone przypadki.
   - Dwuwarstwowy algorytm: scoring słowno-kategorialny (gwarancja 100% działania offline) + opcjonalne wzbogacenie semantyczne/AI wyjaśniające dopasowanie.
   - Wyliczanie wskaźnika trafności dopasowania (Match Score %) oraz generowanie uzasadnienia (*„Dlaczego ta innowacja pasuje”*).
-- [ ] **2.3. Prezentacja wyników i akcje następcze**:
+- [x] **2.3. Prezentacja wyników i akcje następcze**:
   - Prezentacja kart pasujących innowacji (`SolutionCard`) z akcjami:
     - Jeśli rozwiązanie istnieje: *„Wdróż w swojej gminie (przejdź do Middlemana AI)”* lub *„Zgłoś się do testów (Tester innowacji)”*.
     - Jeśli rozwiązanie nie istnieje (luka w innowacjach): informacja o zarejestrowaniu luki w bazie wyzwań ROPS z przyciskiem *„Przekształć w pomysł w Kreatorze”* przenoszącym do Kreatora z pre-filled danymi.
