@@ -36,7 +36,7 @@ focus, and reflow from one column on mobile to richer layouts on wider screens.
 
 | Component | Source | Contract |
 | --- | --- | --- |
-| `DataTable` | `ui/DataTable.tsx` | Searchable and sortable native table. Filtering, sorting, labels, and empty state are Polish. |
+| `DataTable` | `ui/DataTable.tsx` | Searchable and sortable native table with Polish labels and empty state. Optional `selectable` adds named native row/select-all checkboxes; `cellKind: "status"` plus `statusVariants` renders a textual `Badge` status. It scrolls horizontally on narrow screens rather than dropping data. |
 | `Map` | `ui/Map.tsx` | Map plus keyboard-accessible organization list and selected-detail area. The list remains available when map configuration fails. |
 
 ## Accessibility infrastructure

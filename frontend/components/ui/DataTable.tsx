@@ -1,15 +1,18 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { MagnifyingGlass } from "@phosphor-icons/react";
 import { SearchField } from "@/components/ui/FormControls";
+import { Badge, type TagVariant } from "@/components/ui/Tag";
 
 export type DataTableRow = Record<string, string | number>;
 
 export type DataTableColumn<Row extends DataTableRow> = {
+  cellKind?: "text" | "status";
   key: keyof Row & string;
   label: string;
   sortable?: boolean;
+  statusVariants?: Partial<Record<string, TagVariant>>;
 };
 
 type DataTableProps<Row extends DataTableRow> = {
@@ -18,9 +21,12 @@ type DataTableProps<Row extends DataTableRow> = {
   columns: DataTableColumn<Row>[];
   emptyMessage?: string;
   heading: string;
+  onSelectionChange?: (selectedRowKeys: string[]) => void;
   rowKey: keyof Row & string;
+  rowSelectionLabel?: (row: Row) => string;
   rows: Row[];
   searchLabel?: string;
+  selectable?: boolean;
 };
 
 type SortDirection = "ascending" | "descending";
@@ -44,9 +50,12 @@ export function DataTable<Row extends DataTableRow>({
   columns,
   emptyMessage = "Brak pasujących rekordów.",
   heading,
+  onSelectionChange,
   rowKey,
+  rowSelectionLabel = (row) => `Zaznacz wiersz: ${String(row[rowKey])}`,
   rows,
   searchLabel = "Szukaj w tabeli",
+  selectable = false,
 }: DataTableProps<Row>) {
   const generatedId = useId();
   const tableId = `data-table-${generatedId}`;
@@ -54,7 +63,9 @@ export function DataTable<Row extends DataTableRow>({
   const searchId = `${tableId}-search`;
   const [query, setQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [sort, setSort] = useState<{ key: keyof Row & string; direction: SortDirection }>();
+  const selectAllRef = useRef<HTMLInputElement>(null);
 
   const displayedRows = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase();
@@ -69,6 +80,34 @@ export function DataTable<Row extends DataTableRow>({
       return sort.direction === "ascending" ? result : -result;
     });
   }, [columns, query, rows, sort]);
+
+  const displayedRowKeys = displayedRows.map((row) => String(row[rowKey]));
+  const isAllSelected = displayedRowKeys.length > 0 && displayedRowKeys.every((key) => selectedRowKeys.includes(key));
+  const isPartiallySelected = !isAllSelected && displayedRowKeys.some((key) => selectedRowKeys.includes(key));
+
+  useEffect(() => {
+    if (selectAllRef.current) selectAllRef.current.indeterminate = isPartiallySelected;
+  }, [isPartiallySelected]);
+
+  function updateSelection(nextSelection: string[]) {
+    setSelectedRowKeys(nextSelection);
+    onSelectionChange?.(nextSelection);
+  }
+
+  function toggleRowSelection(key: string) {
+    updateSelection(selectedRowKeys.includes(key)
+      ? selectedRowKeys.filter((selectedKey) => selectedKey !== key)
+      : [...selectedRowKeys, key]);
+  }
+
+  function toggleAllRows() {
+    if (isAllSelected) {
+      updateSelection(selectedRowKeys.filter((key) => !displayedRowKeys.includes(key)));
+      return;
+    }
+
+    updateSelection([...new Set([...selectedRowKeys, ...displayedRowKeys])]);
+  }
 
   function toggleSort(key: keyof Row & string) {
     setSort((current) => ({
@@ -94,6 +133,7 @@ export function DataTable<Row extends DataTableRow>({
           {caption && <caption>{caption}</caption>}
           <thead>
             <tr>
+              {selectable && <th className="data-table__selection-cell" scope="col"><input aria-label="Zaznacz wszystkie widoczne wiersze" checked={isAllSelected} className="data-table__checkbox" onChange={toggleAllRows} ref={selectAllRef} type="checkbox" /></th>}
               {columns.map((column) => {
                 const direction = sort?.key === column.key ? sort.direction : undefined;
 
@@ -113,7 +153,8 @@ export function DataTable<Row extends DataTableRow>({
           <tbody>
             {displayedRows.map((row) => (
               <tr key={String(row[rowKey])}>
-                {columns.map((column) => <td key={column.key}>{row[column.key]}</td>)}
+                {selectable && <td className="data-table__selection-cell"><input aria-label={rowSelectionLabel(row)} checked={selectedRowKeys.includes(String(row[rowKey]))} className="data-table__checkbox" onChange={() => toggleRowSelection(String(row[rowKey]))} type="checkbox" /></td>}
+                {columns.map((column) => <td key={column.key}>{column.cellKind === "status" ? <Badge label={String(row[column.key])} variant={column.statusVariants?.[String(row[column.key])] ?? "neutral"} /> : row[column.key]}</td>)}
               </tr>
             ))}
           </tbody>

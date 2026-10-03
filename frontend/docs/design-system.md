@@ -95,3 +95,15 @@ these components rather than introducing look-alikes.
 - Feedback and status patterns stack and wrap without clipping at enlarged text
   or 400% zoom. Verify a dismissible alert with keyboard focus and each pattern
   in light, dark, grayscale, high-contrast, and forced-colors modes.
+
+## Tables
+
+- `DataTable` is the ROPS pattern for searchable, sortable records. It keeps a
+  native table at every width and permits horizontal scrolling rather than
+  hiding columns on narrow screens.
+- Set `selectable` only when a following bulk action is available. Its native
+  row and select-all checkboxes have Polish names and maintain selection while
+  filtering or sorting.
+- A column with `cellKind: "status"` renders the existing `Badge` component.
+  Map visible status text to a semantic variant through `statusVariants`; do
+  not make the colour or indicator its sole meaning.
