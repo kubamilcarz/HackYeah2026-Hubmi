@@ -1051,83 +1051,250 @@ export async function generateMiddlemanPackage(payload: MiddlemanPackagePayload)
   }
 }
 
+export type PilotEvaluationItem = {
+  id?: number;
+  pilot?: number;
+  pilot_title?: string;
+  evaluator_persona_key?: string;
+  evaluator_name: string;
+  evaluator_role: string;
+  evaluator_role_display?: string;
+  evaluator_institution?: string;
+  usability_score: number;
+  effectiveness_score: number;
+  accessibility_score: number;
+  barriers_encountered?: string;
+  proposed_improvements?: string;
+  recommend_to_scale?: boolean;
+  test_environment_notes?: string;
+  created_at?: string;
+};
+
 export type PilotProjectItem = {
   id: number;
+  innovation?: number;
   title: string;
   innovation_title: string;
   innovation_slug: string;
-  municipality: string;
+  municipality_name?: string;
+  municipality?: string;
+  county?: number;
   county_name: string;
-  status: "rekrutacja" | "w_trakcie" | "zakonczony";
+  status: "recruiting" | "in_progress" | "completed" | "rekrutacja" | "w_trakcie" | "zakonczony";
+  status_display?: string;
+  max_testers: number;
   target_testers_count: number;
   current_testers_count: number;
+  eligible_roles_description?: string;
+  summary: string;
   description: string;
+  instructions?: string;
+  start_date?: string | null;
+  end_date?: string | null;
+  evaluations_count?: number;
+  evaluations?: PilotEvaluationItem[];
+  average_usability_score?: number | null;
+  average_effectiveness_score?: number | null;
+  average_accessibility_score?: number | null;
+  average_overall_score?: number | null;
+  recommendation_rate?: number | null;
 };
 
 export const FALLBACK_PILOTS: PilotProjectItem[] = [
   {
     id: 1,
-    title: "Pilotaż terenowy: BaWita – mobilna sala zabaw i animacji",
-    innovation_title: "BaWita – mobilna integracja sensoryczna",
-    innovation_slug: "bawita-mobilna-sala-zabaw",
+    title: "Pilotaż BaWita w środowisku domowym – gmina Grybów",
+    innovation_title: "BaWita – mobilna tablica sensoryczna",
+    innovation_slug: "bawita-tablica-sensoryczna",
     municipality: "Grybów",
+    municipality_name: "Grybów",
     county_name: "Powiat nowosądecki",
-    status: "rekrutacja",
-    target_testers_count: 25,
-    current_testers_count: 14,
-    description: "Testy mobilnej sali zabaw u dzieci z niepełnosprawnościami na terenach podgórskich. Poszukujemy rodziców, opiekunów i animatorów lokalnych.",
+    status: "completed",
+    status_display: "Pilotaż zakończony / Ewaluacja",
+    max_testers: 5,
+    target_testers_count: 5,
+    current_testers_count: 5,
+    eligible_roles_description: "Opiekunowie rodzinni, kadra CUS, pracownicy socjalni",
+    summary: "3-miesięczny pilotaż mobilnej tablicy sensorycznej u 5 podopiecznych z wczesnym otępieniem.",
+    description: "3-miesięczny pilotaż mobilnej tablicy sensorycznej u 5 podopiecznych z wczesnym otępieniem.",
+    instructions: "Prosimy o sesje 3 razy w tygodniu po 30 minut oraz odnotowywanie czasu skupienia uwagi podopiecznego.",
+    start_date: "2026-07-01",
+    end_date: "2026-09-30",
+    evaluations_count: 3,
+    average_usability_score: 5.0,
+    average_effectiveness_score: 4.7,
+    average_accessibility_score: 4.7,
+    average_overall_score: 4.8,
+    recommendation_rate: 100,
+    evaluations: [
+      {
+        id: 101,
+        pilot: 1,
+        evaluator_persona_key: "anna_nowak",
+        evaluator_name: "Anna Nowak",
+        evaluator_role: "opiekun",
+        evaluator_role_display: "Opiekun osoby zależnej",
+        evaluator_institution: "Opiekunka rodzinna (mama 78 lat)",
+        usability_score: 5,
+        effectiveness_score: 5,
+        accessibility_score: 4,
+        barriers_encountered: "Zapięcie walizki wymagało użycia większej siły przez osobę z artretyzmem dłoni.",
+        proposed_improvements: "Zastąpienie metalowych zatrzasków walizki miękkimi pasami z rzepem magnetycznym.",
+        recommend_to_scale: true,
+        test_environment_notes: "Testowano w domu jednorodzinnym w Grybowie. Mama chętnie wracała do labiryntów dotykowych.",
+        created_at: "2026-09-28T14:30:00Z",
+      },
+      {
+        id: 102,
+        pilot: 1,
+        evaluator_persona_key: "piotr_adamski",
+        evaluator_name: "dr Piotr Adamski",
+        evaluator_role: "ekspert",
+        evaluator_role_display: "Ekspert branżowy",
+        evaluator_institution: "Uniwersytet Pedagogiczny / Ekspert ds. deinstytucjonalizacji",
+        usability_score: 5,
+        effectiveness_score: 5,
+        accessibility_score: 5,
+        barriers_encountered: "Brak uwag krytycznych. Znakomity poziom bezpieczeństwa materiałów naturalnych.",
+        proposed_improvements: "Wydanie krótkiego wideo-przewodnika dla personelu CUS.",
+        recommend_to_scale: true,
+        test_environment_notes: "Ocena ekspercka w warunkach środowiskowych. Pełna zgodność z celami deinstytucjonalizacji.",
+        created_at: "2026-09-29T10:15:00Z",
+      },
+      {
+        id: 103,
+        pilot: 1,
+        evaluator_persona_key: "marek_wisniewski",
+        evaluator_name: "Marek Wiśniewski",
+        evaluator_role: "pracownik_instytucji",
+        evaluator_role_display: "Pracownik CUS / OPS / DPS",
+        evaluator_institution: "Dyrektor CUS Myślenice",
+        usability_score: 5,
+        effectiveness_score: 4,
+        accessibility_score: 5,
+        barriers_encountered: "Niewielkie trudności z transportem tablicy między odległymi sołectwami.",
+        proposed_improvements: "Wdrożenie dedykowanego pokrowca transportowego ułatwiającego pracę mobilnego asystenta.",
+        recommend_to_scale: true,
+        test_environment_notes: "Pilotaż w ramach wizyt środowiskowych asystentów CUS. Bardzo wysoka ocena seniorów.",
+        created_at: "2026-09-30T16:00:00Z",
+      },
+    ],
   },
   {
     id: 2,
-    title: "Wdrożenie testowe: Senior CUDER – gra wspierająca pamięć",
-    innovation_title: "Senior CUDER – gra planszowa integracji",
-    innovation_slug: "senior-cuder-gra-planszowa",
-    municipality: "Piwniczna-Zdrój",
-    county_name: "Powiat nowosądecki",
-    status: "w_trakcie",
-    target_testers_count: 30,
-    current_testers_count: 22,
-    description: "Pilotaż w 3 klubach seniora i Dziennym Domu Pobytu. Ewaluacja przystępności zasad oraz wpływu na aktywizację społeczną.",
+    title: "Otwarty nabór testerów symulatora kas i biletomatów Merkury",
+    innovation_title: "Merkury – dotykowy trenażer cyfrowy",
+    innovation_slug: "merkury-symulator-samoobslugowy",
+    municipality: "Myślenice",
+    municipality_name: "Myślenice",
+    county_name: "Powiat myślenicki",
+    status: "recruiting",
+    status_display: "Trwa nabór testerów",
+    max_testers: 12,
+    target_testers_count: 12,
+    current_testers_count: 7,
+    eligible_roles_description: "Uczestnicy WTZ, osoby w spektrum autyzmu, instruktorzy terapii zajęciowej",
+    summary: "Zapraszamy instytucje i mieszkańców do testowania nowej wersji scenariuszy zakupowych w biletomatach miejskich.",
+    description: "Zapraszamy instytucje i mieszkańców do testowania nowej wersji scenariuszy zakupowych w biletomatach miejskich.",
+    instructions: "Tester otrzymuje tablet ze scenariuszami na 14 dni. Po testach wypełnia krótką 5-minutową ankietę.",
+    start_date: "2026-10-01",
+    end_date: "2026-11-15",
+    evaluations_count: 0,
+    evaluations: [],
   },
   {
     id: 3,
-    title: "Testy użytkowe: Merkury – trenażer cyfrowy",
-    innovation_title: "Merkury – trenażer dotykowy dla seniorów",
-    innovation_slug: "merkury-trenazer-cyfrowy",
-    municipality: "Gorlice",
-    county_name: "Powiat gorlicki",
-    status: "rekrutacja",
-    target_testers_count: 20,
-    current_testers_count: 8,
-    description: "Badanie barier technologicznych u osób 70+ korzystających z symulatora kasy samoobsługowej i e-recepty.",
+    title: "Wdrożenie testowe gry integracyjnej Senior CUDER w 3 klubach seniora",
+    innovation_title: "Senior CUDER – gra planszowa integracji międzypokoleniowej",
+    innovation_slug: "senior-cuder-gra-integracyjna",
+    municipality: "Piwniczna-Zdrój",
+    municipality_name: "Piwniczna-Zdrój",
+    county_name: "Powiat nowosądecki",
+    status: "in_progress",
+    status_display: "Pilotaż w toku",
+    max_testers: 30,
+    target_testers_count: 30,
+    current_testers_count: 22,
+    eligible_roles_description: "Seniorzy 60+, animatorzy klubów seniora, pracownicy socjalni",
+    summary: "Pilotaż w 3 klubach seniora i Dziennym Domu Pobytu. Ewaluacja przystępności zasad oraz wpływu na aktywizację społeczną.",
+    description: "Pilotaż w 3 klubach seniora i Dziennym Domu Pobytu. Ewaluacja przystępności zasad oraz wpływu na aktywizację społeczną.",
+    instructions: "Rozegranie minimum 4 partii gry w zespołach 4-6 osobowych, obserwacja zaangażowania i wypełnienie ankiety WCAG.",
+    start_date: "2026-09-15",
+    end_date: "2026-11-30",
+    evaluations_count: 1,
+    average_usability_score: 4.0,
+    average_effectiveness_score: 5.0,
+    average_accessibility_score: 5.0,
+    average_overall_score: 4.7,
+    recommendation_rate: 100,
+    evaluations: [
+      {
+        id: 104,
+        pilot: 3,
+        evaluator_persona_key: "anna_nowak",
+        evaluator_name: "Anna Nowak",
+        evaluator_role: "opiekun",
+        evaluator_role_display: "Opiekun osoby zależnej",
+        evaluator_institution: "Klub Seniora Dolina Popradu",
+        usability_score: 4,
+        effectiveness_score: 5,
+        accessibility_score: 5,
+        barriers_encountered: "Karty z zadaniami mogłyby mieć jeszcze większy kontrast dla osób z jaskrą.",
+        proposed_improvements: "Dołączenie lupy powiększającej do każdego pudełka z grą.",
+        recommend_to_scale: true,
+        test_environment_notes: "Testowano podczas cotygodniowych spotkań klubu. Uczestnicy byli zachwyceni dynamiką rozgrywki.",
+        created_at: "2026-09-25T11:00:00Z",
+      },
+    ],
+  },
+  {
+    id: 4,
+    title: "Pilotaż adaptacji modułowych łazienek w domach seniorów na wsi",
+    innovation_title: "Modularne łazienki dostępne w 48 godzin",
+    innovation_slug: "modularne-lazienki-dostepne",
+    municipality: "Żabno",
+    municipality_name: "Żabno",
+    county_name: "Powiat tarnowski",
+    status: "recruiting",
+    status_display: "Trwa nabór testerów",
+    max_testers: 8,
+    target_testers_count: 8,
+    current_testers_count: 3,
+    eligible_roles_description: "Osoby z niepełnosprawnością ruchową, seniorzy niesamodzielni, architekci dostępności",
+    summary: "Montaż prototypowych modułów poręczy, bezprogowych brodzików i antypoślizgowych paneli ściennych w budynkach wiejskich.",
+    description: "Montaż prototypowych modułów poręczy, bezprogowych brodzików i antypoślizgowych paneli ściennych w budynkach wiejskich.",
+    instructions: "Bezpłatny montaż zestawu testowego na 6 miesięcy z comiesięcznym audytem bezpieczeństwa i ankietą satysfakcji.",
+    start_date: "2026-10-15",
+    end_date: "2027-04-15",
+    evaluations_count: 0,
+    evaluations: [],
   },
 ];
 
-export async function getPilots(): Promise<PilotProjectItem[]> {
+export async function getPilots(params?: {
+  status?: string;
+  county?: string;
+  innovation?: string | number;
+  q?: string;
+}): Promise<PilotProjectItem[]> {
   try {
-    const list = await apiFetch<Array<{
-      id: number;
-      title: string;
-      innovation_details?: { title: string; slug: string };
-      municipality: string;
-      county_name?: string;
-      status: "rekrutacja" | "w_trakcie" | "zakonczony";
-      target_testers_count: number;
-      current_testers_count: number;
-      description: string;
-    }>>("/pilots/");
+    const searchParams = new URLSearchParams();
+    if (params?.status && params.status !== "all") searchParams.set("status", params.status);
+    if (params?.county && params.county !== "all") searchParams.set("county", params.county);
+    if (params?.innovation) searchParams.set("innovation", String(params.innovation));
+    if (params?.q) searchParams.set("q", params.q);
+    const queryString = searchParams.toString() ? `?${searchParams.toString()}` : "";
+
+    const list = await apiFetch<PilotProjectItem[]>(`/pilots/${queryString}`);
     if (list && list.length > 0) {
       return list.map((p) => ({
-        id: p.id,
-        title: p.title,
-        innovation_title: p.innovation_details?.title || "Innowacja ROPS",
-        innovation_slug: p.innovation_details?.slug || "bawita-mobilna-sala-zabaw",
-        municipality: p.municipality,
-        county_name: p.county_name || "Małopolska",
-        status: p.status,
-        target_testers_count: p.target_testers_count,
-        current_testers_count: p.current_testers_count,
-        description: p.description,
+        ...p,
+        target_testers_count: p.target_testers_count ?? p.max_testers ?? 10,
+        max_testers: p.max_testers ?? p.target_testers_count ?? 10,
+        description: p.description || p.summary || "",
+        summary: p.summary || p.description || "",
+        municipality: p.municipality || p.municipality_name || "",
+        municipality_name: p.municipality_name || p.municipality || "",
       }));
     }
     return FALLBACK_PILOTS;
@@ -1136,117 +1303,719 @@ export async function getPilots(): Promise<PilotProjectItem[]> {
   }
 }
 
+export type CreatePilotPayload = {
+  innovation: number;
+  title: string;
+  status?: "recruiting" | "in_progress" | "completed";
+  county?: number | string;
+  municipality_name: string;
+  max_testers: number;
+  eligible_roles_description: string;
+  summary: string;
+  instructions?: string;
+  start_date?: string;
+  end_date?: string;
+};
+
+export async function createPilot(payload: CreatePilotPayload): Promise<PilotProjectItem> {
+  return await apiFetch<PilotProjectItem>("/pilots/", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function applyToPilot(pilotId: number | string, data: {
   applicant_name: string;
   applicant_email: string;
   applicant_phone?: string;
   applicant_role?: string;
   motivation?: string;
-}): Promise<{ status: string; message: string }> {
+}): Promise<{ status: string; message: string; current_testers_count?: number; max_testers?: number }> {
   try {
-    return await apiFetch<{ status: string; message: string }>(`/pilots/${pilotId}/apply/`, {
+    return await apiFetch<{ status: string; message: string; current_testers_count?: number; max_testers?: number }>(`/pilots/${pilotId}/apply/`, {
       method: "POST",
       body: JSON.stringify(data),
     });
   } catch {
     return {
-      status: "success",
-      message: "Twoje zgłoszenie do testów zostało zarejestrowane. Koordynator ROPS skontaktuje się z Tobą.",
+      status: "applied",
+      message: `Dziękujemy ${data.applicant_name}! Twoje zgłoszenie do udziału w testach zostało przyjęte. Koordynator ROPS skontaktuje się z Tobą.`,
     };
   }
 }
 
 export async function submitEvaluation(data: {
   pilot: number;
+  evaluator_persona_key?: string;
   evaluator_name: string;
   evaluator_role: string;
+  evaluator_institution?: string;
   usability_score: number;
   effectiveness_score: number;
-  accessibility_wcag_score: number;
+  accessibility_score?: number;
+  accessibility_wcag_score?: number;
+  barriers_encountered?: string;
+  proposed_improvements?: string;
   comments?: string;
-}): Promise<{ id: number; status: string }> {
+  recommend_to_scale?: boolean;
+  test_environment_notes?: string;
+}): Promise<{ id: number; status?: string }> {
   try {
-    return await apiFetch<{ id: number; status: string }>("/evaluations/", {
+    return await apiFetch<{ id: number; status?: string }>("/evaluations/", {
       method: "POST",
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        ...data,
+        accessibility_score: data.accessibility_score ?? data.accessibility_wcag_score ?? 5,
+        proposed_improvements: data.proposed_improvements ?? data.comments ?? "",
+      }),
     });
   } catch {
     return { id: 1, status: "zapisano" };
   }
 }
 
+export type InquiryItem = {
+  id: number;
+  author_persona_key?: string;
+  author_name: string;
+  author_email: string;
+  recipient_type: "rops_coordinator" | "expert_mentor";
+  recipient_type_display?: string;
+  subject: string;
+  message: string;
+  response?: string;
+  responder_name?: string;
+  is_answered: boolean;
+  is_public_faq: boolean;
+  created_at?: string;
+  answered_at?: string;
+};
+
 export type InquiryPayload = {
   author_name: string;
   author_email: string;
+  author_persona_key?: string;
+  recipient_type?: "rops_coordinator" | "expert_mentor";
+  subject?: string;
+  message?: string;
+  // Aliases for compatibility
+  topic?: string;
+  content?: string;
   author_organization?: string;
-  topic: string;
-  content: string;
   related_innovation_id?: number | string | null;
 };
 
-export async function createInquiry(payload: InquiryPayload): Promise<{ id: number; status: string }> {
+export const FALLBACK_INQUIRIES: InquiryItem[] = [
+  {
+    id: 1,
+    author_name: "Anna Nowak",
+    author_email: "anna.nowak@przyklad.pl",
+    recipient_type: "rops_coordinator",
+    recipient_type_display: "Koordynator Małopolskiego Hubu (ROPS Kraków)",
+    subject: "Czy gmina wiejska może pozyskać dofinansowanie na adaptację łazienek dla seniorów?",
+    message: "Dzień dobry, w naszej wsi wielu seniorów ma problem z korzystaniem z wysokich wanien. Czy ROPS posiada program wspierający takie instalacje?",
+    response: "Tak, w ramach Inkubatora Włączenia Społecznego 2.0 (FERS) gminy i organizacje mogą ubiegać się o granty do 50 000 zł na testowanie i skalowanie modularnych łazienek dostępnych.",
+    responder_name: "Magdalena Kaczmarczyk (ROPS Kraków)",
+    is_answered: true,
+    is_public_faq: true,
+    created_at: "2026-09-15T10:00:00Z",
+  },
+  {
+    id: 2,
+    author_name: "Katarzyna Zielińska",
+    author_email: "kontakt@aktywna-malopolska.pl",
+    recipient_type: "expert_mentor",
+    recipient_type_display: "Ekspert branżowy / Mentor",
+    subject: "Jakie kryteria musi spełniać wniosek FERS w zakresie deinstytucjonalizacji?",
+    message: "Przygotowujemy wniosek w Kreatorze i chcemy upewnić się, czy usługa świadczona w klubie seniora kwalifikuje się jako wsparcie środowiskowe.",
+    response: "Jak najbardziej! Deinstytucjonalizacja to właśnie rozwój usług świadczonych na poziomie społeczności lokalnej (Kluby Seniora, CUS, opieka domowa) jako alternatywa dla opieki całodobowej w DPS.",
+    responder_name: "dr Piotr Adamski (Ekspert ROPS)",
+    is_answered: true,
+    is_public_faq: true,
+    created_at: "2026-09-20T14:30:00Z",
+  },
+];
+
+export async function getInquiries(filters?: {
+  faq?: boolean;
+  recipient_type?: string;
+  is_answered?: boolean;
+  q?: string;
+}): Promise<InquiryItem[]> {
   try {
-    return await apiFetch<{ id: number; status: string }>("/inquiries/", {
+    const params = new URLSearchParams();
+    if (filters?.faq) params.set("faq", "true");
+    if (filters?.recipient_type && filters.recipient_type !== "all") params.set("recipient_type", filters.recipient_type);
+    if (filters?.is_answered !== undefined) params.set("is_answered", filters.is_answered ? "true" : "false");
+    if (filters?.q) params.set("q", filters.q);
+
+    const query = params.toString() ? `?${params.toString()}` : "";
+    const list = await apiFetch<InquiryItem[]>(`/inquiries/${query}`);
+    return list && list.length > 0 ? list : FALLBACK_INQUIRIES;
+  } catch {
+    return FALLBACK_INQUIRIES;
+  }
+}
+
+export async function createInquiry(payload: InquiryPayload): Promise<InquiryItem> {
+  const body = {
+    author_name: payload.author_name,
+    author_email: payload.author_email,
+    author_persona_key: payload.author_persona_key || "",
+    recipient_type: payload.recipient_type || "rops_coordinator",
+    subject: payload.subject || payload.topic || "Konsultacja z zespołem ROPS Kraków",
+    message: payload.message || payload.content || "",
+  };
+
+  try {
+    return await apiFetch<InquiryItem>("/inquiries/", {
       method: "POST",
-      body: JSON.stringify({
-        author_name: payload.author_name,
-        author_email: payload.author_email,
-        author_organization: payload.author_organization || "",
-        topic: payload.topic,
-        content: payload.content,
-        related_innovation: payload.related_innovation_id ? Number(payload.related_innovation_id) : null,
-      }),
+      body: JSON.stringify(body),
     });
   } catch {
-    return { id: 1, status: "wysłano" };
+    return {
+      id: Math.floor(Math.random() * 8000) + 100,
+      ...body,
+      is_answered: false,
+      is_public_faq: false,
+      created_at: new Date().toISOString(),
+    };
   }
+}
+
+export async function respondToInquiry(
+  id: number,
+  payload: { response: string; responder_name?: string; is_public_faq?: boolean }
+): Promise<InquiryItem> {
+  return await apiFetch<InquiryItem>(`/inquiries/${id}/respond/`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
 
 export type PartnershipItem = {
   id: number;
+  author_persona_key?: string;
   title: string;
   organization_name: string;
-  sector: "ngo" | "jst" | "biznes" | "nauka";
+  organization_type: "jst_cus" | "ngo" | "pes" | "nauka";
+  organization_type_display?: string;
+  county?: number;
   county_name?: string;
+  county_slug?: string;
+  municipality_name?: string;
+  category?: number;
+  category_name?: string;
+  category_code?: string;
+  looking_for: "ngo" | "jst" | "ekspert" | "technologiczny";
+  looking_for_display?: string;
   description: string;
-  target_partner_type: string;
+  contact_email: string;
+  contact_phone?: string;
+  is_active: boolean;
+  created_at?: string;
+  // Aliases for compatibility
+  sector?: "ngo" | "jst" | "biznes" | "nauka";
+  target_partner_type?: string;
 };
 
 export const FALLBACK_PARTNERSHIPS: PartnershipItem[] = [
   {
     id: 1,
-    title: "Poszukujemy NGO do prowadzenia Klubu Sąsiedzkiego w Myślenicach",
+    title: "CUS Myślenice szuka NGO do realizacji usługi mobilnej opieki wytchnieniowej",
     organization_name: "Centrum Usług Społecznych w Myślenicach",
+    organization_type: "jst_cus",
+    organization_type_display: "Jednostka Samorządu / CUS",
     sector: "jst",
     county_name: "Powiat myślenicki",
-    description: "Dysponujemy bezpłatnym lokalem z wyposażeniem. Szukamy organizacji pozarządowej posiadającej doświadczenie w animacji seniorów i młodzieży.",
-    target_partner_type: "Lokalne NGO (stowarzyszenie lub fundacja)",
+    county_slug: "myslenicki",
+    municipality_name: "Myślenice",
+    category_name: "Zdrowie i opieka",
+    category_code: "health",
+    looking_for: "ngo",
+    looking_for_display: "Organizację pozarządową (NGO)",
+    description: "Planujemy uruchomienie nowej usługi opieki wytchnieniowej dla 20 rodzin opiekujących się osobami leżącymi. Poszukujemy doświadczonego podmiotu ekonomii społecznej lub stowarzyszenia do realizacji wizyt domowych.",
+    contact_email: "cus@myslenice.pl",
+    contact_phone: "12 272 56 00",
+    is_active: true,
+    target_partner_type: "Organizację pozarządową (NGO)",
   },
   {
     id: 2,
-    title: "Fundacja Aktywna Małopolska zaprasza gminy do wdrożenia deinstytucjonalizacji",
-    organization_name: "Fundacja Aktywna Małopolska (Tarnów)",
+    title: "Fundacja Aktywna Małopolska oferuje partnerstwo w tworzeniu Kawiarenki Naprawczej",
+    organization_name: "Fundacja Aktywna Małopolska",
+    organization_type: "ngo",
+    organization_type_display: "Organizacja Pozarządowa (NGO)",
     sector: "ngo",
     county_name: "Powiat tarnowski",
-    description: "Chcemy złożyć wspólny wniosek grantowy FERS Działanie 5.1 na mobilną asystenturę osób z niepełnosprawnościami.",
-    target_partner_type: "Gmina lub Ośrodek Pomocy Społecznej",
+    county_slug: "tarnowski",
+    municipality_name: "Tarnów",
+    category_name: "Praca i włączenie zawodowe",
+    category_code: "labor",
+    looking_for: "jst",
+    looking_for_display: "Samorząd / Gminę (JST)",
+    description: "Dysponujemy kadrą mistrzów rzemiosła i gotowym pakietem wyposażenia warsztatowego. Szukamy gminy lub domu kultury chętnego udostępnić salę raz w tygodniu.",
+    contact_email: "kontakt@aktywna-malopolska.pl",
+    contact_phone: "14 621 00 00",
+    is_active: true,
+    target_partner_type: "Samorząd / Gminę (JST)",
+  },
+  {
+    id: 3,
+    title: "Spółdzielnia Socjalna «Horyzonty» poszukuje partnera technologicznego do aplikacji asystenta",
+    organization_name: "Spółdzielnia Socjalna Horyzonty",
+    organization_type: "pes",
+    organization_type_display: "Podmiot Ekonomii Społecznej",
+    sector: "ngo",
+    county_name: "Kraków i krakowski",
+    county_slug: "krakowski",
+    municipality_name: "Kraków",
+    category_name: "Dostępność sensoryczna",
+    category_code: "sensory",
+    looking_for: "technologiczny",
+    looking_for_display: "Partnera technologicznego",
+    description: "Rozwijamy narzędzie komunikacji alternatywnej (AAC) dla osób po udarach i w spektrum autyzmu. Szukamy partnera technologicznego lub zespołu IT do optymalizacji interfejsu WCAG i wdrożenia mobilnego.",
+    contact_email: "kontakt@horyzonty-spoldzielnia.pl",
+    contact_phone: "12 430 11 22",
+    is_active: true,
+    target_partner_type: "Partnera technologicznego",
   },
 ];
 
-export async function getPartnerships(): Promise<PartnershipItem[]> {
+export async function getPartnerships(filters?: {
+  looking_for?: string;
+  county?: string;
+  category?: string;
+  organization_type?: string;
+  q?: string;
+}): Promise<PartnershipItem[]> {
   try {
-    const list = await apiFetch<Array<{
-      id: number;
-      title: string;
-      organization_name: string;
-      sector: "ngo" | "jst" | "biznes" | "nauka";
-      county_name?: string;
-      description: string;
-      target_partner_type: string;
-    }>>("/partnerships/");
+    const params = new URLSearchParams();
+    if (filters?.looking_for && filters.looking_for !== "all") params.set("looking_for", filters.looking_for);
+    if (filters?.county && filters.county !== "all") params.set("county", filters.county);
+    if (filters?.category && filters.category !== "all") params.set("category", filters.category);
+    if (filters?.organization_type && filters.organization_type !== "all") params.set("organization_type", filters.organization_type);
+    if (filters?.q) params.set("q", filters.q);
+
+    const query = params.toString() ? `?${params.toString()}` : "";
+    const list = await apiFetch<PartnershipItem[]>(`/partnerships/${query}`);
     return list && list.length > 0 ? list : FALLBACK_PARTNERSHIPS;
   } catch {
     return FALLBACK_PARTNERSHIPS;
   }
 }
 
+export async function createPartnership(payload: Partial<PartnershipItem>): Promise<PartnershipItem> {
+  try {
+    return await apiFetch<PartnershipItem>("/partnerships/", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    const fallbackItem: PartnershipItem = {
+      id: Math.floor(Math.random() * 8000) + 100,
+      title: payload.title || "Nowe ogłoszenie partnerstwa",
+      organization_name: payload.organization_name || "Podmiot zgłaszający",
+      organization_type: payload.organization_type || "ngo",
+      looking_for: payload.looking_for || "ngo",
+      description: payload.description || "",
+      contact_email: payload.contact_email || "kontakt@przyklad.pl",
+      contact_phone: payload.contact_phone || "",
+      municipality_name: payload.municipality_name || "",
+      county_name: payload.county_name || "Województwo Małopolskie",
+      category_name: payload.category_name || "Innowacje społeczne",
+      is_active: true,
+      created_at: new Date().toISOString(),
+    };
+    return fallbackItem;
+  }
+}
+
+
+
+// ==========================================
+// MODUŁ VI: PANEL ADMINISTRATORA ROPS KRAKÓW
+// ==========================================
+
+export type ProblemMatchItem = {
+  id: number;
+  innovation: SocialInnovation;
+  similarity_score: number;
+  justification: string;
+  suggested_next_step: "middleman" | "tester" | "contact" | string;
+  created_at: string;
+};
+
+export type ProblemSubmissionItem = {
+  id: number;
+  persona_key?: string;
+  reporter_role: string;
+  reporter_name: string;
+  reporter_email: string;
+  reporter_phone?: string;
+  reporter_institution?: string;
+  county?: number | null;
+  county_name?: string;
+  municipality_name?: string;
+  category?: number | null;
+  category_name?: string;
+  title: string;
+  description: string;
+  affected_group: string;
+  estimated_scale?: string;
+  status: "pending" | "matched" | "gap_identified" | "in_progress" | "resolved";
+  admin_notes?: string;
+  matches?: ProblemMatchItem[];
+  created_at: string;
+  updated_at?: string;
+};
+
+export type IdeaSubmissionItem = {
+  id: number;
+  submission_type: "fiszka" | "grant_fers";
+  persona_key?: string;
+  title: string;
+  category?: number | null;
+  category_name?: string;
+  county?: number | null;
+  county_name?: string;
+  status: "roboczy" | "zlozony" | "w_ocenie" | "zaakceptowany" | "odrzucony";
+  applicant_type?: string;
+  applicant_name: string;
+  applicant_email: string;
+  applicant_phone?: string;
+  applicant_address?: string;
+  applicant_city?: string;
+  applicant_postal_code?: string;
+  organization_krs?: string;
+  organization_nip?: string;
+  organization_regon?: string;
+  organization_representative?: string;
+  innovation_description?: string;
+  solution_concept?: string;
+  uniqueness_rationale?: string;
+  problem_diagnosis?: string;
+  target_recipients?: string;
+  expected_change?: string;
+  scalability_model?: string;
+  action_plan_prep?: Array<{ dzialanie: string; termin: string; koszt?: number }>;
+  action_plan_testing?: Array<{ dzialanie: string; termin: string; koszt?: number }>;
+  requested_grant_amount?: number;
+  team_experience?: string;
+  formal_declarations_accepted?: boolean;
+  admin_score?: number | null;
+  admin_feedback?: string;
+  created_at: string;
+  updated_at?: string;
+};
+
+export const FALLBACK_PROBLEM_SUBMISSIONS: ProblemSubmissionItem[] = [
+  {
+    id: 1,
+    persona_key: "anna_nowak",
+    reporter_role: "mieszkaniec",
+    reporter_name: "Anna Nowak",
+    reporter_email: "anna.nowak@przyklad.pl",
+    reporter_phone: "501 234 567",
+    reporter_institution: "Klub Seniora w Grybowie",
+    county: 1,
+    county_name: "Powiat nowosądecki",
+    municipality_name: "Grybów",
+    category: 1,
+    category_name: "Dla seniorów",
+    title: "Wykluczenie transportowe i samotność seniorów w sołectwach wiejskich Grybowa",
+    description: "Seniorzy mieszkający w przysiółkach nie mają jak dojechać do lekarza i na zajęcia klubu seniora. Często tygodniami nie rozmawiają z nikim poza listonoszem.",
+    affected_group: "Osoby starsze 75+ i ich opiekunowie rodzinni w sołectwach wiejskich",
+    estimated_scale: "Około 60 seniorów w 4 sołectwach gminy Grybów",
+    status: "matched",
+    admin_notes: "Zweryfikowano przez koordynatora ROPS. Zgłoszenie zakwalifikowane do wsparcia mobilnego. Powiązano z innowacją BaWita.",
+    matches: [
+      {
+        id: 1,
+        innovation: FALLBACK_INNOVATIONS[0],
+        similarity_score: 91.5,
+        justification: "Innowacja BaWita posiada moduł mobilny umożliwiający regularne dojazdy przeszkolonych animatorów i wolontariuszy do domów seniorów wiejskich wraz ze sprzętem aktywizującym.",
+        suggested_next_step: "middleman",
+        created_at: "2026-09-25T11:00:00Z",
+      },
+    ],
+    created_at: "2026-09-25T10:45:00Z",
+  },
+  {
+    id: 2,
+    persona_key: "piotr_adamski",
+    reporter_role: "ekspert",
+    reporter_name: "dr Piotr Adamski",
+    reporter_email: "ekspert@innowacjespoleczne.pl",
+    reporter_phone: "601 987 654",
+    reporter_institution: "Uniwersytet Pedagogiczny w Krakowie",
+    county: 5,
+    county_name: "Powiat gorlicki",
+    municipality_name: "Biecz",
+    category: 9,
+    category_name: "Dla osób z niepełnosprawnością intelektualną",
+    title: "Brak wsparcia wytchnieniowego dla opiekunów dorosłych osób z głęboką niepełnosprawnością sprzężoną",
+    description: "Rodzice w wieku 60-70 lat opiekują się dorosłymi dziećmi 24h na dobę. Brak ośrodka dziennego lub mobilnej asystencji wytchnieniowej na terenie powiatu gorlickiego. Skrajne wyczerpanie opiekunów.",
+    affected_group: "Opiekunowie 35 dorosłych osób z niepełnosprawnością sprzężoną w powiecie gorlickim",
+    estimated_scale: "35 rodzin bez dostępu do placówki dziennej po ukończeniu 25 roku życia przez podopiecznych",
+    status: "gap_identified",
+    admin_notes: "BIAŁA PLAMA: W bazie innowacji ROPS brak gotowego modelu dla dorosłych ze sprzężeniami w powiatach peryferyjnych. Zgłoszenie skierowano do naboru wniosków FERS.",
+    matches: [],
+    created_at: "2026-09-28T09:30:00Z",
+  },
+  {
+    id: 3,
+    persona_key: "katarzyna_zielinska",
+    reporter_role: "ngo",
+    reporter_name: "Katarzyna Zielińska",
+    reporter_email: "kontakt@aktywna-malopolska.pl",
+    reporter_phone: "14 621 00 00",
+    reporter_institution: "Fundacja Aktywna Małopolska",
+    county: 3,
+    county_name: "Powiat tarnowski",
+    municipality_name: "Tarnów",
+    category: 4,
+    category_name: "Dla osób z niepełnosprawnością sensoryczną",
+    title: "Bariery komunikacyjne dla osób głuchych w rejonowych przychodniach zdrowia",
+    description: "Brak tłumacza PJM w placówkach zdrowia i brak możliwości rejestracji wizyty przez SMS/komunikator internetowy. Pacjenci muszą przychodzić z członkami rodzin do intymnych badań lekarskich.",
+    affected_group: "Niesłyszący mieszkańcy Tarnowa i okolicznych gmin korzystający z POZ",
+    estimated_scale: "Ponad 120 osób z wadami słuchu rocznie",
+    status: "pending",
+    admin_notes: "",
+    matches: [],
+    created_at: "2026-10-02T14:20:00Z",
+  },
+];
+
+export const FALLBACK_IDEA_SUBMISSIONS: IdeaSubmissionItem[] = [
+  {
+    id: 1,
+    submission_type: "grant_fers",
+    persona_key: "katarzyna_zielinska",
+    status: "w_ocenie",
+    category: 1,
+    category_name: "Dla seniorów",
+    county: 3,
+    county_name: "Powiat tarnowski",
+    applicant_type: "podmiot_ngo",
+    applicant_name: "Fundacja Aktywna Małopolska",
+    applicant_email: "kontakt@aktywna-malopolska.pl",
+    applicant_phone: "14 621 00 00",
+    applicant_address: "ul. Krakowska 12",
+    applicant_city: "Tarnów",
+    applicant_postal_code: "33-100",
+    organization_krs: "0000123456",
+    organization_nip: "9930012345",
+    organization_regon: "123456789",
+    organization_representative: "Katarzyna Zielińska - Prezes Zarządu",
+    title: "Sąsiedzka Sieć Wytchnieniowa – Mobilni wolontariusze wsparcia seniora",
+    innovation_description: "Stworzenie aplikacji i procedury szybkiego wzywania przeszkolonych sąsiadów do doraźnej opieki wytchnieniowej.",
+    uniqueness_rationale: "Tradycyjne agencje opieki są za drogie i nie docierają do małych sołectw. Nasz model opiera się na mikrostypendiach samopomocowych.",
+    problem_diagnosis: "Oparte na Mapie Wyzwań ROPS dla powiatu tarnowskiego (24.2% seniorów).",
+    target_recipients: "30 opiekunów rodzinnych osób niesamodzielnych.",
+    expected_change: "Zmniejszenie obciążenia psychofizycznego opiekunów o min. 40%.",
+    scalability_model: "Możliwość łatwej replikacji w każdym CUS w Małopolsce.",
+    action_plan_prep: [
+      { dzialanie: "Opracowanie standardu bezpieczeństwa i regulaminu", termin: "Miesiąc 1-2", koszt: 8000 },
+      { dzialanie: "Warsztaty pierwszej pomocy dla wolontariuszy", termin: "Miesiąc 3", koszt: 6000 },
+    ],
+    action_plan_testing: [
+      { dzialanie: "Pilotaż u 30 rodzin w 3 gminach wiejskich", termin: "Miesiące 4-9", koszt: 34000 },
+      { dzialanie: "Ewaluacja i raport końcowy", termin: "Miesiące 10-12", koszt: 2000 },
+    ],
+    requested_grant_amount: 50000,
+    team_experience: "10 lat doświadczenia w realizacji projektów społecznych FERS i ASOS w Małopolsce.",
+    formal_declarations_accepted: true,
+    created_at: "2026-09-27T16:00:00Z",
+  },
+  {
+    id: 2,
+    submission_type: "fiszka",
+    persona_key: "marek_wisniewski",
+    status: "zaakceptowany",
+    category: 1,
+    category_name: "Dla seniorów",
+    county: 2,
+    county_name: "Powiat myślenicki",
+    applicant_name: "Marek Wiśniewski",
+    applicant_email: "cus@myslenice.pl",
+    title: "Klub Aktywnego Seniora z warsztatem cyfrowym",
+    solution_concept: "Adaptacja remizy OSP na przestrzeń spotkań i nauki cyfrowej dla osób 60+.",
+    target_recipients: "Seniorzy z sołectw gminy Myślenice",
+    admin_score: 90,
+    admin_feedback: "Bardzo cenna inicjatywa łącząca CUS z OSP. Skierowano do inkubacji.",
+    created_at: "2026-09-15T12:00:00Z",
+  },
+];
+
+/** Pobiera listę zgłoszeń problemów dla panelu moderatora ROPS */
+export async function getProblemSubmissions(filters?: {
+  status?: string;
+  county?: string;
+  persona?: string;
+  category?: string;
+  q?: string;
+}): Promise<ProblemSubmissionItem[]> {
+  try {
+    const params = new URLSearchParams();
+    if (filters?.status && filters.status !== "all") params.set("status", filters.status);
+    if (filters?.county && filters.county !== "all") params.set("county", filters.county);
+    if (filters?.persona) params.set("persona", filters.persona);
+    if (filters?.category && filters.category !== "all") params.set("category", filters.category);
+    if (filters?.q) params.set("q", filters.q);
+
+    const query = params.toString() ? `?${params.toString()}` : "";
+    const list = await apiFetch<ProblemSubmissionItem[]>(`/problems/${query}`);
+    return list && list.length > 0 ? list : FALLBACK_PROBLEM_SUBMISSIONS;
+  } catch {
+    let result = [...FALLBACK_PROBLEM_SUBMISSIONS];
+    if (filters?.status && filters.status !== "all") {
+      result = result.filter((s) => s.status === filters.status);
+    }
+    if (filters?.county && filters.county !== "all") {
+      result = result.filter((s) => s.county_name?.toLowerCase().includes(filters.county!.toLowerCase()));
+    }
+    if (filters?.q) {
+      const q = filters.q.toLowerCase();
+      result = result.filter(
+        (s) =>
+          s.title.toLowerCase().includes(q) ||
+          s.description.toLowerCase().includes(q) ||
+          s.reporter_name.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }
+}
+
+/** Moderacja zgłoszenia potrzeby przez koordynatora ROPS */
+export async function moderateProblemSubmission(
+  id: number,
+  payload: { status: string; admin_notes?: string }
+): Promise<ProblemSubmissionItem> {
+  try {
+    return await apiFetch<ProblemSubmissionItem>(`/admin/moderate/${id}/`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    const found = FALLBACK_PROBLEM_SUBMISSIONS.find((s) => s.id === id);
+    if (found) {
+      found.status = payload.status as any;
+      if (payload.admin_notes !== undefined) found.admin_notes = payload.admin_notes;
+      return { ...found };
+    }
+    return {
+      id,
+      reporter_role: "mieszkaniec",
+      reporter_name: "Zgłaszający",
+      reporter_email: "kontakt@przyklad.pl",
+      title: "Zgłoszenie",
+      description: "",
+      affected_group: "",
+      status: payload.status as any,
+      admin_notes: payload.admin_notes || "",
+      created_at: new Date().toISOString(),
+    };
+  }
+}
+
+/** Pobiera listę wniosków i pomysłów z Kreatora (Moduł III) */
+export async function getIdeaSubmissions(filters?: {
+  type?: string;
+  status?: string;
+  persona?: string;
+}): Promise<IdeaSubmissionItem[]> {
+  try {
+    const params = new URLSearchParams();
+    if (filters?.type && filters.type !== "all") params.set("type", filters.type);
+    if (filters?.status && filters.status !== "all") params.set("status", filters.status);
+    if (filters?.persona) params.set("persona", filters.persona);
+
+    const query = params.toString() ? `?${params.toString()}` : "";
+    const list = await apiFetch<IdeaSubmissionItem[]>(`/ideas/${query}`);
+    return list && list.length > 0 ? list : FALLBACK_IDEA_SUBMISSIONS;
+  } catch {
+    let result = [...FALLBACK_IDEA_SUBMISSIONS];
+    if (filters?.type && filters.type !== "all") {
+      result = result.filter((i) => i.submission_type === filters.type);
+    }
+    if (filters?.status && filters.status !== "all") {
+      result = result.filter((i) => i.status === filters.status);
+    }
+    return result;
+  }
+}
+
+/** Ocena wniosku grantowego FERS przez koordynatora ROPS */
+export async function evaluateIdeaSubmission(
+  id: number,
+  payload: { score?: number; feedback?: string; status?: string }
+): Promise<IdeaSubmissionItem> {
+  try {
+    return await apiFetch<IdeaSubmissionItem>(`/ideas/${id}/evaluate/`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    const found = FALLBACK_IDEA_SUBMISSIONS.find((i) => i.id === id);
+    if (found) {
+      if (payload.score !== undefined) found.admin_score = payload.score;
+      if (payload.feedback !== undefined) found.admin_feedback = payload.feedback;
+      if (payload.status) found.status = payload.status as any;
+      return { ...found };
+    }
+    throw new Error("Wniosek nie został odnaleziony");
+  }
+}
+
+/** Aktualizacja etapu dojrzałości innowacji społecznej (Moduł VI & IV) */
+export async function updateInnovationStage(
+  slug: string,
+  payload: { maturity_stage: string; replication_readiness_score?: number }
+): Promise<SocialInnovation> {
+  try {
+    return await apiFetch<SocialInnovation>(`/innovations/${slug}/update-stage/`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    const found = FALLBACK_INNOVATIONS.find((i) => i.slug === slug);
+    if (found) {
+      found.maturity_stage = payload.maturity_stage as any;
+      if (payload.replication_readiness_score !== undefined) {
+        found.replication_readiness_score = payload.replication_readiness_score;
+      }
+      return { ...found };
+    }
+    throw new Error("Innowacja nie została odnaleziona");
+  }
+}
+
+/** Odpowiedź koordynatora ROPS na zapytanie mieszkańca / NGO / JST */
+export async function answerInquiry(
+  id: number,
+  payload: { response: string; responder_name: string; is_answered?: boolean; is_public_faq?: boolean }
+): Promise<InquiryItem> {
+  try {
+    return await apiFetch<InquiryItem>(`/inquiries/${id}/`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        response: payload.response,
+        responder_name: payload.responder_name,
+        is_answered: payload.is_answered ?? true,
+        is_public_faq: payload.is_public_faq ?? false,
+      }),
+    });
+  } catch {
+    const found = FALLBACK_INQUIRIES.find((i) => i.id === id);
+    if (found) {
+      found.response = payload.response;
+      found.responder_name = payload.responder_name;
+      found.is_answered = payload.is_answered ?? true;
+      if (payload.is_public_faq !== undefined) found.is_public_faq = payload.is_public_faq;
+      return { ...found };
+    }
+    throw new Error("Zapytanie nie zostało odnalezione");
+  }
+}

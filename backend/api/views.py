@@ -2,11 +2,11 @@ import re
 from decimal import Decimal
 from django.db.models import Count, Q
 from django.utils import timezone
-from rest_framework import status, viewsets
+from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes, inline_serializer
 
 from .models import (
     InnovationCategory,
@@ -130,6 +130,33 @@ class SocialInnovationViewSet(viewsets.ReadOnlyModelViewSet):
         innovation.likes_count += 1
         innovation.save(update_fields=["likes_count"])
         return Response({"status": "liked", "likes_count": innovation.likes_count})
+
+    @extend_schema(
+        summary="Aktualizacja dojrzałości innowacji (Moduł VI: Panel ROPS)",
+        description="Pozwala koordynatorowi ROPS zmienić etap innowacji (np. awansować z testów do sprawdzonej) i zaktualizować wskaźnik replikacji.",
+        request=inline_serializer(
+            name="InnovationStageUpdate",
+            fields={
+                "maturity_stage": serializers.ChoiceField(choices=SocialInnovation.STAGE_CHOICES),
+                "replication_readiness_score": serializers.IntegerField(required=False),
+            },
+        ),
+        responses={200: SocialInnovationDetailSerializer},
+    )
+    @action(detail=True, methods=["patch", "post"], url_path="update-stage")
+    def update_stage(self, request, slug=None):
+        innovation = self.get_object()
+        new_stage = request.data.get("maturity_stage")
+        if new_stage in dict(SocialInnovation.STAGE_CHOICES):
+            innovation.maturity_stage = new_stage
+        readiness = request.data.get("replication_readiness_score")
+        if readiness is not None:
+            try:
+                innovation.replication_readiness_score = int(readiness)
+            except (ValueError, TypeError):
+                pass
+        innovation.save()
+        return Response(SocialInnovationDetailSerializer(innovation).data)
 
 
 class MatchmakingAnalyzeView(APIView):
@@ -322,6 +349,20 @@ class ProblemSubmissionViewSet(viewsets.ModelViewSet):
             qs = qs.filter(county__slug=county)
         if persona:
             qs = qs.filter(persona_key=persona)
+        category = self.request.query_params.get("category")
+        if category:
+            if category.isdigit():
+                qs = qs.filter(category_id=int(category))
+            else:
+                qs = qs.filter(category__code=category)
+        q = self.request.query_params.get("q")
+        if q:
+            qs = qs.filter(
+                Q(title__icontains=q)
+                | Q(description__icontains=q)
+                | Q(reporter_name__icontains=q)
+                | Q(affected_group__icontains=q)
+            )
         return qs
 
 
@@ -513,9 +554,34 @@ class IdeaSubmissionViewSet(viewsets.ModelViewSet):
         return Response(IdeaSubmissionSerializer(idea).data)
 
 
-class PilotProjectViewSet(viewsets.ReadOnlyModelViewSet):
+class PilotProjectViewSet(viewsets.ModelViewSet):
     queryset = PilotProject.objects.select_related("innovation", "county").prefetch_related("evaluations").all()
     serializer_class = PilotProjectSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        status_param = self.request.query_params.get("status")
+        county_param = self.request.query_params.get("county")
+        innovation_param = self.request.query_params.get("innovation")
+        q = self.request.query_params.get("q")
+
+        if status_param:
+            qs = qs.filter(status=status_param)
+        if county_param:
+            qs = qs.filter(county__slug=county_param)
+        if innovation_param:
+            if innovation_param.isdigit():
+                qs = qs.filter(innovation_id=int(innovation_param))
+            else:
+                qs = qs.filter(innovation__slug=innovation_param)
+        if q:
+            qs = qs.filter(
+                models.Q(title__icontains=q)
+                | models.Q(summary__icontains=q)
+                | models.Q(municipality_name__icontains=q)
+                | models.Q(innovation__title__icontains=q)
+            )
+        return qs
 
     @action(detail=True, methods=["post"], url_path="apply")
     def apply_as_tester(self, request, pk=None):
@@ -527,9 +593,11 @@ class PilotProjectViewSet(viewsets.ReadOnlyModelViewSet):
             )
         pilot.current_testers_count += 1
         pilot.save(update_fields=["current_testers_count"])
+        applicant_name = request.data.get("applicant_name", "")
+        name_part = f" {applicant_name}" if applicant_name else ""
         return Response({
             "status": "applied",
-            "message": "Zgłoszenie do udziału w testach zostało przyjęte.",
+            "message": f"Dziękujemy{name_part}! Twoje zgłoszenie do udziału w testach zostało pomyślnie przyjęte. Koordynator ROPS skontaktuje się z Tobą.",
             "current_testers_count": pilot.current_testers_count,
             "max_testers": pilot.max_testers,
         })
@@ -541,7 +609,7 @@ class PilotEvaluationViewSet(viewsets.ModelViewSet):
 
 
 class PartnershipPostViewSet(viewsets.ModelViewSet):
-    queryset = PartnershipPost.objects.select_related("county", "category").filter(is_active=True)
+    queryset = PartnershipPost.objects.select_related("county", "category").filter(is_active=True).order_by("-created_at")
     serializer_class = PartnershipPostSerializer
 
     def get_queryset(self):
@@ -549,25 +617,59 @@ class PartnershipPostViewSet(viewsets.ModelViewSet):
         looking_for = self.request.query_params.get("looking_for")
         county = self.request.query_params.get("county")
         category = self.request.query_params.get("category")
+        org_type = self.request.query_params.get("organization_type")
+        q = self.request.query_params.get("q")
 
-        if looking_for:
+        if looking_for and looking_for != "all":
             qs = qs.filter(looking_for=looking_for)
-        if county:
-            qs = qs.filter(county__slug=county)
-        if category:
-            qs = qs.filter(category__code=category)
+        if org_type and org_type != "all":
+            qs = qs.filter(organization_type=org_type)
+        if county and county != "all":
+            if county.isdigit():
+                qs = qs.filter(county_id=int(county))
+            else:
+                qs = qs.filter(county__slug=county)
+        if category and category != "all":
+            if category.isdigit():
+                qs = qs.filter(category_id=int(category))
+            else:
+                qs = qs.filter(category__code=category)
+        if q:
+            qs = qs.filter(
+                Q(title__icontains=q)
+                | Q(organization_name__icontains=q)
+                | Q(description__icontains=q)
+                | Q(municipality_name__icontains=q)
+            )
         return qs
 
 
 class InquiryViewSet(viewsets.ModelViewSet):
-    queryset = Inquiry.objects.all()
+    queryset = Inquiry.objects.all().order_by("-created_at")
     serializer_class = InquirySerializer
 
     def get_queryset(self):
         qs = super().get_queryset()
         only_faq = self.request.query_params.get("faq")
+        recipient = self.request.query_params.get("recipient_type")
+        is_answered = self.request.query_params.get("is_answered")
+        q = self.request.query_params.get("q")
+
         if only_faq in ("true", "1"):
             qs = qs.filter(is_public_faq=True, is_answered=True)
+        if recipient and recipient != "all":
+            qs = qs.filter(recipient_type=recipient)
+        if is_answered in ("true", "1"):
+            qs = qs.filter(is_answered=True)
+        elif is_answered in ("false", "0"):
+            qs = qs.filter(is_answered=False)
+        if q:
+            qs = qs.filter(
+                Q(subject__icontains=q)
+                | Q(message__icontains=q)
+                | Q(response__icontains=q)
+                | Q(author_name__icontains=q)
+            )
         return qs
 
     @action(detail=True, methods=["post"], url_path="respond")

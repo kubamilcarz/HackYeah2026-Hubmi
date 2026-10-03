@@ -267,13 +267,18 @@ class BackendFullTestSuite(TestCase):
         self.assertGreaterEqual(len(res_diag_concept.data["steps"]), 4)
 
     def test_pilot_apply_and_evaluation(self):
-        """Test zapisu na testy oraz złożenia formularza ewaluacji"""
-        # Zgłoszenie kandydata na testera
-        apply_res = self.client.post(f"/api/pilots/{self.pilot.id}/apply/")
+        """Test zapisu na testy, formularza ewaluacji z aliasami oraz filtrowania i wskaźników"""
+        # Zgłoszenie kandydata na testera z danymi
+        apply_res = self.client.post(
+            f"/api/pilots/{self.pilot.id}/apply/",
+            {"applicant_name": "Anna Nowak", "applicant_role": "opiekun"},
+            format="json",
+        )
         self.assertEqual(apply_res.status_code, status.HTTP_200_OK)
         self.assertEqual(apply_res.data["current_testers_count"], 2)
+        self.assertIn("Anna Nowak", apply_res.data["message"])
 
-        # Wypełnienie ewaluacji
+        # Wypełnienie ewaluacji z aliasami pol (accessibility_wcag_score i comments)
         eval_payload = {
             "pilot": self.pilot.id,
             "evaluator_persona_key": "anna_nowak",
@@ -281,17 +286,52 @@ class BackendFullTestSuite(TestCase):
             "evaluator_role": "opiekun",
             "usability_score": 5,
             "effectiveness_score": 4,
-            "accessibility_score": 5,
+            "accessibility_wcag_score": 5,
             "barriers_encountered": "Brak",
-            "proposed_improvements": "Dodanie większych uchwytów",
+            "comments": "Dodanie większych uchwytów",
             "recommend_to_scale": True,
         }
         eval_res = self.client.post("/api/evaluations/", eval_payload, format="json")
         self.assertEqual(eval_res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(eval_res.data["accessibility_score"], 5)
+        self.assertEqual(eval_res.data["proposed_improvements"], "Dodanie większych uchwytów")
+
+        # Sprawdzenie wskaźników obliczeniowych pilotażu
+        pilot_res = self.client.get(f"/api/pilots/{self.pilot.id}/")
+        self.assertEqual(pilot_res.status_code, status.HTTP_200_OK)
+        self.assertEqual(pilot_res.data["evaluations_count"], 1)
+        self.assertEqual(pilot_res.data["average_usability_score"], 5.0)
+        self.assertEqual(pilot_res.data["average_effectiveness_score"], 4.0)
+        self.assertEqual(pilot_res.data["average_accessibility_score"], 5.0)
+        self.assertEqual(pilot_res.data["average_overall_score"], 4.7)
+        self.assertEqual(pilot_res.data["recommendation_rate"], 100)
+
+        # Sprawdzenie filtrowania listy pilotaży
+        filter_res = self.client.get("/api/pilots/?status=recruiting")
+        self.assertEqual(filter_res.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(len(filter_res.data), 1)
+
+        # Sprawdzenie tworzenia nowego pilotażu ze stringowym slugiem powiatu
+        create_res = self.client.post(
+            "/api/pilots/",
+            {
+                "innovation": self.innovation.id,
+                "title": "Nowy pilotaż w Grybowie",
+                "county": self.county.slug,
+                "municipality_name": "Grybów",
+                "max_testers": 6,
+                "eligible_roles_description": "Seniorzy i opiekunowie",
+                "summary": "Weryfikacja mobilnego sprzętu.",
+            },
+            format="json",
+        )
+        self.assertEqual(create_res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(create_res.data["county"], self.county.id)
+        self.assertEqual(create_res.data["county_name"], self.county.name)
 
     def test_partnership_and_inquiry_flow(self):
-        """Test giełdy partnerstw i panelu komunikacji z ROPS"""
-        # Ogłoszenie partnerstwa
+        """Test giełdy partnerstw i panelu komunikacji z ROPS (Moduł V)"""
+        # 1. Ogłoszenie partnerstwa z ID
         part_payload = {
             "title": "Gmina Grybów poszukuje partnera NGO",
             "organization_name": "OPS Grybów",
@@ -304,19 +344,54 @@ class BackendFullTestSuite(TestCase):
         }
         part_res = self.client.post("/api/partnerships/", part_payload, format="json")
         self.assertEqual(part_res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(part_res.data["county_slug"], self.county.slug)
+        self.assertEqual(part_res.data["category_code"], self.cat_seniors.code)
+        self.assertEqual(part_res.data["organization_type_display"], "Jednostka Samorządu / CUS")
+        self.assertEqual(part_res.data["looking_for_display"], "Organizację pozarządową (NGO)")
 
-        # Zapytanie i odpowiedź do FAQ
+        # 2. Ogłoszenie partnerstwa z aliasami i slugami
+        part2_payload = {
+            "title": "Fundacja Aktywna poszukuje partnera technologicznego",
+            "organization_name": "Fundacja Aktywna",
+            "sector": "ngo",
+            "county": self.county.slug,
+            "category": self.cat_seniors.code,
+            "target_partner_type": "technologiczny",
+            "desc": "Budowa aplikacji asystenckiej.",
+            "email": "kontakt@aktywna.pl",
+            "phone": "501 999 888",
+        }
+        part2_res = self.client.post("/api/partnerships/", part2_payload, format="json")
+        self.assertEqual(part2_res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(part2_res.data["organization_type"], "ngo")
+        self.assertEqual(part2_res.data["looking_for"], "technologiczny")
+        self.assertEqual(part2_res.data["contact_email"], "kontakt@aktywna.pl")
+
+        # 3. Filtrowanie i wyszukiwanie ofert partnerstw
+        filter_res = self.client.get(f"/api/partnerships/?county={self.county.slug}&looking_for=ngo")
+        self.assertEqual(filter_res.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(len(filter_res.data), 1)
+
+        search_res = self.client.get("/api/partnerships/?q=technologicznego")
+        self.assertEqual(search_res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(search_res.data), 1)
+
+        # 4. Zapytanie z aliasami (topic, content)
         inquiry_payload = {
             "author_name": "Marek Wiśniewski",
             "author_email": "cus@myslenice.pl",
             "recipient_type": "rops_coordinator",
-            "subject": "Procedura wdrożenia innowacji w CUS",
-            "message": "Jak wygląda formalna ścieżka adaptacji?",
+            "topic": "Procedura wdrożenia innowacji w CUS",
+            "content": "Jak wygląda formalna ścieżka adaptacji?",
         }
         inq_res = self.client.post("/api/inquiries/", inquiry_payload, format="json")
         self.assertEqual(inq_res.status_code, status.HTTP_201_CREATED)
         inq_id = inq_res.data["id"]
+        self.assertEqual(inq_res.data["subject"], "Procedura wdrożenia innowacji w CUS")
+        self.assertEqual(inq_res.data["message"], "Jak wygląda formalna ścieżka adaptacji?")
+        self.assertFalse(inq_res.data["is_answered"])
 
+        # 5. Odpowiedź mentora/koordynatora i publikacja w FAQ
         resp_payload = {
             "response": "Adaptacja wymaga uchwały Rady Gminy lub zmiany PUS.",
             "responder_name": "Magdalena Kaczmarczyk",
@@ -324,7 +399,13 @@ class BackendFullTestSuite(TestCase):
         }
         resp_res = self.client.post(f"/api/inquiries/{inq_id}/respond/", resp_payload, format="json")
         self.assertEqual(resp_res.status_code, status.HTTP_200_OK)
+        self.assertTrue(resp_res.data["is_answered"])
         self.assertTrue(resp_res.data["is_public_faq"])
+
+        # 6. Sprawdzenie filtrowania FAQ
+        faq_res = self.client.get("/api/inquiries/?faq=true")
+        self.assertEqual(faq_res.status_code, status.HTTP_200_OK)
+        self.assertTrue(all(item["is_public_faq"] and item["is_answered"] for item in faq_res.data))
 
     def test_middleman_package_generation(self):
         """Test generatora pakietu wdrożeniowego usługi dla JST (Middleman AI)"""
