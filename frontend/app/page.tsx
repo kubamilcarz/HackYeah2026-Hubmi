@@ -9,7 +9,8 @@ import {
   Plus,
   UsersThree,
 } from "@phosphor-icons/react/ssr";
-import { ButtonLink } from "@/components/ui/Button";
+import { Button, ButtonLink } from "@/components/ui/Button";
+import { SearchField } from "@/components/ui/FormControls";
 
 const navigationItems = [
   { href: "/about", label: "O Hubie" },
@@ -41,10 +42,15 @@ export default function Home() {
           </nav>
 
           <div className="landing-header__actions">
-            <Link className="landing-search-link" href="/search">
-              <MagnifyingGlass aria-hidden="true" size={21} weight="bold" />
-              <span className="sr-only">Wyszukaj</span>
-            </Link>
+            <details className="landing-search">
+              <summary><MagnifyingGlass aria-hidden="true" size={21} weight="bold" /><span className="sr-only">Otwórz wyszukiwanie</span></summary>
+              <div className="landing-search__panel">
+                <form action="/search" className="landing-search__form" method="get" role="search">
+                  <SearchField className="landing-search__field" hideLabel label="Szukaj w Splot" name="q" placeholder="Czego szukasz?" />
+                  <Button size="sm" type="submit">Szukaj</Button>
+                </form>
+              </div>
+            </details>
             <ButtonLink href="/login" size="sm" variant="tertiary">Zaloguj się</ButtonLink>
             <ButtonLink href="/join" size="sm">Dołącz</ButtonLink>
           </div>
@@ -56,7 +62,10 @@ export default function Home() {
                 {navigationItems.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
               </nav>
               <div className="landing-mobile-menu__actions">
-                <Link href="/search">Wyszukaj</Link>
+                <form action="/search" className="landing-search__form landing-search__form--mobile" method="get" role="search">
+                  <SearchField className="landing-search__field" hideLabel label="Szukaj w Splot" name="q" placeholder="Czego szukasz?" />
+                  <Button size="sm" type="submit">Szukaj</Button>
+                </form>
                 <ButtonLink href="/login" variant="tertiary">Zaloguj się</ButtonLink>
                 <ButtonLink href="/join">Dołącz</ButtonLink>
               </div>
