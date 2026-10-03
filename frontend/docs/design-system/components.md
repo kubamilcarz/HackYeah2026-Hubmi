@@ -56,7 +56,7 @@ remain visible and the search field keeps its associated Polish label.
 | Component | Source | Contract |
 | --- | --- | --- |
 | `DataTable` | `ui/DataTable.tsx` | Searchable and sortable native table with Polish labels and empty state. Optional `selectable` adds named native row/select-all checkboxes; `cellKind: "status"` plus `statusVariants` renders a textual `Badge` status. It scrolls horizontally on narrow screens rather than dropping data. |
-| `Map` | `ui/Map.tsx` | Desktop map plus keyboard-accessible organization list and in-map selected-detail card. The list remains available when map configuration fails. |
+| `Map` | `ui/Map.tsx` | Map with title, introduction, labelled discovery controls, keyboard-accessible organization list, and an in-map selected-detail card. The location list is a native disclosure panel so map discovery remains visually primary; it opens when map configuration fails. Use its default `h2` heading in nested content or `headingLevel="h1"` when it is the route’s sole page header. |
 
 ## Knowledge resource patterns
 

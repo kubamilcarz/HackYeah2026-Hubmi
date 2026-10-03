@@ -30,6 +30,7 @@ export type MapProps = {
   center?: MapPosition;
   className?: string;
   description?: string;
+  headingLevel?: "h1" | "h2";
   markers?: MapMarker[];
   onProfileClick?: (marker: MapMarker) => void;
   styleUrl?: string;
@@ -98,12 +99,14 @@ export function Map({
   center = TAURON_ARENA_KRAKOW,
   className,
   description = "Zobacz, co dzieje się w Twojej okolicy.",
+  headingLevel = "h2",
   markers = EMPTY_MARKERS,
   onProfileClick,
   styleUrl = DEFAULT_STYLE_URL,
   title = "Mapa inicjatyw i partnerów",
   zoom = 16,
 }: MapProps) {
+  const Heading = headingLevel;
   const accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -204,7 +207,7 @@ export function Map({
     <section className={`map${className ? ` ${className}` : ""}`} aria-label={ariaLabel}>
       <header className="map__header">
         <div className="map__heading">
-          <h2 className="type-h2">{title}</h2>
+          <Heading className={headingLevel === "h1" ? "type-h1" : "type-h2"}>{title}</Heading>
           <p className="type-body">{description}</p>
         </div>
         <div className="map__discovery-controls">
@@ -231,8 +234,11 @@ export function Map({
       </div>
       <div className="map__supporting-content">
         {filteredMarkers.length > 0 ? (
-          <div>
-            <h3 className="type-h3" id={listId}>Punkty na mapie</h3>
+          <details className="map__location-list" open={configurationError ? true : undefined}>
+            <summary id={listId}>
+              <span>Lista punktów</span>
+              <span aria-hidden="true">({filteredMarkers.length})</span>
+            </summary>
             <ul aria-labelledby={listId} className="map__marker-list">
               {filteredMarkers.map((marker) => (
                 <li key={marker.id}>
@@ -248,7 +254,7 @@ export function Map({
                 </li>
               ))}
             </ul>
-          </div>
+          </details>
         ) : (
           <div className="map__empty" role="status">
             <p className="type-body">Nie znaleziono punktów spełniających te kryteria.</p>

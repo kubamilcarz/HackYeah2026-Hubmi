@@ -122,7 +122,8 @@ these components rather than introducing look-alikes.
   `Wydarzenia`), Mapbox markers, and a paired accessible location list. A
   marker supplies its name, position, type, optional categories and description,
   and optional visual tone; the visible type label is always supplied alongside
-  the marker colour.
+  the marker colour. Its heading is `h2` by default; set `headingLevel="h1"`
+  when the map supplies the route’s only page heading.
 - Selecting a point centres the map and reveals its dismissible card as an
   in-map overlay. `onProfileClick` is an optional action callback; consumers
   add routing or another action outside the component.

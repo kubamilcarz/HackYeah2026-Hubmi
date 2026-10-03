@@ -1,15 +1,16 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Bell, Briefcase, Compass, HandHeart, House, Lightbulb } from "@phosphor-icons/react";
+import { Bell, Briefcase, Compass, HandHeart, House, Lightbulb, MapTrifold } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { AppNavigation, type NavigationItem } from "@/components/ui/AppNavigation";
 import { PageNavigationBar } from "@/components/ui/PageNavigationBar";
 import { Toast, ToastViewport } from "@/components/ui/Toast";
 
 const navigationItems: NavigationItem[] = [
-  { id: "home", label: "Strona główna", href: "/", icon: House },
+  { id: "start", label: "Strona główna", href: "/start", icon: House },
   { id: "report-need", label: "Zgłoś potrzebę", href: "/needs/new", icon: HandHeart },
+  { id: "map", label: "Mapa inicjatyw", href: "/map", icon: MapTrifold },
   { id: "solutions", label: "Rozwiązania", href: "/solutions", icon: Lightbulb },
 ];
 
