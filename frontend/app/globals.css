@@ -160,7 +160,7 @@
   --feedback-info-background: #00274e;
   --focus-ring: #ffffff;
   --overlay-backdrop: rgb(0 0 0 / 64%);
-  --brand-image-filter: invert(1);
+  --brand-image-filter: none;
   --button-image-filter: none;
 }
 
@@ -220,7 +220,7 @@
   --feedback-info-background: #000000;
   --focus-ring: #ffffff;
   --overlay-backdrop: rgb(0 0 0 / 72%);
-  --brand-image-filter: invert(1);
+  --brand-image-filter: grayscale(1);
   --button-image-filter: none;
 }
 
@@ -280,7 +280,7 @@
   --feedback-info-background: #000000;
   --focus-ring: #ffff00;
   --overlay-backdrop: rgb(0 0 0 / 72%);
-  --brand-image-filter: invert(93%) sepia(97%) saturate(1700%) hue-rotate(2deg) brightness(110%) contrast(105%);
+  --brand-image-filter: var(--brand-yellow-filter);
   --button-image-filter: none;
 }
 
@@ -813,6 +813,24 @@ a.app-navigation__link {
   filter: var(--brand-image-filter);
   height: 3rem;
   width: 5rem;
+}
+
+:root[data-theme="dark"] .app-navigation__brand-logo,
+:root[data-theme="dark"] .landing-brand__mark,
+:root[data-theme="hc-black-white"] .app-navigation__brand-logo,
+:root[data-theme="hc-black-white"] .landing-brand__mark,
+:root[data-theme="hc-black-yellow"] .app-navigation__brand-logo,
+:root[data-theme="hc-black-yellow"] .landing-brand__mark {
+  content: url("/logo-color-dark.svg");
+}
+
+:root[data-theme="grayscale"] .landing-brand__mark,
+:root[data-theme="hc-black-white"] .landing-brand__mark {
+  filter: grayscale(1);
+}
+
+:root[data-theme="hc-black-yellow"] .landing-brand__mark {
+  filter: var(--brand-yellow-filter);
 }
 
 .app-navigation__link {
@@ -6704,4 +6722,3 @@ a.app-navigation__link {
   background: var(--surface-subtle);
   border-top: 1px solid var(--border-subtle);
 }
-
