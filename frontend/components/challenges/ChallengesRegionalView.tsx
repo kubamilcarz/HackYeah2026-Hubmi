@@ -141,14 +141,13 @@ export function ChallengesRegionalView({
       <div className="challenges-view__split">
         {/* Lewa kolumna: wyszukiwarka + lista powiatów */}
         <div className="challenges-view__sidebar">
-          <div className="challenges-view__sidebar-filter">
-            <SearchField
-              label="Wyszukaj powiat"
-              onChange={(e) => setCountySearchQuery(e.target.value)}
-              placeholder="np. nowosądecki, tarnowski..."
-              value={countySearchQuery}
-            />
-          </div>
+          <SearchField
+            hideLabel
+            label="Wyszukaj powiat"
+            onChange={(e) => setCountySearchQuery(e.target.value)}
+            placeholder="Wyszukaj powiat, np: nowosadecki..."
+            value={countySearchQuery}
+          />
 
           <div
             aria-label="Lista powiatów"
@@ -323,14 +322,13 @@ export function ChallengesRegionalView({
       <div className="challenges-view__split">
         {/* Lewa kolumna: wyszukiwarka + lista wyzwań */}
         <div className="challenges-view__sidebar">
-          <div className="challenges-view__sidebar-filter">
-            <SearchField
-              label="Szukaj wyzwania"
-              onChange={(e) => setChallengeSearchQuery(e.target.value)}
-              placeholder="np. seniorzy, bariery, samotność..."
-              value={challengeSearchQuery}
-            />
-          </div>
+          <SearchField
+            hideLabel
+            label="Szukaj wyzwania"
+            onChange={(e) => setChallengeSearchQuery(e.target.value)}
+            placeholder="Wyszukaj wyzwanie, np: seniorzy..."
+            value={challengeSearchQuery}
+          />
 
           <div
             aria-label="Wybierz wyzwanie"
@@ -547,7 +545,7 @@ export function ChallengesRegionalView({
             <article className="challenges-view__white-spot-card" key={spot.submission_id}>
               <div className="flex flex-col gap-2">
                 <div className="challenges-view__white-spot-meta">
-                  <Tag label={spot.category_name} variant="neutral" />
+                  <Tag className="challenges-view__white-spot-category" label={spot.category_name} variant="neutral" />
                   <span className="type-caption text-[var(--content-muted)]">{spot.county_name}</span>
                 </div>
                 <h4 className="challenges-view__white-spot-title">{spot.title}</h4>

@@ -292,6 +292,7 @@ export function InnovationLibraryView({ initialInnovations, categories }: Innova
 
       {/* Dialog zaawansowanych filtrów */}
       <Dialog
+        className="innovation-library__filter-dialog"
         description="Wybierz kategorie, etap dojrzałości i formę innowacji, aby zawęzić listę."
         onOpenChange={setIsFilterDialogOpen}
         open={isFilterDialogOpen}

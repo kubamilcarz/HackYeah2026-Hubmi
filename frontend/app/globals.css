@@ -800,7 +800,6 @@ a.app-navigation__link {
 
 .app-navigation__link--active {
   background: var(--navigation-active-surface);
-  box-shadow: inset 0.1875rem 0 0 var(--navigation-active-indicator);
   color: var(--navigation-active-content);
   font-weight: var(--font-weight-bold);
 }
@@ -2776,7 +2775,6 @@ a.app-navigation__link {
 
   .app-navigation__link--active {
     background: Highlight;
-    box-shadow: inset 0.1875rem 0 0 HighlightText;
     color: HighlightText;
   }
 
@@ -3233,7 +3231,6 @@ a.app-navigation__link {
 .hub-shell .app-navigation nav { display: inline-block; max-width: calc(100% - var(--control-height-lg) - var(--space-5)); vertical-align: middle; }
 .hub-shell .app-navigation__list { display: flex; gap: var(--space-2); max-width: 100%; overflow-x: auto; padding-block: var(--space-1); }
 .hub-shell a.app-navigation__link { flex: 0 0 auto; font-size: var(--font-size-caption); min-height: var(--control-height-sm); padding: var(--space-2) var(--space-3); }
-.hub-shell .app-navigation__link--active { box-shadow: inset 0 -0.1875rem 0 var(--navigation-active-indicator); }
 .hub-shell__content { min-width: 0; }
 .hub-shell__content > .page-navigation-bar { border-bottom: 0; position: sticky; top: 0; z-index: 30; }
 .hub-shell__main { margin-inline: auto; max-width: 82rem; padding: var(--space-6) var(--space-4) var(--space-12); }
@@ -3451,7 +3448,6 @@ a.app-navigation__link {
   .hub-shell .app-navigation nav { display: block; max-width: none; }
   .hub-shell .app-navigation__list { display: grid; overflow: visible; padding: 0; }
   .hub-shell a.app-navigation__link { font-size: var(--font-size-body); min-height: var(--space-12); padding: var(--space-3) var(--space-4); }
-  .hub-shell .app-navigation__link--active { box-shadow: inset 0.1875rem 0 0 var(--navigation-active-indicator); }
   .hub-shell__main { padding: var(--space-10) var(--space-10) var(--space-16); }
   .start-page { align-items: start; grid-template-columns: minmax(0, 1fr) 20rem; }
   .start-statistics { position: sticky; top: calc(var(--control-height-lg) + var(--space-10)); }
@@ -3681,46 +3677,55 @@ a.app-navigation__link {
 }
 
 .matchmaking-gap {
-  background: var(--feedback-warning-background);
-  border: 2px solid var(--feedback-warning-foreground);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-control);
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
-  padding: var(--space-6);
+  gap: var(--space-5);
+  padding: var(--space-5);
 }
 
 .matchmaking-gap__header {
-  align-items: center;
+  align-items: flex-start;
   display: flex;
   gap: var(--space-3);
 }
+
+.matchmaking-gap__header > div { min-width: 0; }
 
 .matchmaking-gap__icon {
   color: var(--feedback-warning-foreground);
   display: flex;
   flex-shrink: 0;
+  margin-top: 0.25rem;
 }
 
 .matchmaking-gap__eyebrow {
-  background: var(--surface-raised);
-  border-radius: var(--radius-pill);
   color: var(--feedback-warning-foreground);
-  display: inline-block;
   font-size: 0.75rem;
   font-weight: var(--font-weight-bold);
-  margin: 0 0 var(--space-1);
-  padding: 0.125rem 0.5rem;
+  letter-spacing: 0.04em;
+  margin: 0 0 var(--space-2);
   text-transform: uppercase;
 }
 
+.matchmaking-gap h2 {
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  line-height: 1.15;
+  margin: 0;
+  max-width: 28ch;
+}
+
+.matchmaking-gap > .feedback { padding: var(--space-4); }
+
+.matchmaking-gap__body { display: grid; gap: var(--space-3); max-width: 68rem; }
 .matchmaking-gap__body .type-body { margin: 0; }
 
 .matchmaking-gap__actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
-  margin-top: var(--space-2);
 }
 
 .need-matches {
@@ -3991,6 +3996,7 @@ a.app-navigation__link {
 .challenges-view__empty-state h4,
 .challenges-view__empty-state p { margin: 0; }
 .innovation-library__empty-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.innovation-library__filter-dialog .dialog__surface { max-width: 54rem; }
 .innovation-library__dialog-content { display: grid; gap: var(--space-6); }
 .innovation-library__filter-section { display: grid; gap: var(--space-3); }
 .innovation-library__filter-section h4 { margin: 0; }
@@ -4800,6 +4806,14 @@ a.app-navigation__link {
   gap: var(--space-2);
   margin-bottom: var(--space-2);
 }
+
+.tag.challenges-view__white-spot-category {
+  max-width: 100%;
+  min-width: 0;
+  white-space: normal;
+}
+
+.challenges-view__white-spot-category > span { overflow-wrap: anywhere; }
 
 .challenges-view__white-spot-title {
   color: var(--content-primary);
