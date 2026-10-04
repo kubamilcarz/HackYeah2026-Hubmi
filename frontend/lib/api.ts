@@ -1060,27 +1060,35 @@ export const FALLBACK_ADMIN_TRENDS: AdminTrendsResponse = {
 
 async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const url = `${API_BASE_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      ...options?.headers,
-    },
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 1500);
 
-  if (!response.ok) {
-    let errorDetail = `Błąd HTTP ${response.status}`;
-    try {
-      const errorJson = await response.json();
-      errorDetail = errorJson.detail || errorJson.error || JSON.stringify(errorJson);
-    } catch {
-      // ignore json parse error
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: options?.signal ?? controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        ...options?.headers,
+      },
+    });
+
+    if (!response.ok) {
+      let errorDetail = `Błąd HTTP ${response.status}`;
+      try {
+        const errorJson = await response.json();
+        errorDetail = errorJson.detail || errorJson.error || JSON.stringify(errorJson);
+      } catch {
+        // ignore json parse error
+      }
+      throw new Error(errorDetail);
     }
-    throw new Error(errorDetail);
-  }
 
-  return response.json();
+    return response.json();
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 /** Pobiera listę 9 oficjalnych kategorii innowacji ROPS */
