@@ -6684,3 +6684,10 @@ a.app-navigation__link {
   color: var(--content-primary);
 }
 
+.pdf-embed__footer {
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-subtle);
+  border-top: 1px solid var(--border-subtle);
+}
+
+

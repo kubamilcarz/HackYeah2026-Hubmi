@@ -92,38 +92,20 @@ export function PdfEmbed({
 
       {!isCollapsed && (
         <div className="pdf-embed__viewport">
-          <object
-            aria-label={`Podgląd dokumentu PDF: ${title}`}
-            className="pdf-embed__object"
-            data={`${url}#toolbar=1&navpanes=0&view=FitH`}
-            type="application/pdf"
-          >
-            <iframe
-              className="pdf-embed__iframe"
-              src={`${url}#toolbar=1`}
-              title={`Wbudowany czytnik dokumentu: ${title}`}
-            >
-              <div className="pdf-embed__fallback">
-                <FilePdf aria-hidden="true" className="text-[var(--action-primary)]" size={48} weight="duotone" />
-                <p className="type-body font-semibold">Podgląd dokumentu PDF</p>
-                <p className="type-caption max-w-md text-[var(--content-secondary)]">
-                  Twoja przeglądarka nie obsługuje bezpośredniego podglądu plików PDF na tym urządzeniu. Możesz pobrać dokument na dysk lub otworzyć go w osobnej karcie.
-                </p>
-                <div className="flex gap-2 mt-2">
-                  <a className="button button--primary button--sm" download href={url}>
-                    <DownloadSimple aria-hidden="true" size={16} />
-                    <span>Pobierz dokument</span>
-                  </a>
-                  <a className="button button--secondary button--sm" href={url} rel="noreferrer" target="_blank">
-                    <ArrowSquareOut aria-hidden="true" size={16} />
-                    <span>Otwórz w przeglądarce</span>
-                  </a>
-                </div>
-              </div>
-            </iframe>
-          </object>
+          <iframe
+            className="pdf-embed__iframe"
+            loading="lazy"
+            src={`${url}#toolbar=1&navpanes=0`}
+            title={`Wbudowany czytnik dokumentu: ${title}`}
+          />
         </div>
       )}
+
+      <footer className="pdf-embed__footer">
+        <p className="type-caption text-[var(--content-secondary)] m-0">
+          Wskazówka: Jeśli Twoje urządzenie lub przeglądarka nie wyświetla wbudowanego podglądu PDF, skorzystaj z przycisku „Pełne okno” lub „Pobierz PDF”.
+        </p>
+      </footer>
     </article>
   );
 }
