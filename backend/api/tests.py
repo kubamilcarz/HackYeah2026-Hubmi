@@ -773,15 +773,13 @@ class BackendFullTestSuite(TestCase):
 
     def test_idea_ai_assist_with_openai_mock_and_fallback(self):
         """Test działania asystenta AI przy włączonym OpenAI oraz fallbacku przy błędzie API"""
-        # Test 1: Sukces OpenAI API
-        mock_choice = MagicMock()
-        mock_choice.message.content = '{"suggestion": "Dedykowana rekomendacja deinstytucjonalizacji wygenerowana przez OpenAI GPT-4o."}'
+        # Test 1: Sukces OpenAI Responses API
         mock_response = MagicMock()
-        mock_response.choices = [mock_choice]
+        mock_response.output_text = '{"suggestion": "Dedykowana rekomendacja deinstytucjonalizacji wygenerowana przez OpenAI."}'
 
         with patch("api.llm_service.get_openai_client") as mock_get_client:
             mock_client = MagicMock()
-            mock_client.chat.completions.create.return_value = mock_response
+            mock_client.responses.create.return_value = mock_response
             mock_get_client.return_value = mock_client
 
             res = self.client.post("/api/ideas/ai-assist/", {
@@ -793,11 +791,12 @@ class BackendFullTestSuite(TestCase):
 
             self.assertEqual(res.status_code, status.HTTP_200_OK)
             self.assertEqual(res.data["source"], "openai")
-            self.assertIn("OpenAI GPT-4o", res.data["suggestion"])
+            self.assertIn("wygenerowana przez OpenAI", res.data["suggestion"])
 
         # Test 2: Błąd OpenAI API -> automatyczny fallback do szablonu
         with patch("api.llm_service.get_openai_client") as mock_get_client:
             mock_client = MagicMock()
+            mock_client.responses.create.side_effect = RuntimeError("OpenAI rate limit or network error")
             mock_client.chat.completions.create.side_effect = RuntimeError("OpenAI rate limit or network error")
             mock_get_client.return_value = mock_client
 
