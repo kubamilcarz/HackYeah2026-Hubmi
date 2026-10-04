@@ -64,8 +64,8 @@ export function ConceptDiagramView({
     <div className="creator-diagram-container" role="region" aria-label="Wizualizacja koncepcji innowacji">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
-          <TreeStructure className="text-emerald-700" size={20} weight="bold" aria-hidden="true" />
-          <h4 className="type-h3 text-slate-900">Schemat koncepcji i logiki innowacji</h4>
+          <TreeStructure className="text-[var(--action-primary)]" size={20} weight="bold" aria-hidden="true" />
+          <h4 className="type-h3 text-[var(--content-primary)]">Schemat koncepcji i logiki innowacji</h4>
         </div>
         <div className="flex items-center gap-2">
           <Badge label="Model FERS Działanie 5.1" variant="info" />
@@ -91,17 +91,17 @@ export function ConceptDiagramView({
             <div key={idx} className="creator-diagram-step">
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="type-caption font-semibold text-emerald-800">
+                  <span className="type-caption font-semibold text-[var(--action-primary)]">
                     Etap {idx + 1}
                   </span>
                   {idx === defaultSteps.length - 1 ? (
-                    <CheckCircle className="text-emerald-600" size={16} weight="fill" aria-hidden="true" />
+                    <CheckCircle className="text-[var(--action-primary)]" size={16} weight="fill" aria-hidden="true" />
                   ) : (
-                    <ArrowRight className="text-slate-400 hidden sm:block -mr-1" size={14} aria-hidden="true" />
+                    <ArrowRight className="text-[var(--content-muted)] hidden sm:block -mr-1" size={14} aria-hidden="true" />
                   )}
                 </div>
-                <h5 className="type-body font-semibold text-slate-900 text-sm mb-1">{s.title}</h5>
-                <p className="type-caption text-slate-600 text-xs leading-relaxed">{s.description}</p>
+                <h5 className="type-body font-semibold text-[var(--content-primary)] text-sm mb-1">{s.title}</h5>
+                <p className="type-caption text-[var(--content-secondary)] text-xs leading-relaxed">{s.description}</p>
               </div>
             </div>
           ))}

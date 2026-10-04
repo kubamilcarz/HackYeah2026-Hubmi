@@ -388,7 +388,7 @@ export function FersGrantWizard({
   return (
     <div ref={stepContainerRef} className="space-y-6" tabIndex={-1}>
       {/* Pasek postępu 5 etapów */}
-      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-6 space-y-4">
+      <div className="creator-progress-card space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div>
             <h2 className="type-h2">Generator wniosku grantowego FERS (12 punktów)</h2>
@@ -426,7 +426,7 @@ export function FersGrantWizard({
       {/* KROK 1: Metryka & Wnioskodawca */}
       {currentStep === 1 && (
         <div className="space-y-6">
-          <div className="border-b border-slate-100 pb-3">
+          <div className="border-b border-[var(--border-subtle)] pb-3">
             <h3 className="type-h2">1. Przedmiot innowacji i dane wnioskodawcy</h3>
           </div>
 
@@ -549,7 +549,7 @@ export function FersGrantWizard({
             {/* Pola dla NGO */}
             {applicantType === "podmiot_ngo" && (
               <div className="creator-subpanel">
-                <h5 className="type-body font-semibold text-slate-900">Dane rejestrowe podmiotu</h5>
+                <h5 className="type-body font-semibold text-[var(--content-primary)]">Dane rejestrowe podmiotu</h5>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <TextField
                     label="Numer KRS"
@@ -584,7 +584,7 @@ export function FersGrantWizard({
             {applicantType === "grupa_nieformalna" && (
               <div className="creator-subpanel">
                 <div className="flex items-center justify-between">
-                  <h5 className="type-body font-semibold text-slate-900">Członkowie grupy nieformalnej</h5>
+                  <h5 className="type-body font-semibold text-[var(--content-primary)]">Członkowie grupy nieformalnej</h5>
                   <Button
                     type="button"
                     variant="secondary"
@@ -598,7 +598,7 @@ export function FersGrantWizard({
 
                 <div className="space-y-3">
                   {groupMembers.map((m, idx) => (
-                    <div key={idx} className="flex items-center gap-3 bg-white p-3 border border-slate-200 rounded-xl">
+                    <div key={idx} className="flex items-center gap-3 bg-[var(--surface-raised)] p-3 border border-[var(--border-subtle)] rounded-xl">
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">
                         <TextField
                           label={`Członek ${idx + 1}: Imię i nazwisko`}
@@ -654,7 +654,7 @@ export function FersGrantWizard({
       {/* KROK 2: Koncepcja & Innowacyjność */}
       {currentStep === 2 && (
         <div className="space-y-6">
-          <div className="border-b border-slate-100 pb-3">
+          <div className="border-b border-[var(--border-subtle)] pb-3">
             <h3 className="type-h2">2. Koncepcja rozwiązania i innowacyjność</h3>
           </div>
 
@@ -719,7 +719,7 @@ export function FersGrantWizard({
       {/* KROK 3: Diagnoza & Odbiorcy */}
       {currentStep === 3 && (
         <div className="space-y-6">
-          <div className="border-b border-slate-100 pb-3">
+          <div className="border-b border-[var(--border-subtle)] pb-3">
             <h3 className="type-h2">3. Diagnoza problemu i grupa docelowa</h3>
           </div>
 
@@ -782,10 +782,10 @@ export function FersGrantWizard({
       {/* KROK 4: Skalowalność & Budżet */}
       {currentStep === 4 && (
         <div className="space-y-6">
-          <div className="creator-section__header border-b border-slate-100 pb-3">
+          <div className="creator-section__header border-b border-[var(--border-subtle)] pb-3">
             <div>
               <h3 className="type-h2">4. Skalowalność, harmonogram i budżet mikrograntu</h3>
-              <p className="type-body text-slate-600 mt-1">
+              <p className="type-body text-[var(--content-secondary)] mt-1">
                 Zaplanuj etapy przygotowania (maks. 3 msc) i testowania (maks. 9 msc). Limit mikrograntu FERS to 50 000 zł.
               </p>
             </div>
@@ -837,10 +837,10 @@ export function FersGrantWizard({
             <div className="creator-budget-card">
               <div className="creator-budget-card__header">
                 <div>
-                  <h5 className="type-body font-semibold text-slate-900">
+                  <h5 className="type-body font-semibold text-[var(--content-primary)]">
                     Część I: Okres przygotowawczy (maks. 3 miesiące)
                   </h5>
-                  <p className="type-caption text-slate-600">
+                  <p className="type-caption text-[var(--content-secondary)]">
                     Opracowanie metody, standardu usługi, regulaminów i szkolenia kadry.
                   </p>
                 </div>
@@ -911,7 +911,7 @@ export function FersGrantWizard({
                   </div>
                 ))}
               </div>
-              <div className="text-right font-semibold text-sm text-slate-700 pt-1">
+              <div className="text-right font-semibold text-sm text-[var(--content-secondary)] pt-1">
                 Podsuma etapu przygotowawczego: {prepTotal.toLocaleString("pl-PL")} PLN
               </div>
             </div>
@@ -920,10 +920,10 @@ export function FersGrantWizard({
             <div className="creator-budget-card">
               <div className="creator-budget-card__header">
                 <div>
-                  <h5 className="type-body font-semibold text-slate-900">
+                  <h5 className="type-body font-semibold text-[var(--content-primary)]">
                     Część II: Okres testowania (maks. 9 miesięcy)
                   </h5>
-                  <p className="type-caption text-slate-600">
+                  <p className="type-caption text-[var(--content-secondary)]">
                     Realizacja pilotażu z udziałem testerów oraz badanie ewaluacyjne.
                   </p>
                 </div>
@@ -1007,7 +1007,7 @@ export function FersGrantWizard({
                   </div>
                 ))}
               </div>
-              <div className="text-right font-semibold text-sm text-slate-700 pt-1">
+              <div className="text-right font-semibold text-sm text-[var(--content-secondary)] pt-1">
                 Podsuma etapu testowania: {testingTotal.toLocaleString("pl-PL")} PLN
               </div>
             </div>
@@ -1016,10 +1016,10 @@ export function FersGrantWizard({
             <div className={`creator-budget-summary ${isBudgetOverLimit ? "creator-budget-summary--overlimit" : ""}`}>
               <div className="flex items-center justify-between flex-wrap gap-4">
                 <div>
-                  <span className="type-caption font-semibold uppercase tracking-wider block text-slate-700">
+                  <span className="type-caption font-semibold uppercase tracking-wider block text-[var(--content-secondary)]">
                     Pkt 10: Wnioskowana kwota mikrograntu FERS (suma całkowita)
                   </span>
-                  <div className="text-3xl font-bold mt-1 text-slate-900">
+                  <div className="text-3xl font-bold mt-1 text-[var(--content-primary)]">
                     {requestedAmount.toLocaleString("pl-PL")} PLN
                   </div>
                 </div>
@@ -1028,7 +1028,7 @@ export function FersGrantWizard({
                     label={isBudgetOverLimit ? "Przekroczono limit 50 000 zł!" : "W ramach limitu 50 000 zł"}
                     variant={isBudgetOverLimit ? "danger" : "success"}
                   />
-                  <p className="type-caption text-slate-600 mt-1">
+                  <p className="type-caption text-[var(--content-secondary)] mt-1">
                     Okres przygotowawczy: {prepTotal.toLocaleString("pl-PL")} zł • Testy: {testingTotal.toLocaleString("pl-PL")} zł
                   </p>
                 </div>
@@ -1050,7 +1050,7 @@ export function FersGrantWizard({
       {/* KROK 5: Zespół & Złożenie */}
       {currentStep === 5 && (
         <div className="space-y-6">
-          <div className="border-b border-slate-100 pb-3">
+          <div className="border-b border-[var(--border-subtle)] pb-3">
             <h3 className="type-h2">5. Zespół projektowy, wizualizacja i oświadczenia</h3>
           </div>
 
@@ -1102,9 +1102,9 @@ export function FersGrantWizard({
                   type="checkbox"
                   checked={formalAccepted}
                   onChange={(e) => setFormalAccepted(e.target.checked)}
-                  className="mt-1 w-4 h-4 text-emerald-600 rounded"
+                  className="mt-1 w-4 h-4 accent-[var(--action-primary)] rounded"
                 />
-                <span className="type-body text-sm text-slate-800">
+                <span className="type-body text-sm text-[var(--content-primary)]">
                   Oświadczam, że zapoznałem/-am się z Regulaminem Naboru Inkubatora Włączenia Społecznego 2.0
                   (Program FERS Działanie 5.1), wniosek spełnia wymogi formalne, wnioskowana kwota (
                   <strong>{requestedAmount.toLocaleString("pl-PL")} PLN</strong>) nie przekracza limitu 50 000 zł,
@@ -1117,10 +1117,10 @@ export function FersGrantWizard({
           {/* Podgląd oficjalnego arkusza i Druk */}
           <div className="creator-print-callout">
             <div className="flex items-center gap-3">
-              <FileText size={24} className="text-emerald-700 shrink-0" weight="fill" aria-hidden="true" />
+              <FileText size={24} className="text-[var(--action-primary)] shrink-0" weight="fill" aria-hidden="true" />
               <div>
-                <h5 className="type-h3 text-slate-900">Oficjalny arkusz wniosku do druku</h5>
-                <p className="type-caption text-slate-600 mt-0.5">
+                <h5 className="type-h3 text-[var(--content-primary)]">Oficjalny arkusz wniosku do druku</h5>
+                <p className="type-caption text-[var(--content-secondary)] mt-0.5">
                   Możesz przejrzeć gotowy do podpisu dokument lub pobrać go w formacie PDF.
                 </p>
               </div>
@@ -1138,7 +1138,7 @@ export function FersGrantWizard({
       )}
 
       {/* Pasek nawigacji między krokami */}
-      <div className="pt-6 border-t border-slate-200 flex items-center justify-between flex-wrap gap-4">
+      <div className="pt-6 border-t border-[var(--border-subtle)] flex items-center justify-between flex-wrap gap-4">
         {currentStep === 1 ? (
           <Button type="button" variant="tertiary" onClick={onCancel} leadingIcon={ArrowLeft}>
             Wróć do wyboru trybu

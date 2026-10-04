@@ -34,7 +34,7 @@ export default async function SolutionDetailPage({ params }: SolutionDetailPageP
         <nav aria-label="Okruszki" className="hub-breadcrumbs">
           <Link href="/">Strona główna</Link>
           <span aria-hidden="true">›</span>
-          <Link href="/solutions">Rozwiązania</Link>
+          <Link href="/solutions">Dopasuj pomoc</Link>
           <span aria-hidden="true">›</span>
           <span aria-current="page">{innovation.title}</span>
         </nav>
@@ -45,7 +45,13 @@ export default async function SolutionDetailPage({ params }: SolutionDetailPageP
 
   return (
     <HubShell activeItem="solutions">
-      <nav aria-label="Okruszki" className="hub-breadcrumbs"><Link href="/">Strona główna</Link><span aria-hidden="true">›</span><Link href="/solutions">Rozwiązania</Link><span aria-hidden="true">›</span><span aria-current="page">{solution.title}</span></nav>
+      <nav aria-label="Okruszki" className="hub-breadcrumbs">
+        <Link href="/">Strona główna</Link>
+        <span aria-hidden="true">›</span>
+        <Link href="/solutions">Dopasuj pomoc</Link>
+        <span aria-hidden="true">›</span>
+        <span aria-current="page">{solution.title}</span>
+      </nav>
       <article className="solution-detail">
         <SolutionDetailHero image={solution.image} matchLabel={`${solution.matchScore}% dopasowania`} summary={solution.summary} title={solution.title} />
         <SolutionDetailContent solution={solution} />

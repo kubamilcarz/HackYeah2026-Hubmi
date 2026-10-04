@@ -237,7 +237,7 @@ export function InnovationDetailView({ innovation }: InnovationDetailViewProps) 
               </p>
             ))
           ) : (
-            <p className="type-body text-slate-500 italic">
+            <p className="type-body text-[var(--content-muted)] italic">
               Transkrypcja tekstowa dla tego materiału wideo jest przygotowywana przez zespół ROPS Kraków.
             </p>
           )}
@@ -266,7 +266,7 @@ export function InnovationDetailView({ innovation }: InnovationDetailViewProps) 
             <p className="type-body">
               Kompleksowy opis metodologii, wytyczne BHP, standard pracy z podopiecznymi oraz formularze ewaluacyjne.
             </p>
-            <span className="type-caption text-slate-500">Format: PDF • Rozmiar: 3.4 MB • Wersja dostępna cyfrowo</span>
+            <span className="type-caption text-[var(--content-muted)]">Format: PDF • Rozmiar: 3.4 MB • Wersja dostępna cyfrowo</span>
           </div>
           <a
             aria-label={`Pobierz Podręcznik wdrożeniowy innowacji ${innovation.title} (plik PDF)`}
@@ -288,7 +288,7 @@ export function InnovationDetailView({ innovation }: InnovationDetailViewProps) 
             <p className="type-body">
               Arkusz szacunkowy dla Centrum Usług Społecznych z montażem funduszy FERS, PFRON i środków własnych.
             </p>
-            <span className="type-caption text-slate-500">Format: XLSX / PDF • Rozmiar: 850 KB</span>
+            <span className="type-caption text-[var(--content-muted)]">Format: XLSX / PDF • Rozmiar: 850 KB</span>
           </div>
           <a
             aria-label="Pobierz Wzór kalkulacji kosztów (plik PDF)"
@@ -349,7 +349,7 @@ export function InnovationDetailView({ innovation }: InnovationDetailViewProps) 
             <div className="innovation-sidebar-card__item">
               <span className="type-caption">Gotowość do replikacji:</span>
               <div className="flex items-center justify-between mt-1 mb-1">
-                <strong className="text-emerald-700 text-lg">{innovation.replication_readiness_score}%</strong>
+                <strong className="text-[var(--action-primary)] text-lg">{innovation.replication_readiness_score}%</strong>
                 <Badge label="Wysoka replikowalność" variant="success" />
               </div>
               <LinearProgress
@@ -362,7 +362,7 @@ export function InnovationDetailView({ innovation }: InnovationDetailViewProps) 
               <span className="type-caption">Autor i pomysłodawca:</span>
               <p className="type-body font-semibold">{innovation.author_name || "Zespół ROPS Kraków"}</p>
               {innovation.author_organization && (
-                <p className="type-caption text-slate-600">{innovation.author_organization}</p>
+                <p className="type-caption text-[var(--content-secondary)]">{innovation.author_organization}</p>
               )}
             </div>
 

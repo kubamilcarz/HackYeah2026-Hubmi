@@ -22,7 +22,7 @@ export default async function InnowacjePage() {
       <nav aria-label="Okruszki" className="hub-breadcrumbs">
         <Link href="/">Strona główna</Link>
         <span aria-hidden="true">›</span>
-        <span aria-current="page">Biblioteka Innowacji Społecznych</span>
+        <span aria-current="page">Biblioteka Innowacji</span>
       </nav>
 
       <PageHeader

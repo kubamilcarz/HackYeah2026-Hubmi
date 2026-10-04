@@ -24,12 +24,12 @@ export default async function WyzwaniaPage() {
       <nav aria-label="Okruszki" className="hub-breadcrumbs">
         <Link href="/">Strona główna</Link>
         <span aria-hidden="true">›</span>
-        <span aria-current="page">Kondycja Małopolski & Wyzwania</span>
+        <span aria-current="page">Wyzwania Regionu</span>
       </nav>
 
       <PageHeader
         description="Przeglądaj wyzwania społeczne w 22 powiatach regionu, gotowe rozwiązania i obszary wymagające nowych działań."
-        title="Wyzwania Małopolski"
+        title="Wyzwania regionalne Małopolski"
       />
 
       <ChallengesRegionalView

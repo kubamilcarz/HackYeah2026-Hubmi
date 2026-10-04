@@ -17,11 +17,11 @@ export default function MiddlemanPage() {
       <nav aria-label="Okruszki" className="hub-breadcrumbs">
         <Link href="/">Strona główna</Link>
         <span aria-hidden="true">›</span>
-        <span aria-current="page">Asystent wdrożeniowy JST</span>
+        <span aria-current="page">Middleman JST</span>
       </nav>
 
       <PageHeader
-        title="Asystent wdrożeniowy dla gmin"
+        title="Middleman JST: Pakiet wdrożeniowy dla gmin"
         description="Adaptuj przetestowane innowacje społeczne do realiów swojej gminy lub CUS. Wygeneruj standard usługi, kalkulację kosztów i montaż finansowy FERS / PFRON."
       />
 

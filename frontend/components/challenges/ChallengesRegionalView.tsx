@@ -156,7 +156,7 @@ export function ChallengesRegionalView({
             role="group"
           >
             {filteredCounties.length === 0 ? (
-              <p className="type-caption text-slate-500 p-3">Brak powiatów dla tego zapytania.</p>
+              <p className="type-caption text-[var(--content-muted)] p-3">Brak powiatów dla tego zapytania.</p>
             ) : (
               filteredCounties.map((c) => {
                 const isSelected = c.slug === selectedCounty?.slug;
@@ -193,7 +193,7 @@ export function ChallengesRegionalView({
               <div className="challenges-view__detail-header-tags">
                 <Tag label="Województwo Małopolskie" variant="neutral" />
                 {selectedCounty.teryt && (
-                  <span className="type-caption text-slate-500">TERYT: {selectedCounty.teryt}</span>
+                  <span className="type-caption text-[var(--content-muted)]">TERYT: {selectedCounty.teryt}</span>
                 )}
               </div>
               <h2 className="challenges-view__detail-title">{selectedCounty.name}</h2>
@@ -338,7 +338,7 @@ export function ChallengesRegionalView({
             role="group"
           >
             {filteredChallenges.length === 0 ? (
-              <p className="type-caption text-slate-500 p-3">Brak wyzwań dla podanych kryteriów.</p>
+              <p className="type-caption text-[var(--content-muted)] p-3">Brak wyzwań dla podanych kryteriów.</p>
             ) : (
               filteredChallenges.map((ch) => {
                 const isSelected = ch.slug === selectedChallenge?.slug;
@@ -548,7 +548,7 @@ export function ChallengesRegionalView({
               <div className="flex flex-col gap-2">
                 <div className="challenges-view__white-spot-meta">
                   <Tag label={spot.category_name} variant="neutral" />
-                  <span className="type-caption text-slate-500">{spot.county_name}</span>
+                  <span className="type-caption text-[var(--content-muted)]">{spot.county_name}</span>
                 </div>
                 <h4 className="challenges-view__white-spot-title">{spot.title}</h4>
                 <p className="challenges-view__white-spot-desc">

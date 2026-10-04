@@ -126,18 +126,18 @@ export function IdeaCreatorView() {
         </div>
 
         <div className="space-y-2">
-          <span className="type-caption font-semibold text-emerald-800 uppercase tracking-wider">
+          <span className="type-caption font-semibold text-[var(--action-primary)] uppercase tracking-wider">
             ROPS Kraków • Zgłoszenie zarejestrowane
           </span>
           <h2 className="type-h2">
             {isFers ? "Wniosek grantowy FERS został złożony" : "Fiszka pomysłu została przyjęta"}
           </h2>
-          <p className="type-body text-slate-700">
+          <p className="type-body text-[var(--content-secondary)]">
             Numer ewidencyjny Twojego zgłoszenia: <strong>#{submittedData.id}</strong>.
           </p>
         </div>
 
-        <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-left text-sm text-slate-700 w-full">
+        <div className="creator-subpanel text-left text-sm w-full">
           {isFers
             ? "Twój wniosek trafił do zespołu ekspertów Inkubatora Włączenia Społecznego ROPS Kraków. O wyniku oceny formalno-merytorycznej powiadomimy Cię drogą e-mailową."
             : "Dziękujemy za podzielenie się pomysłem. Zespół ROPS Kraków skontaktuje się z Tobą w ciągu 3 dni roboczych, aby omówić dalsze kroki rozwoju innowacji."}
@@ -179,7 +179,7 @@ export function IdeaCreatorView() {
         <div className="creator-mode-header">
           <div>
             <h2 className="type-h2" id="creator-mode-heading">Wybierz tryb zgłoszenia</h2>
-            <p className="type-body text-slate-600 mt-1">
+            <p className="type-body text-[var(--content-secondary)] mt-1">
               W zależności od etapu pomysłu możesz złożyć szybką fiszkę lub pełny wniosek grantowy.
             </p>
           </div>

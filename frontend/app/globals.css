@@ -6284,7 +6284,8 @@ a.app-navigation__link {
    Moduł III — Kreator Pomysłów i Generator Wniosków FERS
    ========================================================================== */
 
-.creator-mode-card {
+.creator-mode-card,
+.creator-progress-card {
   background: var(--surface-raised);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-card);

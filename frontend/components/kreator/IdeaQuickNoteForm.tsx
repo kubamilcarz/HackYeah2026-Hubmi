@@ -104,10 +104,10 @@ export function IdeaQuickNoteForm({
       {/* Baner możliwości awansu do wniosku grantowego */}
       <div className="creator-upgrade-banner">
         <div className="flex items-start gap-3">
-          <FileText size={22} className="text-emerald-700 shrink-0 mt-0.5" weight="fill" aria-hidden="true" />
+          <FileText size={22} className="text-[var(--action-primary)] shrink-0 mt-0.5" weight="fill" aria-hidden="true" />
           <div>
-            <h4 className="type-body font-semibold text-slate-900">Potrzebujesz dofinansowania do 50 000 zł?</h4>
-            <p className="type-caption text-slate-600 mt-0.5">
+            <h4 className="type-body font-semibold text-[var(--content-primary)]">Potrzebujesz dofinansowania do 50 000 zł?</h4>
+            <p className="type-caption text-[var(--content-secondary)] mt-0.5">
               Możesz w każdej chwili przenieść wprowadzone dane do 12-punktowego wniosku grantowego FERS.
             </p>
           </div>
@@ -271,8 +271,8 @@ export function IdeaQuickNoteForm({
       </div>
 
       {/* Akcja złożenia */}
-      <div className="pt-6 border-t border-slate-200 flex items-center justify-between flex-wrap gap-4">
-        <span className="type-caption text-slate-500">
+      <div className="pt-6 border-t border-[var(--border-subtle)] flex items-center justify-between flex-wrap gap-4">
+        <span className="type-caption text-[var(--content-muted)]">
           Zespół ROPS Kraków odpowie w ciągu 3 dni roboczych.
         </span>
         <Button
