@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   ArrowRight,
   CheckCircle,
+  FileText,
   HandHeart,
   House,
   Lightbulb,
@@ -18,7 +19,8 @@ import { Badge, Tag } from "@/components/ui/Tag";
 import { TabSwitcher } from "@/components/ui/TabSwitcher";
 import { ButtonLink } from "@/components/ui/Button";
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
-import { KnowledgeResourceBrowser } from "@/components/ui/KnowledgeResourceBrowser";
+import { SearchField } from "@/components/ui/FormControls";
+import { MatchmakingGap } from "@/components/ui/MatchmakingGap";
 
 type ChallengesRegionalViewProps = {
   counties: County[];
@@ -36,22 +38,51 @@ export function ChallengesRegionalView({
   const [selectedCountySlug, setSelectedCountySlug] = useState<string>(
     counties[0]?.slug || "nowosadecki"
   );
+  const [countySearchQuery, setCountySearchQuery] = useState<string>("");
+
   const [selectedChallengeSlug, setSelectedChallengeSlug] = useState<string>(
     challenges[0]?.slug || ""
   );
+  const [challengeSearchQuery, setChallengeSearchQuery] = useState<string>("");
+
+  // Filtrowanie powiatów
+  const filteredCounties = useMemo(() => {
+    const q = countySearchQuery.trim().toLowerCase();
+    if (!q) return counties;
+    return counties.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        (c.summary && c.summary.toLowerCase().includes(q))
+    );
+  }, [counties, countySearchQuery]);
 
   const selectedCounty = useMemo(() => {
-    return counties.find((c) => c.slug === selectedCountySlug) || counties[0];
-  }, [counties, selectedCountySlug]);
+    const found = counties.find((c) => c.slug === selectedCountySlug);
+    return found || filteredCounties[0] || counties[0];
+  }, [counties, filteredCounties, selectedCountySlug]);
+
+  // Filtrowanie wyzwań
+  const filteredChallenges = useMemo(() => {
+    const q = challengeSearchQuery.trim().toLowerCase();
+    if (!q) return challenges;
+    return challenges.filter(
+      (ch) =>
+        ch.title.toLowerCase().includes(q) ||
+        ch.summary.toLowerCase().includes(q) ||
+        (ch.county_name && ch.county_name.toLowerCase().includes(q)) ||
+        (ch.category_name && ch.category_name.toLowerCase().includes(q))
+    );
+  }, [challenges, challengeSearchQuery]);
 
   const selectedChallenge = useMemo(() => {
-    return challenges.find((c) => c.slug === selectedChallengeSlug) || challenges[0];
-  }, [challenges, selectedChallengeSlug]);
+    const found = challenges.find((c) => c.slug === selectedChallengeSlug);
+    return found || filteredChallenges[0] || challenges[0];
+  }, [challenges, filteredChallenges, selectedChallengeSlug]);
 
-  // Powiązane innowacje dla wybranego powiatu
+  // Demo data has no county-to-innovation relation. These are suggestions for
+  // exploration, not a claim that a solution already covers the county need.
   const countyInnovations = useMemo(() => {
     if (!selectedCounty) return [];
-    // Jeśli powiat ma bezpośrednie innowacje z seedu lub pasujące tematycznie
     if (selectedCounty.slug === "nowosadecki") {
       return allInnovations.filter((i) => i.slug.includes("bawita") || i.slug.includes("cuder"));
     }
@@ -75,25 +106,25 @@ export function ChallengesRegionalView({
     innovations_count: number;
     status: string;
   }>[] = [
-    { key: "category_name", label: "Kategoria ROPS Kraków", sortable: true },
+    { key: "category_name", label: "Kategoria", sortable: true },
     { key: "submissions_count", label: "Zgłoszone potrzeby", sortable: true },
-    { key: "innovations_count", label: "Gotowe innowacje", sortable: true },
+    { key: "innovations_count", label: "Dostępne innowacje", sortable: true },
     {
       key: "status",
-      label: "Kondycja wsparcia",
+      label: "Pokrycie",
       cellKind: "status",
       statusVariants: {
-        "Wysokie pokrycie": "success",
-        "Średnie pokrycie": "warning",
-        "Wykryta Biała Plama": "danger",
+        "Wysokie": "success",
+        "Średnie": "warning",
+        "Biała Plama": "danger",
       },
     },
   ];
 
   const categoryRows = trends.by_category.map((c) => {
-    let status = "Średnie pokrycie";
-    if (c.innovations_count >= 2) status = "Wysokie pokrycie";
-    if (c.innovations_count === 0 && c.submissions_count > 0) status = "Wykryta Biała Plama";
+    let status = "Średnie";
+    if (c.innovations_count >= 2) status = "Wysokie";
+    if (c.innovations_count === 0 && c.submissions_count > 0) status = "Biała Plama";
     return {
       category_name: c.category_name,
       category_code: c.category_code,
@@ -103,117 +134,129 @@ export function ChallengesRegionalView({
     };
   });
 
-  // Kolumny dla tabeli powiatów
-  const countyColumns: DataTableColumn<{
-    county_name: string;
-    population: number;
-    senior_ratio: number;
-    submissions_count: number;
-  }>[] = [
-    { key: "county_name", label: "Powiat", sortable: true },
-    { key: "population", label: "Liczba mieszkańców", sortable: true },
-    { key: "senior_ratio", label: "Odsetek seniorów 60+ (%)", sortable: true },
-    { key: "submissions_count", label: "Aktywne zgłoszenia", sortable: true },
-  ];
-
-  const countyRows = trends.by_county.map((c) => ({
-    county_name: c.county_name,
-    population: c.population,
-    senior_ratio: c.senior_ratio,
-    submissions_count: c.submissions_count,
-  }));
-
-  // Zakładka 1: Kondycja Powiatów
+  // ==========================================
+  // PANEL 1: Diagnoza Powiatów
+  // ==========================================
   const countiesPanel = (
     <div className="challenges-view__panel">
-      <div className="challenges-view__intro">
-        <h3 className="type-h2">Diagnoza demograficzno-społeczna powiatów Małopolski</h3>
-        <p className="type-body">
-          Wybierz powiat, aby zapoznać się ze wskaźnikami demograficznymi, strukturą Centrów Usług Społecznych (CUS) oraz rozwiązaniami deinstytucjonalnymi.
-        </p>
-      </div>
-
       <div className="challenges-view__split">
-        {/* Lista powiatów z klawiaturą */}
-        <div aria-label="Wybierz powiat z listy" className="challenges-view__county-list" role="tablist">
-          {counties.map((c) => {
-            const isSelected = c.slug === selectedCounty?.slug;
-            return (
-              <button
-                aria-selected={isSelected}
-                className={`challenges-view__county-item${isSelected ? " is-selected" : ""}`}
-                key={c.slug}
-                onClick={() => setSelectedCountySlug(c.slug)}
-                role="tab"
-                type="button"
-              >
-                <div className="challenges-view__county-item-header">
-                  <strong className="challenges-view__county-name">{c.name}</strong>
-                  <Badge
-                    label={`60+: ${c.senior_ratio}%`}
-                    variant={Number(c.senior_ratio) > 23 ? "warning" : "info"}
-                  />
-                </div>
-                <p className="challenges-view__county-sub">
-                  Mieszkańcy: {c.population ? c.population.toLocaleString("pl-PL") : "b.d."}
-                </p>
-              </button>
-            );
-          })}
+        {/* Lewa kolumna: wyszukiwarka + lista powiatów */}
+        <div className="challenges-view__sidebar">
+          <div className="challenges-view__sidebar-filter">
+            <SearchField
+              label="Wyszukaj powiat"
+              onChange={(e) => setCountySearchQuery(e.target.value)}
+              placeholder="np. nowosądecki, tarnowski..."
+              value={countySearchQuery}
+            />
+          </div>
+
+          <div
+            aria-label="Lista powiatów"
+            className="challenges-view__selector-list"
+            role="group"
+          >
+            {filteredCounties.length === 0 ? (
+              <p className="type-caption text-slate-500 p-3">Brak powiatów dla tego zapytania.</p>
+            ) : (
+              filteredCounties.map((c) => {
+                const isSelected = c.slug === selectedCounty?.slug;
+                const seniorVal = Number(c.senior_ratio);
+                return (
+                  <button
+                    aria-pressed={isSelected}
+                    className={`challenges-view__selector-item${isSelected ? " is-selected" : ""}`}
+                    key={c.slug}
+                    onClick={() => setSelectedCountySlug(c.slug)}
+                    type="button"
+                  >
+                    <div className="challenges-view__selector-item-header">
+                      <strong className="challenges-view__selector-item-name">{c.name}</strong>
+                      <Badge
+                        label={`Seniorzy: ${c.senior_ratio}%`}
+                        variant={seniorVal >= 24 ? "warning" : seniorVal >= 22 ? "info" : "neutral"}
+                      />
+                    </div>
+                    <p className="challenges-view__selector-item-meta">
+                      {c.population ? `${c.population.toLocaleString("pl-PL")} mieszkańców` : "Brak danych o ludności"}
+                    </p>
+                  </button>
+                );
+              })
+            )}
+          </div>
         </div>
 
-        {/* Szczegółowa karta wybranego powiatu */}
+        {/* Prawa kolumna: Karta wybranego powiatu */}
         {selectedCounty && (
-          <article className="challenges-view__county-card">
-            <header className="challenges-view__county-card-header">
-              <div>
-                <span className="type-caption text-slate-500">Karta diagnozy regionalnej</span>
-                <h3 className="type-h2">{selectedCounty.name}</h3>
-              </div>
-              <div className="flex gap-2">
+          <article className="challenges-view__detail-card">
+            <header className="challenges-view__detail-header">
+              <div className="challenges-view__detail-header-tags">
                 <Tag label="Województwo Małopolskie" variant="neutral" />
+                {selectedCounty.teryt && (
+                  <span className="type-caption text-slate-500">TERYT: {selectedCounty.teryt}</span>
+                )}
               </div>
+              <h2 className="challenges-view__detail-title">{selectedCounty.name}</h2>
+              {selectedCounty.summary && (
+                <p className="challenges-view__detail-lead">{selectedCounty.summary}</p>
+              )}
             </header>
 
+            {/* Metryki */}
             <div className="challenges-view__stats-grid">
-              <div className="challenges-view__stat-box">
-                <span className="type-caption">Odsetek osób 60+:</span>
-                <strong className="type-h2 text-emerald-700">{selectedCounty.senior_ratio}%</strong>
-                <span className="type-caption text-slate-600">Średnia reg.: 22.4%</span>
+              <div className="challenges-view__stat-card">
+                <span className="challenges-view__stat-label">Seniorzy (60+)</span>
+                <strong className="challenges-view__stat-value challenges-view__stat-value--accent">
+                  {selectedCounty.senior_ratio}%
+                </strong>
+                <span className="challenges-view__stat-hint">Średnia w regionie: 22.4%</span>
               </div>
-              <div className="challenges-view__stat-box">
-                <span className="type-caption">Liczba ludności:</span>
-                <strong className="type-h2 text-slate-800">
+              <div className="challenges-view__stat-card">
+                <span className="challenges-view__stat-label">Liczba mieszkańców</span>
+                <strong className="challenges-view__stat-value">
                   {selectedCounty.population ? selectedCounty.population.toLocaleString("pl-PL") : "217 000"}
                 </strong>
-                <span className="type-caption text-slate-600">Obszar podgórski / miejski</span>
+                <span className="challenges-view__stat-hint">GUS</span>
               </div>
-              <div className="challenges-view__stat-box">
-                <span className="type-caption">Stopa bezrobocia:</span>
-                <strong className="type-h2 text-slate-800">{selectedCounty.unemployment_rate || "7.8"}%</strong>
-                <span className="type-caption text-slate-600">Rejestrowane GUS</span>
+              <div className="challenges-view__stat-card">
+                <span className="challenges-view__stat-label">Stopa bezrobocia</span>
+                <strong className="challenges-view__stat-value">
+                  {selectedCounty.unemployment_rate || "7.8"}%
+                </strong>
+                <span className="challenges-view__stat-hint">Rejestrowane WUP</span>
               </div>
             </div>
 
-            {selectedCounty.summary && (
+            {/* Zdiagnozowane wyzwania */}
+            {selectedCounty.main_challenges && selectedCounty.main_challenges.length > 0 && (
               <div className="challenges-view__section">
-                <h4 className="type-h3">Profil społeczno-geograficzny</h4>
-                <p className="type-body">{selectedCounty.summary}</p>
+                <h3 className="challenges-view__section-title">Główne zdiagnozowane wyzwania</h3>
+                <ul className="challenges-view__needs-list">
+                  {selectedCounty.main_challenges.map((challengeItem, idx) => (
+                    <li className="challenges-view__need-item" key={idx}>
+                      <Warning aria-hidden="true" size={18} weight="bold" />
+                      <span>{challengeItem}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
 
-            {/* Gminy i CUS */}
+            {/* Gminy i Centra Usług Społecznych */}
             {selectedCounty.municipalities && selectedCounty.municipalities.length > 0 && (
               <div className="challenges-view__section">
-                <h4 className="type-h3">Gminy w powiecie i Centra Usług Społecznych (CUS)</h4>
+                <h3 className="challenges-view__section-title">Centra Usług Społecznych w powiecie</h3>
                 <div className="challenges-view__municipalities-grid">
                   {selectedCounty.municipalities.map((m) => (
                     <div className="challenges-view__municipality-item" key={m.name}>
                       <House aria-hidden="true" size={18} />
-                      <span className="font-semibold">{m.name}</span>
-                      <span className="text-xs text-slate-500 capitalize">({m.kind})</span>
+                      <div className="flex-1 min-w-0">
+                        <span className="challenges-view__municipality-name block truncate">{m.name}</span>
+                        <span className="challenges-view__municipality-kind">gmina {m.kind}</span>
+                      </div>
                       {m.has_cus ? (
-                        <Badge label="Aktywny CUS" variant="success" />
+                        <Badge label="CUS aktywny" variant="success" />
                       ) : (
                         <Badge label="OPS tradycyjny" variant="neutral" />
                       )}
@@ -223,25 +266,46 @@ export function ChallengesRegionalView({
               </div>
             )}
 
-            {/* Rekomendowane innowacje ROPS dla powiatu */}
+            {/* Rozwiązania do sprawdzenia */}
             <div className="challenges-view__section">
-              <h4 className="type-h3">Innowacje społeczne odpowiadające na potrzeby {selectedCounty.name}</h4>
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <h3 className="challenges-view__section-title">
+                  Rozwiązania warte sprawdzenia w tym powiecie
+                </h3>
+                <ButtonLink href="/innowacje" trailingIcon={ArrowRight} variant="tertiary">
+                  Wszystkie innowacje
+                </ButtonLink>
+              </div>
+
               <div className="challenges-view__innovations-list">
                 {countyInnovations.map((inn) => (
                   <div className="challenges-view__inn-card" key={inn.id}>
-                    <div className="flex-1">
-                      <h5 className="type-h3 text-base">
+                    <div className="challenges-view__inn-header">
+                      <div className="flex items-center justify-between gap-2">
+                        <Tag label={inn.category_name || "Innowacja"} variant="info" />
+                        <Badge label="Sprawdzona" variant="success" />
+                      </div>
+                      <h4 className="challenges-view__inn-title">
                         <Link href={`/innowacje/${inn.slug}`}>{inn.title}</Link>
-                      </h5>
-                      <p className="type-body text-sm text-slate-600">{inn.short_summary}</p>
+                      </h4>
+                      <p className="challenges-view__inn-summary">{inn.short_summary}</p>
                     </div>
-                    <ButtonLink
-                      href={`/innowacje/${inn.slug}`}
-                      trailingIcon={ArrowRight}
-                      variant="secondary"
-                    >
-                      Szczegóły
-                    </ButtonLink>
+
+                    <div className="flex gap-2">
+                      <ButtonLink
+                        href={`/innowacje/${inn.slug}`}
+                        trailingIcon={ArrowRight}
+                        variant="primary"
+                      >
+                        Zobacz szczegóły
+                      </ButtonLink>
+                      <ButtonLink
+                        href={`/kreator?prefill_title=${encodeURIComponent(`Wdrożenie ${inn.title} w: ${selectedCounty.name}`)}`}
+                        variant="secondary"
+                      >
+                        Wdróż w powiecie
+                      </ButtonLink>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -252,76 +316,97 @@ export function ChallengesRegionalView({
     </div>
   );
 
-  // Zakładka 2: Katalog Wyzwań Regionalnych
+  // ==========================================
+  // PANEL 2: Katalog Wyzwań ROPS
+  // ==========================================
   const challengesPanel = (
     <div className="challenges-view__panel">
-      <div className="challenges-view__intro">
-        <h3 className="type-h2">Katalog wyzwań regionalnych Małopolski</h3>
-        <p className="type-body">
-          Zidentyfikowane przez ROPS Kraków kluczowe bariery społeczne wymagające innowacji, deinstytucjonalizacji oraz współpracy międzysektorowej.
-        </p>
-      </div>
-
       <div className="challenges-view__split">
-        {/* Lista wyzwań */}
-        <div aria-label="Wybierz wyzwanie regionalne" className="challenges-view__challenge-selector" role="tablist">
-          {challenges.map((ch) => {
-            const isSelected = ch.slug === selectedChallenge?.slug;
-            return (
-              <button
-                aria-selected={isSelected}
-                className={`challenges-view__challenge-btn${isSelected ? " is-selected" : ""}`}
-                key={ch.slug}
-                onClick={() => setSelectedChallengeSlug(ch.slug)}
-                role="tab"
-                type="button"
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <Tag label={ch.category_name || "Wyzwanie ROPS"} variant="info" />
-                  <span className="type-caption text-slate-500">{ch.county_name}</span>
-                </div>
-                <strong className="type-h3 text-sm text-slate-900 block text-left">{ch.title}</strong>
-              </button>
-            );
-          })}
+        {/* Lewa kolumna: wyszukiwarka + lista wyzwań */}
+        <div className="challenges-view__sidebar">
+          <div className="challenges-view__sidebar-filter">
+            <SearchField
+              label="Szukaj wyzwania"
+              onChange={(e) => setChallengeSearchQuery(e.target.value)}
+              placeholder="np. seniorzy, bariery, samotność..."
+              value={challengeSearchQuery}
+            />
+          </div>
+
+          <div
+            aria-label="Wybierz wyzwanie"
+            className="challenges-view__selector-list"
+            role="group"
+          >
+            {filteredChallenges.length === 0 ? (
+              <p className="type-caption text-slate-500 p-3">Brak wyzwań dla podanych kryteriów.</p>
+            ) : (
+              filteredChallenges.map((ch) => {
+                const isSelected = ch.slug === selectedChallenge?.slug;
+                return (
+                  <button
+                    aria-pressed={isSelected}
+                    className={`challenges-view__selector-item${isSelected ? " is-selected" : ""}`}
+                    key={ch.slug}
+                    onClick={() => setSelectedChallengeSlug(ch.slug)}
+                    type="button"
+                  >
+                    <div className="challenges-view__selector-item-header">
+                      <Tag label={ch.category_name || "Wyzwanie"} variant="info" />
+                      <span className="challenges-view__selector-item-meta">{ch.county_name}</span>
+                    </div>
+                    <strong className="challenges-view__selector-item-name">{ch.title}</strong>
+                  </button>
+                );
+              })
+            )}
+          </div>
         </div>
 
-        {/* Szczegóły wyzwania */}
+        {/* Prawa kolumna: Szczegóły wyzwania */}
         {selectedChallenge && (
-          <article className="challenges-view__challenge-detail">
-            <header className="challenges-view__challenge-header">
-              <div className="flex gap-2 mb-2">
-                <Tag label={selectedChallenge.category_name || "Wyzwanie ROPS"} variant="info" />
+          <article className="challenges-view__detail-card">
+            <header className="challenges-view__detail-header">
+              <div className="challenges-view__detail-header-tags">
+                <Tag label={selectedChallenge.category_name || "Wyzwanie"} variant="info" />
                 <Badge label={selectedChallenge.county_name || "Region Małopolski"} variant="neutral" />
               </div>
-              <h3 className="type-h2">{selectedChallenge.title}</h3>
-              <p className="type-body text-slate-700 leading-relaxed">{selectedChallenge.summary}</p>
+              <h2 className="challenges-view__detail-title">{selectedChallenge.title}</h2>
+              <p className="challenges-view__detail-lead">{selectedChallenge.summary}</p>
             </header>
 
+            {/* Diagnoza */}
             <div className="challenges-view__section">
-              <h4 className="type-h3">Diagnoza i analiza ROPS Kraków</h4>
-              <p className="type-body leading-relaxed">{selectedChallenge.full_analysis}</p>
+              <h3 className="challenges-view__section-title">Diagnoza sytuacji</h3>
+              <p className="challenges-view__section-body leading-relaxed">
+                {selectedChallenge.full_analysis}
+              </p>
             </div>
 
-            {/* Wskaźniki statystyczne */}
-            {selectedChallenge.statistical_data && Object.keys(selectedChallenge.statistical_data).length > 0 && (
-              <div className="challenges-view__section">
-                <h4 className="type-h3">Podstawa analityczna (Wskaźniki ROPS / GUS)</h4>
-                <div className="challenges-view__stats-grid">
-                  {Object.entries(selectedChallenge.statistical_data).map(([key, val]) => (
-                    <div className="challenges-view__stat-box" key={key}>
-                      <span className="type-caption">{key}:</span>
-                      <strong className="type-h2 text-emerald-700">{String(val)}</strong>
-                    </div>
-                  ))}
+            {/* Dane liczbowe */}
+            {selectedChallenge.statistical_data &&
+              Object.keys(selectedChallenge.statistical_data).length > 0 && (
+                <div className="challenges-view__section">
+                  <h3 className="challenges-view__section-title">Podstawa analityczna</h3>
+                  <div className="challenges-view__stats-grid">
+                    {Object.entries(selectedChallenge.statistical_data).map(([key, val]) => (
+                      <div className="challenges-view__stat-card" key={key}>
+                        <span className="challenges-view__stat-label">
+                          {key.replace(/_/g, " ")}:
+                        </span>
+                        <strong className="challenges-view__stat-value challenges-view__stat-value--accent">
+                          {String(val)}
+                        </strong>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Zidentyfikowane kluczowe potrzeby */}
+            {/* Kluczowe potrzeby */}
             {selectedChallenge.key_needs && selectedChallenge.key_needs.length > 0 && (
               <div className="challenges-view__section">
-                <h4 className="type-h3">Kluczowe potrzeby wdrożeniowe</h4>
+                <h3 className="challenges-view__section-title">Pilne potrzeby w terenie</h3>
                 <ul className="challenges-view__needs-list">
                   {selectedChallenge.key_needs.map((need, idx) => (
                     <li className="challenges-view__need-item" key={idx}>
@@ -333,31 +418,62 @@ export function ChallengesRegionalView({
               </div>
             )}
 
-            {/* Innowacje odpowiadające na wyzwanie */}
+            {/* Powiązane innowacje albo jawna luka */}
             <div className="challenges-view__section">
-              <h4 className="type-h3">Odpowiedź innowacyjna ROPS Kraków</h4>
-              <div className="challenges-view__innovations-list">
-                {(selectedChallenge.related_innovations && selectedChallenge.related_innovations.length > 0
-                  ? selectedChallenge.related_innovations
-                  : allInnovations.slice(0, 2)
-                ).map((inn) => (
+              <h3 className="challenges-view__section-title">Gotowe innowacje rozwiązujące ten problem</h3>
+              {selectedChallenge.related_innovations && selectedChallenge.related_innovations.length > 0 ? (
+                <div className="challenges-view__innovations-list">
+                  {selectedChallenge.related_innovations.map((inn) => (
                   <div className="challenges-view__inn-card" key={inn.id}>
-                    <div className="flex-1">
-                      <h5 className="type-h3 text-base">
+                    <div className="challenges-view__inn-header">
+                      <div className="flex items-center justify-between gap-2">
+                        <Tag label="Innowacja" variant="success" />
+                        <Badge label="Przetestowana" variant="neutral" />
+                      </div>
+                      <h4 className="challenges-view__inn-title">
                         <Link href={`/innowacje/${inn.slug}`}>{inn.title}</Link>
-                      </h5>
-                      <p className="type-body text-sm text-slate-600">{inn.short_summary}</p>
+                      </h4>
+                      <p className="challenges-view__inn-summary">{inn.short_summary}</p>
                     </div>
-                    <ButtonLink
-                      href={`/innowacje/${inn.slug}`}
-                      trailingIcon={ArrowRight}
-                      variant="primary"
-                    >
-                      Karta innowacji
-                    </ButtonLink>
+
+                    <div className="flex gap-2">
+                      <ButtonLink
+                        href={`/innowacje/${inn.slug}`}
+                        trailingIcon={ArrowRight}
+                        variant="primary"
+                      >
+                        Karta innowacji
+                      </ButtonLink>
+                      <ButtonLink
+                        href={`/middleman?innovation=${encodeURIComponent(inn.slug)}`}
+                        leadingIcon={FileText}
+                        variant="secondary"
+                      >
+                        Pakiet dla JST
+                      </ButtonLink>
+                    </div>
                   </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <MatchmakingGap
+                  actions={
+                    <>
+                      <ButtonLink href="/kreator" leadingIcon={Sparkle} variant="primary">
+                        Zgłoś pomysł na rozwiązanie
+                      </ButtonLink>
+                      <ButtonLink href="/innowacje" variant="secondary">
+                        Przeglądaj bibliotekę
+                      </ButtonLink>
+                    </>
+                  }
+                  description="W katalogu nie ma jeszcze rozwiązania powiązanego z tym wyzwaniem. Możesz pomóc je stworzyć albo sprawdzić całą bibliotekę."
+                  heading="Brakuje powiązanego rozwiązania"
+                  noticeTitle="Biała plama wymaga dalszego działania"
+                >
+                  <p className="type-body">ROPS oznaczył to wyzwanie do dalszego rozpoznania. Zgłoszenie pomysłu nie zobowiązuje do jego realizacji.</p>
+                </MatchmakingGap>
+              )}
             </div>
           </article>
         )}
@@ -365,84 +481,79 @@ export function ChallengesRegionalView({
     </div>
   );
 
-  // Zakładka 3: Zasobnik Wiedzy
-  const knowledgePanel = (
-    <div className="challenges-view__panel">
-      <KnowledgeResourceBrowser />
-    </div>
-  );
-
-  // Zakładka 4: Trendy i Białe Plamy
+  // ==========================================
+  // PANEL 3: Niezaspokojone potrzeby (Białe Plamy & Trendy)
+  // ==========================================
   const trendsPanel = (
     <div className="challenges-view__panel">
-      <div className="challenges-view__intro">
-        <h3 className="type-h2">Analityka Trendów Regionalnych & „Białe Plamy” ROPS Kraków</h3>
-        <p className="type-body">
-          Zautomatyzowane monitorowanie potrzeb mieszkańców, NGO i samorządów. Moduł wykrywa obszary niezaspokojonych potrzeb (similarity &lt; 45%), stanowiące bazę do ogłaszania nowych naborów grantowych FERS.
-        </p>
-      </div>
-
-      {/* Kafelki zagregowane KPI */}
+      {/* 4 konkretne metryki regionalne */}
       <div className="challenges-view__kpi-grid">
         <div className="challenges-view__kpi-card">
-          <div className="challenges-view__kpi-icon"><HandHeart aria-hidden="true" size={28} /></div>
-          <div>
-            <strong className="type-h1">{trends.total_submissions}</strong>
-            <p className="type-caption">Zgłoszonych potrzeb</p>
+          <div className="challenges-view__kpi-icon">
+            <HandHeart aria-hidden="true" size={24} />
+          </div>
+          <div className="challenges-view__kpi-content">
+            <strong className="challenges-view__kpi-number">{trends.total_submissions}</strong>
+            <p className="challenges-view__kpi-label">Zgłoszonych potrzeb</p>
           </div>
         </div>
         <div className="challenges-view__kpi-card">
-          <div className="challenges-view__kpi-icon"><Lightbulb aria-hidden="true" size={28} /></div>
-          <div>
-            <strong className="type-h1">{trends.total_ideas}</strong>
-            <p className="type-caption">Nowych pomysłów (Fiszki / FERS)</p>
+          <div className="challenges-view__kpi-icon">
+            <Lightbulb aria-hidden="true" size={24} />
+          </div>
+          <div className="challenges-view__kpi-content">
+            <strong className="challenges-view__kpi-number">{trends.total_ideas}</strong>
+            <p className="challenges-view__kpi-label">Nowych pomysłów</p>
           </div>
         </div>
         <div className="challenges-view__kpi-card">
-          <div className="challenges-view__kpi-icon"><TrendUp aria-hidden="true" size={28} /></div>
-          <div>
-            <strong className="type-h1">{trends.total_pilots}</strong>
-            <p className="type-caption">Aktywnych pilotaży</p>
+          <div className="challenges-view__kpi-icon">
+            <TrendUp aria-hidden="true" size={24} />
+          </div>
+          <div className="challenges-view__kpi-content">
+            <strong className="challenges-view__kpi-number">{trends.total_pilots}</strong>
+            <p className="challenges-view__kpi-label">Aktywnych testów</p>
           </div>
         </div>
         <div className="challenges-view__kpi-card">
-          <div className="challenges-view__kpi-icon"><UsersThree aria-hidden="true" size={28} /></div>
-          <div>
-            <strong className="type-h1">{trends.total_partnerships}</strong>
-            <p className="type-caption">Ogłoszeń partnerstw JST-NGO</p>
+          <div className="challenges-view__kpi-icon">
+            <UsersThree aria-hidden="true" size={24} />
+          </div>
+          <div className="challenges-view__kpi-content">
+            <strong className="challenges-view__kpi-number">{trends.total_partnerships}</strong>
+            <p className="challenges-view__kpi-label">Partnerstw JST-NGO</p>
           </div>
         </div>
       </div>
 
-      {/* Sekcja Białych Plam (Innowacyjne luki) */}
-      <div className="challenges-view__section">
-        <div className="flex items-center justify-between mb-4">
+      {/* Wykryte Białe Plamy */}
+      <div className="challenges-view__white-spots-container">
+        <div className="challenges-view__white-spots-header">
           <div>
-            <h4 className="type-h3 flex items-center gap-2">
-              <Warning aria-hidden="true" className="text-amber-600" size={24} weight="bold" />
-              <span>Zidentyfikowane „Białe Plamy” (Luki w innowacjach)</span>
-            </h4>
-            <p className="type-body text-sm text-slate-600">
-              Problemy zgłoszone przez mieszkańców i gminy, dla których nie ma jeszcze gotowych innowacji w bazie ROPS Kraków.
+            <h3 className="challenges-view__section-title">
+              Białe Plamy — potrzeby bez gotowych rozwiązań
+            </h3>
+            <p className="challenges-view__section-body text-sm mt-1">
+              Obszary zgłoszone przez mieszkańców, dla których w regionie brakuje sprawdzonych innowacji.
             </p>
           </div>
           <ButtonLink href="/kreator" leadingIcon={Sparkle} variant="primary">
-            Uruchom nabór w Kreatorze FERS
+            Zgłoś pomysł
           </ButtonLink>
         </div>
 
-        <div className="challenges-view__white-spots-list">
-          {trends.white_spots.map((spot) => (
-            <article className="challenges-view__white-spot-item" key={spot.submission_id}>
-              <div className="flex-1">
-                <div className="flex gap-2 items-center mb-1">
-                  <Badge label="Biała Plama" variant="danger" />
+        {trends.white_spots.length > 0 ? (
+          <div className="challenges-view__white-spots-list">
+            {trends.white_spots.map((spot) => (
+            <article className="challenges-view__white-spot-card" key={spot.submission_id}>
+              <div className="flex flex-col gap-2">
+                <div className="challenges-view__white-spot-meta">
                   <Tag label={spot.category_name} variant="neutral" />
-                  <span className="type-caption text-slate-500">Lokalizacja: {spot.county_name}</span>
+                  <span className="type-caption text-slate-500">{spot.county_name}</span>
                 </div>
-                <h5 className="type-h3 text-base text-slate-900">{spot.title}</h5>
-                <p className="type-body text-sm text-slate-600">
-                  Grupa dotknięta: <strong>{spot.affected_group}</strong>
+                <h4 className="challenges-view__white-spot-title">{spot.title}</h4>
+                <p className="challenges-view__white-spot-desc">
+                  Grupa: {spot.affected_group}
                 </p>
               </div>
               <div className="challenges-view__white-spot-action">
@@ -451,33 +562,31 @@ export function ChallengesRegionalView({
                   trailingIcon={ArrowRight}
                   variant="secondary"
                 >
-                  Zgłoś rozwiązanie (Fiszka)
+                  Zaproponuj rozwiązanie
                 </ButtonLink>
               </div>
             </article>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="challenges-view__empty-state" role="status">
+            <CheckCircle aria-hidden="true" size={28} weight="fill" />
+            <div>
+              <h4 className="type-h3">Brak zgłoszonych białych plam</h4>
+              <p className="type-body">W aktualnych danych nie ma potrzeb bez dopasowanego rozwiązania. To nie wyklucza zgłaszania nowych potrzeb.</p>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Tabela kategorii i rozkładu potrzeb */}
+      {/* Przejrzysta tabela kategorii */}
       <div className="challenges-view__section">
         <DataTable
-          caption="Zestawienie liczby zgłoszonych potrzeb oraz dostępnych innowacji w 9 oficjalnych kategoriach ROPS Kraków"
+          caption="Zestawienie liczby zgłoszeń i gotowych rozwiązań w kategoriach wsparcia"
           columns={categoryColumns}
-          heading="Rozkład potrzeb i innowacji według 9 kategorii ROPS"
+          heading="Stan zaspokojenia potrzeb według kategorii"
           rowKey="category_code"
           rows={categoryRows}
-        />
-      </div>
-
-      {/* Tabela powiatów */}
-      <div className="challenges-view__section">
-        <DataTable
-          caption="Rozkład aktywności zgłoszeń w powiatach Małopolski z uwzględnieniem wskaźnika starzenia się społeczeństwa"
-          columns={countyColumns}
-          heading="Aktywność społeczna w powiatach Małopolski"
-          rowKey="county_name"
-          rows={countyRows}
         />
       </div>
     </div>
@@ -487,12 +596,11 @@ export function ChallengesRegionalView({
     <div className="challenges-view">
       <TabSwitcher
         items={[
-          { id: "powiaty", label: "Kondycja Powiatów", panel: countiesPanel },
-          { id: "wyzwania", label: "Katalog Wyzwań ROPS", panel: challengesPanel },
-          { id: "wiedza", label: "Zasobnik Wiedzy", panel: knowledgePanel },
-          { id: "trendy", label: "Trendy i Białe Plamy", panel: trendsPanel },
+          { id: "powiaty", label: "Diagnoza powiatów", panel: countiesPanel },
+          { id: "wyzwania", label: "Katalog wyzwań", panel: challengesPanel },
+          { id: "trendy", label: "Białe plamy i luki", panel: trendsPanel },
         ]}
-        label="Obszary wiedzy i wyzwań Małopolski"
+        label="Nawigacja po wyzwaniach regionu"
       />
     </div>
   );

@@ -4,7 +4,6 @@ import { useId, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
-  Funnel,
   HandHeart,
   Heart,
   Lightbulb,
@@ -14,7 +13,8 @@ import {
 import type { InnovationCategory, SocialInnovation } from "@/lib/api";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
-import { CheckboxChipGroup, SearchField } from "@/components/ui/FormControls";
+import { CheckboxChipGroup } from "@/components/ui/FormControls";
+import { SearchFilterBar } from "@/components/ui/SearchFilterBar";
 import { Badge, Tag, type TagVariant } from "@/components/ui/Tag";
 import { LinearProgress } from "@/components/ui/Progress";
 
@@ -146,31 +146,14 @@ export function InnovationLibraryView({ initialInnovations, categories }: Innova
 
   return (
     <div className="innovation-library">
-      {/* Pasek wyszukiwania i przycisk filtrów */}
-      <div className="innovation-library__toolbar" role="search" aria-label="Wyszukiwarka Biblioteki Innowacji">
-        <div className="innovation-library__search-input">
-          <SearchField
-            hideLabel
-            label="Szukaj innowacji po tytule, opisie, tagach lub autorze"
-            name="innovation-search"
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Szukaj innowacji (np. seniorzy, sensoryka, łazienki, CUS)..."
-            value={query}
-          />
-        </div>
-        <Button
-          aria-haspopup="dialog"
-          aria-label={`Filtruj innowacje${activeFiltersCount > 0 ? ` (aktywne filtry: ${activeFiltersCount})` : ""}`}
-          leadingIcon={Funnel}
-          onClick={handleOpenFilters}
-          variant="secondary"
-        >
-          <span>Filtry</span>
-          {activeFiltersCount > 0 && (
-            <Badge label={String(activeFiltersCount)} variant="success" />
-          )}
-        </Button>
-      </div>
+      <SearchFilterBar
+        filterLabel={activeFiltersCount > 0 ? `Filtry (${activeFiltersCount})` : "Filtry"}
+        onFiltersClick={handleOpenFilters}
+        onQueryChange={(event) => setQuery(event.target.value)}
+        query={query}
+        searchLabel="Szukaj innowacji po tytule, opisie, tagach lub autorze"
+        searchPlaceholder="np. seniorzy, sensoryka, łazienki, CUS"
+      />
 
       {/* Szybkie pigułki aktywnych filtrów */}
       {activeFiltersCount > 0 && (

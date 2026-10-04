@@ -27,6 +27,7 @@ public primitives to compose in product routes.
 | Component | Required public data | Purpose |
 | --- | --- | --- |
 | `NeedCard` | title, summary, category, locality, update time, status, action | A resident need with enough context to assess and open it. |
+| `MatchmakingGap` | heading, notice title and description, explanatory content, actions | Shared outcome when no innovation meets the matching threshold. It uses a named `section`, warning `Alert`, clear text status, and consumer-provided next actions; content and actions stack at narrow widths and enlarged text. Test the primary action, keyboard focus, and warning treatment in every appearance mode and forced colours. |
 | `SolutionCard` | title, summary, organization, category, availability, action; optional image, engagement, and match label | An NGO or public-service offer and its next step. Optional image requires meaningful Polish alt text; optional engagement exposes likes and matches as labelled context. An optional match label makes a local relevance score explicit in matching flows. |
 | `SolutionDetailHero` | image, title, summary; optional match label and heading level | Detail-page hero with one meaningful image, heading and plain-language introduction. It stacks on mobile and becomes two columns on wide screens. |
 | `ExpandableDescription` | description; optional preview length and Polish labels | Client-side in-place disclosure for longer supporting descriptions. The native button exposes its expanded state and controls the description paragraph. |

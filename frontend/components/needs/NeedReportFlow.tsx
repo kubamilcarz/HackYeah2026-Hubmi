@@ -7,7 +7,6 @@ import {
   CheckCircle,
   Lightbulb,
   Sparkle,
-  WarningCircle,
   Buildings,
   Flask,
   ChatCircleText,
@@ -23,6 +22,7 @@ import {
 } from "@/components/ui/FormControls";
 import { Badge } from "@/components/ui/Tag";
 import { CircularProgress } from "@/components/ui/Progress";
+import { MatchmakingGap } from "@/components/ui/MatchmakingGap";
 import { usePersona } from "@/contexts/PersonaContext";
 import {
   getCategories,
@@ -249,8 +249,8 @@ export function NeedReportFlow() {
   const selectedCategoryObj = categories.find((c) => c.code === draft.categoryCode);
 
   return (
-    <section aria-labelledby="need-flow-heading" className="need-report">
-      <StepProgress currentStep={step} label="Postęp zgłoszenia potrzeby" steps={steps} />
+    <section aria-labelledby="need-flow-heading" className={`need-report${step === 4 ? " need-report--results" : ""}`}>
+      {step < 4 && <StepProgress currentStep={step} label="Postęp zgłoszenia potrzeby" steps={steps} />}
 
       {step === 4 ? (
         <div className="need-results">
@@ -271,31 +271,30 @@ export function NeedReportFlow() {
             </div>
           ) : matchResult ? (
             <div>
-              {matchResult.is_gap_identified ? (
+              {matchResult.is_gap_identified || matchResult.matches.length === 0 ? (
                 /* Wariant: Biała Plama (Brak innowacji lub wynik < 45%) */
-                <div className="need-gap-card">
-                  <div className="need-gap-card__header">
-                    <span className="need-gap-card__icon" aria-hidden="true">
-                      <WarningCircle size={32} weight="fill" />
-                    </span>
-                    <div>
-                      <span className="need-gap-card__badge">Biała plama w innowacjach</span>
-                      <h2 className="type-h2" id="need-flow-heading" ref={headingRef} tabIndex={-1}>
-                        Zidentyfikowano regionalną lukę innowacyjną
-                      </h2>
-                    </div>
-                  </div>
-
-                  <Alert
-                    description={
-                      matchResult.gap_message ||
-                      "W bazie innowacji ROPS Kraków nie odnaleziono jeszcze gotowego rozwiązania dla wskazanego problemu."
-                    }
-                    title="Potrzeba została zarejestrowana"
-                    variant="warning"
-                  />
-
-                  <div className="need-gap-card__body">
+                <MatchmakingGap
+                  actions={
+                    <>
+                      <ButtonLink
+                        href={`/kreator?title=${encodeURIComponent(draft.title)}&desc=${encodeURIComponent(draft.description)}&cat=${draft.categoryCode}&county=${draft.countyId}`}
+                        leadingIcon={Lightbulb}
+                        trailingIcon={ArrowRight}
+                      >
+                        Przekształć w pomysł w Kreatorze Innowacji
+                      </ButtonLink>
+                      <Button onClick={restart} variant="secondary">Zgłoś kolejną potrzebę</Button>
+                      <ButtonLink href="/start" variant="tertiary">Wróć do pulpitu</ButtonLink>
+                    </>
+                  }
+                  description={
+                    matchResult.gap_message ||
+                    "W bazie innowacji ROPS Kraków nie odnaleziono jeszcze gotowego rozwiązania dla wskazanego problemu."
+                  }
+                  heading="Zidentyfikowano regionalną lukę innowacyjną"
+                  headingRef={headingRef}
+                  noticeTitle="Potrzeba została zarejestrowana"
+                >
                     <p className="type-body">
                       Dobra wiadomość: Twoje zgłoszenie zostało pomyślnie zapisane w{" "}
                       <strong>Bazie Wyzwań Regionalnych ROPS Kraków</strong> (zgłoszenie nr{" "}
@@ -304,40 +303,21 @@ export function NeedReportFlow() {
                     <p className="type-body">
                       Możesz już teraz przekształcić ten problem w koncepcję innowacji lub wniosek grantowy (do 50 000 zł) w Kreatorze Pomysłów.
                     </p>
-                  </div>
-
-                  <div className="need-gap-card__actions">
-                    <ButtonLink
-                      href={`/kreator?title=${encodeURIComponent(draft.title)}&desc=${encodeURIComponent(draft.description)}&cat=${draft.categoryCode}&county=${draft.countyId}`}
-                      leadingIcon={Lightbulb}
-                      trailingIcon={ArrowRight}
-                    >
-                      Przekształć w pomysł w Kreatorze Innowacji
-                    </ButtonLink>
-                    <Button onClick={restart} variant="secondary">
-                      Zgłoś kolejną potrzebę
-                    </Button>
-                    <ButtonLink href="/start" variant="tertiary">
-                      Wróć do pulpitu
-                    </ButtonLink>
-                  </div>
-                </div>
+                </MatchmakingGap>
               ) : (
                 /* Wariant: Znaleziono dopasowania (Scoring >= 45%) */
                 <div className="need-matches">
-                  <Alert
-                    description={`Znaleziono ${matchResult.total_matches} innowacje ROPS Kraków odpowiadające Twojej sytuacji (najwyższa zgodność: ${matchResult.top_score}%).`}
-                    title="Sukces! Dopasowano innowacje społeczne"
-                    variant="success"
-                  />
-
                   <div className="need-matches__header">
-                    <div>
+                    <div className="need-matches__intro">
+                      <div className="need-matches__status" role="status">
+                        <Badge label="Dopasowanie gotowe" variant="success" />
+                        <span>{matchResult.total_matches} {matchResult.total_matches === 1 ? "rekomendacja" : "rekomendacje"} · najwyższa zgodność {matchResult.top_score}%</span>
+                      </div>
                       <h2 className="type-h2" id="need-flow-heading" ref={headingRef} tabIndex={-1}>
                         Rekomendowane innowacje ROPS
                       </h2>
                       <p className="type-body">
-                        Poniższe rozwiązania zostały przetestowane lub wdrożone w Małopolsce. Możesz z nich skorzystać lub wdrożyć je w swojej gminie.
+                        Rozwiązania przetestowane lub wdrożone w Małopolsce. Wybierz to, które najlepiej odpowiada Twojej sytuacji.
                       </p>
                     </div>
                   </div>
@@ -387,7 +367,7 @@ export function NeedReportFlow() {
                               leadingIcon={Flask}
                               size="sm"
                             >
-                              Zgłoś się do testów innowacji
+                              Dołącz do pilotażu
                             </ButtonLink>
                           )}
                           {item.suggested_next_step === "contact" && (

@@ -1,1221 +1,1053 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
+  Calendar,
   CheckCircle,
   Flask,
-  HandHeart,
-  Star,
   MapPin,
-  Users,
-  Calendar,
-  Info,
-  ChatText,
   PlusCircle,
-  Sparkle,
-  ShieldCheck,
-  Check,
+  Star,
+  UsersThree,
 } from "@phosphor-icons/react";
+import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
+import { Dialog } from "@/components/ui/Dialog";
 import {
-  TextField,
-  TextAreaField,
+  RadioGroup,
+  SearchField,
   SelectField,
   Slider,
-  SegmentedControl,
-  RadioGroup,
+  TextAreaField,
+  TextField,
 } from "@/components/ui/FormControls";
-import { Badge } from "@/components/ui/Tag";
 import { LinearProgress } from "@/components/ui/Progress";
-import { Alert } from "@/components/ui/Alert";
-import { Dialog } from "@/components/ui/Dialog";
+import { Badge, type TagVariant } from "@/components/ui/Tag";
 import { usePersona } from "@/contexts/PersonaContext";
 import {
-  getPilots,
   applyToPilot,
-  submitEvaluation,
   createPilot,
-  getInnovations,
-  type PilotProjectItem,
-  type PilotEvaluationItem,
-  type SocialInnovation,
   FALLBACK_PILOTS,
+  getCounties,
+  getInnovations,
+  getPilots,
+  submitEvaluation,
+  type PilotEvaluationItem,
+  type PilotProjectItem,
+  type SocialInnovation,
 } from "@/lib/api";
 
 const ROLE_OPTIONS = [
-  { label: "Mieszkaniec / Użytkownik końcowy", value: "mieszkaniec" },
-  { label: "Opiekun osoby zależnej / Seniora", value: "opiekun" },
-  { label: "Pracownik CUS / OPS / DPS / ŚDS", value: "pracownik_instytucji" },
-  { label: "Przedstawiciel NGO / Wolontariusz", value: "przedstawiciel_ngo" },
-  { label: "Ekspert merytoryczny / Animator", value: "ekspert" },
+  { label: "Mieszkaniec / użytkownik końcowy", value: "mieszkaniec" },
+  { label: "Opiekun osoby zależnej", value: "opiekun" },
+  { label: "Pracownik CUS / OPS / DPS", value: "pracownik_instytucji" },
+  { label: "Przedstawiciel NGO", value: "przedstawiciel_ngo" },
+  { label: "Ekspert branżowy", value: "ekspert" },
 ];
 
-const COUNTY_OPTIONS = [
+const DEFAULT_COUNTIES = [
   { label: "Wszystkie powiaty", value: "all" },
   { label: "Powiat nowosądecki", value: "nowosadecki" },
   { label: "Powiat myślenicki", value: "myslenicki" },
   { label: "Powiat tarnowski", value: "tarnowski" },
   { label: "Powiat gorlicki", value: "gorlicki" },
-  { label: "Kraków i krakowski", value: "krakowski" },
+  { label: "Kraków i powiat krakowski", value: "krakowski" },
 ];
 
-export function PilotTesterView() {
-  const searchParams = useSearchParams();
-  const { activePersona } = usePersona();
+type DialogName = "details" | "apply" | "evaluate" | "create" | null;
 
-  const queryInnovation = searchParams.get("innovation") || "";
+function isRecruiting(pilot: PilotProjectItem): boolean {
+  return pilot.status === "recruiting" || pilot.status === "rekrutacja";
+}
+
+function getStatusBadge(pilot: PilotProjectItem): { label: string; variant: TagVariant } {
+  if (isRecruiting(pilot)) {
+    return { label: "Nabór otwarty", variant: "success" };
+  }
+  if (pilot.status === "in_progress" || pilot.status === "w_trakcie") {
+    return { label: "Pilotaż w toku", variant: "warning" };
+  }
+  return { label: "Pilotaż zakończony", variant: "info" };
+}
+
+function getPersonaDefaultRole(roleType: string): string {
+  switch (roleType) {
+    case "ngo":
+      return "przedstawiciel_ngo";
+    case "jst":
+      return "pracownik_instytucji";
+    case "ekspert":
+      return "ekspert";
+    default:
+      return "opiekun";
+  }
+}
+
+function formatDate(value?: string | null): string {
+  if (!value) return "";
+  try {
+    return new Intl.DateTimeFormat("pl-PL", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(new Date(value + "T12:00:00"));
+  } catch {
+    return value;
+  }
+}
+
+export function PilotTesterView() {
+  const { activePersona } = usePersona();
+  const searchParams = useSearchParams();
 
   const [pilots, setPilots] = useState<PilotProjectItem[]>(FALLBACK_PILOTS);
   const [innovations, setInnovations] = useState<SocialInnovation[]>([]);
+  const [countyOptions, setCountyOptions] = useState(DEFAULT_COUNTIES);
+  const [query, setQuery] = useState("");
+  const [county, setCounty] = useState("all");
+  const [stage, setStage] = useState("all");
+  const [selected, setSelected] = useState<PilotProjectItem | null>(null);
+  const [activeDialog, setActiveDialog] = useState<DialogName>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
-  // Filtrowanie i wyszukiwanie
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [countyFilter, setCountyFilter] = useState<string>("all");
-  const [searchQuery, setSearchQuery] = useState("");
-
-  // Zaznaczony pilotaż i dialogi
-  const [selectedPilot, setSelectedPilot] = useState<PilotProjectItem | null>(null);
-  const [isApplyOpen, setIsApplyOpen] = useState(false);
-  const [isEvalOpen, setIsEvalOpen] = useState(false);
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-
-  function getPersonaRole(): string {
-    if (activePersona.key === "anna_nowak") return "opiekun";
-    if (activePersona.roleType === "ngo") return "przedstawiciel_ngo";
-    if (activePersona.roleType === "jst") return "pracownik_instytucji";
-    if (activePersona.roleType === "ekspert") return "ekspert";
-    return "mieszkaniec";
-  }
-
-  // Formularz zgłoszenia testera
-  const [name, setName] = useState(activePersona.name || "");
-  const [email, setEmail] = useState(activePersona.email || "");
-  const [phone, setPhone] = useState(activePersona.phone || "");
-  const [role, setRole] = useState<string>(getPersonaRole());
-  const [institution, setInstitution] = useState(activePersona.organization || activePersona.municipality || "");
-  const [motivation, setMotivation] = useState("");
-  const [consent, setConsent] = useState(true);
-  const [applySuccess, setApplySuccess] = useState(false);
+  // Application form state
+  const [application, setApplication] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    role: "opiekun",
+    motivation: "",
+    consent: false,
+  });
+  const [applyState, setApplyState] = useState<"idle" | "sending" | "success" | "error">("idle");
   const [applyMessage, setApplyMessage] = useState("");
-  const [applyError, setApplyError] = useState<string | null>(null);
-  const [isApplying, setIsApplying] = useState(false);
 
-  // Formularz ewaluacji WCAG
-  const [evalName, setEvalName] = useState(activePersona.name || "");
-  const [evalRole, setEvalRole] = useState<string>(getPersonaRole());
-  const [evalInstitution, setEvalInstitution] = useState(activePersona.organization || activePersona.municipality || "");
-  const [usabilityScore, setUsabilityScore] = useState(5);
-  const [effectivenessScore, setEffectivenessScore] = useState(5);
-  const [accessibilityScore, setAccessibilityScore] = useState(5);
-  const [barriersEncountered, setBarriersEncountered] = useState("");
-  const [proposedImprovements, setProposedImprovements] = useState("");
-  const [testEnvironmentNotes, setTestEnvironmentNotes] = useState("");
-  const [recommendToScale, setRecommendToScale] = useState("true");
-  const [evalSuccess, setEvalSuccess] = useState(false);
-  const [evalError, setEvalError] = useState<string | null>(null);
-  const [isSubmittingEval, setIsSubmittingEval] = useState(false);
+  // Evaluation form state
+  const [evaluation, setEvaluation] = useState({
+    name: "",
+    role: "opiekun",
+    institution: "",
+    usability: 5,
+    effectiveness: 5,
+    accessibility: 5,
+    barriers: "",
+    improvements: "",
+    environment: "",
+    recommend: "true",
+  });
+  const [evalState, setEvalState] = useState<"idle" | "sending" | "success" | "error">("idle");
+  const [evalError, setEvalError] = useState("");
 
-  // Formularz tworzenia pilotażu (ROPS / Koordynator)
-  const [newInnId, setNewInnId] = useState<string>("");
-  const [newTitle, setNewTitle] = useState("");
-  const [newCounty, setNewCounty] = useState("nowosadecki");
-  const [newMunicipality, setNewMunicipality] = useState("");
-  const [newMaxTesters, setNewMaxTesters] = useState("10");
-  const [newEligibleRoles, setNewEligibleRoles] = useState("Mieszkańcy, opiekunowie osób zależnych, kadra CUS/OPS");
-  const [newSummary, setNewSummary] = useState("");
-  const [newInstructions, setNewInstructions] = useState("");
-  const [createSuccess, setCreateSuccess] = useState(false);
-  const [createError, setCreateError] = useState<string | null>(null);
+  // Create pilot form state (coordinator only)
+  const [newPilot, setNewPilot] = useState({
+    innovation: "",
+    title: "",
+    county: "nowosadecki",
+    municipality: "",
+    capacity: 10,
+    roles: "Mieszkańcy, opiekunowie i kadra CUS/OPS",
+    summary: "",
+    instructions: "",
+  });
+  const [createState, setCreateState] = useState<"idle" | "sending" | "success" | "error">("idle");
+  const [createError, setCreateError] = useState("");
 
-  const openApplyDialog = (pilot?: PilotProjectItem) => {
-    if (pilot) setSelectedPilot(pilot);
-    setName(activePersona.name || "");
-    setEmail(activePersona.email || "");
-    setPhone(activePersona.phone || "");
-    setRole(getPersonaRole());
-    setInstitution(activePersona.organization || activePersona.municipality || "");
-    setApplyError(null);
-    setIsApplyOpen(true);
-  };
+  const isCoordinator = activePersona.roleType === "admin";
 
-  const openEvalDialog = (pilot?: PilotProjectItem) => {
-    if (pilot) setSelectedPilot(pilot);
-    setEvalName(activePersona.name || "");
-    setEvalRole(getPersonaRole());
-    setEvalInstitution(activePersona.organization || activePersona.municipality || "");
-    setEvalError(null);
-    setIsEvalOpen(true);
-  };
-
-  // Pobieranie listy pilotaży i innowacji
   useEffect(() => {
+    let mounted = true;
+
     async function loadData() {
       try {
-        const [pilotList, innList] = await Promise.all([
+        const [loadedPilots, loadedInnovations, loadedCounties] = await Promise.all([
           getPilots(),
-          getInnovations().catch(() => []),
+          getInnovations(),
+          getCounties().catch(() => []),
         ]);
-        if (pilotList && pilotList.length > 0) {
-          setPilots(pilotList);
-          if (queryInnovation) {
-            const found = pilotList.find(
-              (p) =>
-                String(p.id) === queryInnovation ||
-                p.innovation_slug === queryInnovation ||
-                String(p.innovation) === queryInnovation
-            );
-            if (found) {
-              setSelectedPilot(found);
-            }
+
+        if (!mounted) return;
+
+        setPilots(loadedPilots);
+        setInnovations(loadedInnovations);
+
+        if (loadedCounties.length > 0) {
+          setCountyOptions([
+            { label: "Wszystkie powiaty", value: "all" },
+            ...loadedCounties.map((c) => ({
+              label: c.name.startsWith("Powiat") ? c.name : `Powiat ${c.name}`,
+              value: c.slug,
+            })),
+          ]);
+        }
+
+        setNewPilot((prev) => ({
+          ...prev,
+          innovation: prev.innovation || String(loadedInnovations[0]?.id ?? ""),
+        }));
+
+        const focus = searchParams.get("innovation");
+        if (focus) {
+          const match = loadedPilots.find(
+            (p) =>
+              String(p.id) === focus ||
+              p.innovation_slug === focus ||
+              String(p.innovation) === focus
+          );
+          if (match) {
+            setSelected(match);
+            setActiveDialog("details");
           }
         }
-        if (innList && innList.length > 0) {
-          setInnovations(innList);
-          setNewInnId((prev) => prev || (innList[0] ? String(innList[0].id) : ""));
-        }
       } catch {
-        // Fallback already active
+        if (mounted) {
+          setNotice("Nie udało się pobrać aktualnych danych. Wyświetlamy dostępne dane demonstracyjne.");
+        }
       }
     }
-    loadData();
-  }, [queryInnovation]);
 
-  // Filtrowanie pilotaży w pamięci
-  const filteredPilots = useMemo(() => {
+    void loadData();
+
+    return () => {
+      mounted = false;
+    };
+  }, [searchParams]);
+
+  const visiblePilots = useMemo(() => {
+    const needle = query.trim().toLocaleLowerCase("pl");
+
     return pilots.filter((pilot) => {
-      // Filtr statusu
-      if (statusFilter !== "all") {
-        const isRecruiting = pilot.status === "recruiting" || pilot.status === "rekrutacja";
-        const isInProgress = pilot.status === "in_progress" || pilot.status === "w_trakcie";
-        const isCompleted = pilot.status === "completed" || pilot.status === "zakonczony";
+      const matchesText =
+        !needle ||
+        [
+          pilot.title,
+          pilot.summary,
+          pilot.description,
+          pilot.innovation_title,
+          pilot.municipality_name,
+          pilot.municipality,
+          pilot.county_name,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLocaleLowerCase("pl")
+          .includes(needle);
 
-        if (statusFilter === "recruiting" && !isRecruiting) return false;
-        if (statusFilter === "in_progress" && !isInProgress) return false;
-        if (statusFilter === "completed" && !isCompleted) return false;
-      }
+      const matchesCounty =
+        county === "all" ||
+        pilot.county_name.toLocaleLowerCase("pl").includes(
+          county === "nowosadecki"
+            ? "nowosądecki"
+            : county === "myslenicki"
+            ? "myślenicki"
+            : county
+        );
 
-      // Filtr powiatu
-      if (countyFilter !== "all") {
-        const countyMatch =
-          pilot.county_name?.toLowerCase().includes(countyFilter.toLowerCase()) || false;
-        if (!countyMatch) return false;
-      }
+      const matchesStage =
+        stage === "all" ||
+        (stage === "recruiting" && isRecruiting(pilot)) ||
+        (stage === "in_progress" &&
+          (pilot.status === "in_progress" || pilot.status === "w_trakcie")) ||
+        (stage === "completed" &&
+          (pilot.status === "completed" || pilot.status === "zakonczony"));
 
-      // Wyszukiwarka tekstowa
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matches =
-          pilot.title.toLowerCase().includes(q) ||
-          pilot.description.toLowerCase().includes(q) ||
-          pilot.innovation_title.toLowerCase().includes(q) ||
-          (pilot.municipality_name && pilot.municipality_name.toLowerCase().includes(q)) ||
-          (pilot.county_name && pilot.county_name.toLowerCase().includes(q));
-        if (!matches) return false;
-      }
-
-      return true;
+      return matchesText && matchesCounty && matchesStage;
     });
-  }, [pilots, statusFilter, countyFilter, searchQuery]);
+  }, [county, pilots, query, stage]);
 
-  // Statystyki globalne
-  const stats = useMemo(() => {
-    const total = pilots.length;
-    const recruiting = pilots.filter(
-      (p) => p.status === "recruiting" || p.status === "rekrutacja"
-    ).length;
-    const completed = pilots.filter(
-      (p) => p.status === "completed" || p.status === "zakonczony"
-    ).length;
-    const totalTesters = pilots.reduce((acc, p) => acc + (p.current_testers_count || 0), 0);
-    const maxTestersTotal = pilots.reduce(
-      (acc, p) => acc + (p.max_testers || p.target_testers_count || 0),
-      0
-    );
+  const closeDialog = () => {
+    setActiveDialog(null);
+    setApplyState("idle");
+    setEvalState("idle");
+    setCreateState("idle");
+  };
 
-    const evaluatedPilots = pilots.filter(
-      (p) => p.average_overall_score !== null && p.average_overall_score !== undefined
-    );
-    const avgScore = evaluatedPilots.length
-      ? (
-          evaluatedPilots.reduce((acc, p) => acc + (p.average_overall_score || 0), 0) /
-          evaluatedPilots.length
-        ).toFixed(1)
-      : "4.8";
+  const handleOpenApply = (pilot: PilotProjectItem) => {
+    setSelected(pilot);
+    setApplication({
+      name: activePersona.name,
+      email: activePersona.email,
+      phone: activePersona.phone,
+      role: getPersonaDefaultRole(activePersona.roleType),
+      motivation: "",
+      consent: false,
+    });
+    setApplyState("idle");
+    setActiveDialog("apply");
+  };
 
-    return { total, recruiting, completed, totalTesters, maxTestersTotal, avgScore };
-  }, [pilots]);
+  const handleOpenEvaluation = (pilot: PilotProjectItem) => {
+    setSelected(pilot);
+    setEvaluation({
+      name: activePersona.name,
+      role: getPersonaDefaultRole(activePersona.roleType),
+      institution: activePersona.organization ?? activePersona.municipality ?? "",
+      usability: 5,
+      effectiveness: 5,
+      accessibility: 5,
+      barriers: "",
+      improvements: "",
+      environment: "",
+      recommend: "true",
+    });
+    setEvalState("idle");
+    setEvalError("");
+    setActiveDialog("evaluate");
+  };
 
-  // Obsługa zgłoszenia do pilotażu
-  async function handleApply(e: React.FormEvent) {
-    e.preventDefault();
-    if (!selectedPilot) return;
-    setApplyError(null);
-    setIsApplying(true);
+  const handleOpenDetails = (pilot: PilotProjectItem) => {
+    setSelected(pilot);
+    setActiveDialog("details");
+  };
+
+  const handleResetFilters = () => {
+    setQuery("");
+    setCounty("all");
+    setStage("all");
+  };
+
+  async function handleApplySubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selected) return;
+
+    setApplyState("sending");
+
     try {
-      const res = await applyToPilot(selectedPilot.id, {
-        applicant_name: name,
-        applicant_email: email,
-        applicant_phone: phone,
-        applicant_role: role,
-        motivation,
+      const response = await applyToPilot(selected.id, {
+        applicant_name: application.name,
+        applicant_email: application.email,
+        applicant_phone: application.phone,
+        applicant_role: application.role,
+        motivation: application.motivation,
       });
 
-      // Zaktualizuj licznik w lokalnym stanie
-      setPilots((prev) =>
-        prev.map((p) =>
-          p.id === selectedPilot.id
-            ? { ...p, current_testers_count: (p.current_testers_count || 0) + 1 }
-            : p
-        )
-      );
-      if (selectedPilot) {
-        setSelectedPilot({
-          ...selectedPilot,
-          current_testers_count: (selectedPilot.current_testers_count || 0) + 1,
-        });
-      }
+      const updatedCount = response.current_testers_count ?? selected.current_testers_count + 1;
 
-      setApplyMessage(res.message);
-      setApplySuccess(true);
-      setTimeout(() => {
-        setIsApplyOpen(false);
-        setApplySuccess(false);
-      }, 3500);
-    } catch (err) {
-      setApplyError(
-        err instanceof Error
-          ? err.message
-          : "Nie udało się przesłać zgłoszenia. Spróbuj ponownie za chwilę."
+      setPilots((items) =>
+        items.map((p) => (p.id === selected.id ? { ...p, current_testers_count: updatedCount } : p))
       );
-    } finally {
-      setIsApplying(false);
+      setSelected((prev) => (prev ? { ...prev, current_testers_count: updatedCount } : prev));
+      setApplyMessage(response.message || "Zgłoszenie zostało pomyślnie zapisane.");
+      setApplyState("success");
+    } catch (error) {
+      setApplyMessage(error instanceof Error ? error.message : "Nie udało się wysłać zgłoszenia.");
+      setApplyState("error");
     }
   }
 
-  // Obsługa ankiety ewaluacji WCAG
-  async function handleEval(e: React.FormEvent) {
-    e.preventDefault();
-    if (!selectedPilot) return;
-    setEvalError(null);
-    setIsSubmittingEval(true);
+  async function handleEvaluationSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selected) return;
+
+    setEvalState("sending");
+
     try {
-      const newEval: PilotEvaluationItem = {
-        pilot: selectedPilot.id,
+      const evaluationPayload: PilotEvaluationItem = {
+        pilot: selected.id,
         evaluator_persona_key: activePersona.key,
-        evaluator_name: evalName,
-        evaluator_role: evalRole,
+        evaluator_name: evaluation.name,
+        evaluator_role: evaluation.role,
         evaluator_role_display:
-          ROLE_OPTIONS.find((r) => r.value === evalRole)?.label || "Tester",
-        evaluator_institution: evalInstitution,
-        usability_score: usabilityScore,
-        effectiveness_score: effectivenessScore,
-        accessibility_score: accessibilityScore,
-        barriers_encountered: barriersEncountered,
-        proposed_improvements: proposedImprovements,
-        recommend_to_scale: recommendToScale === "true",
-        test_environment_notes: testEnvironmentNotes,
+          ROLE_OPTIONS.find((r) => r.value === evaluation.role)?.label ?? "Tester",
+        evaluator_institution: evaluation.institution,
+        usability_score: evaluation.usability,
+        effectiveness_score: evaluation.effectiveness,
+        accessibility_score: evaluation.accessibility,
+        barriers_encountered: evaluation.barriers,
+        proposed_improvements: evaluation.improvements,
+        recommend_to_scale: evaluation.recommend === "true",
+        test_environment_notes: evaluation.environment,
         created_at: new Date().toISOString(),
       };
 
-      await submitEvaluation({
-        ...newEval,
-        pilot: selectedPilot.id,
-        comments: proposedImprovements,
-      });
+      await submitEvaluation({ ...evaluationPayload, pilot: selected.id });
 
-      // Zaktualizuj stan pilotażu w pamięci
-      setPilots((prev) =>
-        prev.map((p) => {
-          if (p.id !== selectedPilot.id) return p;
-          const currentEvals = p.evaluations || [];
-          const updatedEvals = [newEval, ...currentEvals];
-          const avgUsab =
-            updatedEvals.reduce((acc, ev) => acc + ev.usability_score, 0) /
-            updatedEvals.length;
-          const avgEff =
-            updatedEvals.reduce((acc, ev) => acc + ev.effectiveness_score, 0) /
-            updatedEvals.length;
-          const avgAcc =
-            updatedEvals.reduce((acc, ev) => acc + ev.accessibility_score, 0) /
-            updatedEvals.length;
-          const avgOverall = (avgUsab + avgEff + avgAcc) / 3;
-          const recCount = updatedEvals.filter((ev) => ev.recommend_to_scale).length;
+      setPilots((items) =>
+        items.map((pilot) => {
+          if (pilot.id !== selected.id) return pilot;
+
+          const updatedEvaluations = [evaluationPayload, ...(pilot.evaluations ?? [])];
+          const calcAverage = (
+            key: "usability_score" | "effectiveness_score" | "accessibility_score"
+          ) =>
+            Number(
+              (
+                updatedEvaluations.reduce((sum, item) => sum + item[key], 0) /
+                updatedEvaluations.length
+              ).toFixed(1)
+            );
+
+          const usability = calcAverage("usability_score");
+          const effectiveness = calcAverage("effectiveness_score");
+          const accessibility = calcAverage("accessibility_score");
+          const overall = Number(((usability + effectiveness + accessibility) / 3).toFixed(1));
+          const recommendRate = Math.round(
+            (updatedEvaluations.filter((item) => item.recommend_to_scale).length /
+              updatedEvaluations.length) *
+              100
+          );
 
           return {
-            ...p,
-            evaluations: updatedEvals,
-            evaluations_count: updatedEvals.length,
-            average_usability_score: Number(avgUsab.toFixed(1)),
-            average_effectiveness_score: Number(avgEff.toFixed(1)),
-            average_accessibility_score: Number(avgAcc.toFixed(1)),
-            average_overall_score: Number(avgOverall.toFixed(1)),
-            recommendation_rate: Math.round((recCount / updatedEvals.length) * 100),
+            ...pilot,
+            evaluations: updatedEvaluations,
+            evaluations_count: updatedEvaluations.length,
+            average_usability_score: usability,
+            average_effectiveness_score: effectiveness,
+            average_accessibility_score: accessibility,
+            average_overall_score: overall,
+            recommendation_rate: recommendRate,
           };
         })
       );
 
-      setEvalSuccess(true);
-      setTimeout(() => {
-        setIsEvalOpen(false);
-        setEvalSuccess(false);
-        setBarriersEncountered("");
-        setProposedImprovements("");
-        setTestEnvironmentNotes("");
-      }, 3500);
-    } catch (err) {
-      setEvalError(
-        err instanceof Error ? err.message : "Błąd zapisu oceny. Sprawdź poprawność formularza."
-      );
-    } finally {
-      setIsSubmittingEval(false);
+      setEvalState("success");
+    } catch (error) {
+      setEvalError(error instanceof Error ? error.message : "Nie udało się zapisać oceny.");
+      setEvalState("error");
     }
   }
 
-  // Obsługa tworzenia nowego pilotażu (Koordynator ROPS)
-  async function handleCreatePilot(e: React.FormEvent) {
-    e.preventDefault();
-    setCreateError(null);
+  async function handleCreateSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setCreateState("sending");
+    setCreateError("");
+
     try {
-      const inn = innovations.find((i) => String(i.id) === newInnId);
       const created = await createPilot({
-        innovation: Number(newInnId),
-        title: newTitle,
-        status: "recruiting",
-        county: newCounty,
-        municipality_name: newMunicipality,
-        max_testers: parseInt(newMaxTesters, 10) || 10,
-        eligible_roles_description: newEligibleRoles,
-        summary: newSummary,
-        instructions: newInstructions,
+        innovation: Number(newPilot.innovation),
+        title: newPilot.title,
+        county: newPilot.county,
+        municipality_name: newPilot.municipality,
+        max_testers: newPilot.capacity,
+        eligible_roles_description: newPilot.roles,
+        summary: newPilot.summary,
+        instructions: newPilot.instructions,
       });
 
-      const pilotItem: PilotProjectItem = {
-        ...created,
-        innovation_title: inn?.title || "Innowacja ROPS",
-        innovation_slug: inn?.slug || "innowacja",
-        county_name: created.county_name || ("Powiat " + newCounty),
-        municipality: newMunicipality,
-        municipality_name: newMunicipality,
-        status_display: "Trwa nabór testerów",
-        target_testers_count: parseInt(newMaxTesters, 10) || 10,
-        max_testers: parseInt(newMaxTesters, 10) || 10,
-        current_testers_count: 0,
-        description: newSummary,
-        summary: newSummary,
-        evaluations_count: 0,
-        evaluations: [],
-      };
+      const matchedInnovation = innovations.find((item) => String(item.id) === newPilot.innovation);
+      const matchedCounty =
+        countyOptions.find((item) => item.value === newPilot.county)?.label ?? "Małopolska";
 
-      setPilots((prev) => [pilotItem, ...prev]);
-      setCreateSuccess(true);
-      setTimeout(() => {
-        setIsCreateOpen(false);
-        setCreateSuccess(false);
-        setNewTitle("");
-        setNewMunicipality("");
-        setNewSummary("");
-        setNewInstructions("");
-      }, 2500);
-    } catch (err) {
-      setCreateError(
-        err instanceof Error ? err.message : "Nie udało się utworzyć pilotażu. Spróbuj ponownie."
-      );
+      setPilots((items) => [
+        {
+          ...created,
+          innovation_title:
+            created.innovation_title || matchedInnovation?.title || "Rozwiązanie społeczne",
+          innovation_slug: created.innovation_slug || matchedInnovation?.slug || "",
+          county_name: created.county_name || matchedCounty,
+          municipality_name: created.municipality_name || newPilot.municipality,
+          municipality: created.municipality || newPilot.municipality,
+          status: "recruiting",
+          max_testers: created.max_testers || newPilot.capacity,
+          target_testers_count: created.target_testers_count || newPilot.capacity,
+          current_testers_count: 0,
+          summary: created.summary || newPilot.summary,
+          description: created.description || newPilot.summary,
+          evaluations: [],
+          evaluations_count: 0,
+        },
+        ...items,
+      ]);
+
+      setCreateState("success");
+    } catch (error) {
+      setCreateError(error instanceof Error ? error.message : "Nie udało się uruchomić pilotażu.");
+      setCreateState("error");
     }
   }
 
   return (
-    <div className="pilot-tester-view max-w-6xl mx-auto space-y-8">
-      {/* 1. Header & Civic Ribbon */}
-      <div className="hub-card p-6 sm:p-8 bg-slate-50 border border-slate-200 rounded-3xl relative overflow-hidden shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-3 max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-100/80 text-emerald-900 rounded-full text-xs font-semibold uppercase tracking-wider">
-              <Flask aria-hidden="true" size={16} weight="duotone" className="text-emerald-700" />
-              <span>Moduł IV • Tester Innowacji ROPS Kraków</span>
-            </div>
-            <h2 className="type-h2 text-slate-900">
-              Pilotaże Innowacji i Ewaluacja Dostępności WCAG 2.2 AA
-            </h2>
-            <p className="type-body text-slate-600 leading-relaxed">
-              Przetestuj nowe usługi i technologie społeczne przed ich wdrożeniem w gminach Małopolski.
-              Oceniamy intuicyjność, wpływ na deinstytucjonalizację oraz pełną dostępność cyfrową i architektoniczną.
+    <div className="pilot-tester">
+      {isCoordinator && (
+        <section aria-label="Narzędzia koordynatora" className="pilot-tester__coordinator-bar">
+          <div>
+            <p className="type-caption font-semibold text-[var(--content-primary)]">
+              Panel koordynatora ROPS
+            </p>
+            <p className="type-caption text-[var(--content-secondary)]">
+              Możesz zarejestrować nowy pilotaż i otworzyć nabór testerów dla wybranej innowacji.
             </p>
           </div>
-
-          <div className="flex flex-col sm:flex-row md:flex-col gap-3 shrink-0">
-            <Button
-              variant="primary"
-              leadingIcon={PlusCircle}
-              onClick={() => setIsCreateOpen(true)}
-            >
-              Uruchom nowy pilotaż
-            </Button>
-            <div className="text-xs text-slate-500 flex items-center gap-1.5 justify-center md:justify-start">
-              <ShieldCheck size={16} className="text-emerald-600" weight="fill" />
-              <span>Standard standardu jakości ROPS</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Pasek wskaźników regionalnych */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-200/80">
-          <div className="bg-white/80 backdrop-blur p-4 rounded-2xl border border-slate-200">
-            <div className="text-2xl font-bold text-slate-900">{stats.total}</div>
-            <div className="type-caption text-slate-600 font-medium">Pilotaże w Małopolsce</div>
-          </div>
-          <div className="bg-white/80 backdrop-blur p-4 rounded-2xl border border-slate-200">
-            <div className="text-2xl font-bold text-emerald-700">{stats.recruiting}</div>
-            <div className="type-caption text-slate-600 font-medium">Otwarte nabory testerów</div>
-          </div>
-          <div className="bg-white/80 backdrop-blur p-4 rounded-2xl border border-slate-200">
-            <div className="text-2xl font-bold text-slate-900">
-              {stats.totalTesters} / {stats.maxTestersTotal}
-            </div>
-            <div className="type-caption text-slate-600 font-medium">Zrekrutowanych testerów</div>
-          </div>
-          <div className="bg-white/80 backdrop-blur p-4 rounded-2xl border border-slate-200">
-            <div className="text-2xl font-bold text-amber-600 flex items-center gap-1">
-              <span>{stats.avgScore}</span>
-              <Star size={20} weight="fill" className="text-amber-500" />
-            </div>
-            <div className="type-caption text-slate-600 font-medium">Średnia ocena WCAG / Użyteczność</div>
-          </div>
-        </div>
-      </div>
-
-      {/* 2. Filtry, Zakładki i Wyszukiwanie */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 p-4 bg-white rounded-2xl border border-slate-200 shadow-sm">
-        <div className="w-full md:w-auto">
-          <SegmentedControl
-            label="Filtruj wg etapu pilotażu"
-            hideLabel
-            name="statusFilter"
-            value={statusFilter}
-            onValueChange={setStatusFilter}
-            options={[
-              { label: `Wszystkie (${pilots.length})`, value: "all" },
-              { label: `Nabór (${stats.recruiting})`, value: "recruiting" },
-              { label: "W toku", value: "in_progress" },
-              { label: `Zakończone (${stats.completed})`, value: "completed" },
-            ]}
-          />
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-center gap-3">
-          <div className="w-full sm:w-56">
-            <SelectField
-              label="Wybierz powiat"
-              hideLabel
-              name="countyFilter"
-              value={countyFilter}
-              onChange={(e) => setCountyFilter(e.target.value)}
-              options={COUNTY_OPTIONS}
-            />
-          </div>
-          <div className="w-full sm:w-64">
-            <TextField
-              label="Szukaj pilotażu"
-              hideLabel
-              name="searchQuery"
-              placeholder="Szukaj pilotażu lub innowacji..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* 3. Lista Pilotaży */}
-      {filteredPilots.length === 0 ? (
-        <div className="hub-card p-12 text-center bg-white rounded-2xl border border-slate-200">
-          <Flask size={48} className="text-slate-400 mx-auto mb-3" weight="duotone" />
-          <h3 className="type-h3 text-slate-800">Brak pilotaży spełniających kryteria</h3>
-          <p className="type-body text-slate-500 mt-1 max-w-md mx-auto">
-            Zmień wybrane filtry lub wyczyść wyszukiwaną frazę, aby zobaczyć dostępne projekty testowe.
-          </p>
           <Button
-            variant="secondary"
-            className="mt-4"
-            onClick={() => {
-              setStatusFilter("all");
-              setCountyFilter("all");
-              setSearchQuery("");
-            }}
+            leadingIcon={PlusCircle}
+            onClick={() => setActiveDialog("create")}
+            size="sm"
+            variant="primary"
           >
-            Zresetuj filtry
+            Dodaj pilotaż
           </Button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {filteredPilots.map((pilot) => {
-            const isRecruiting = pilot.status === "recruiting" || pilot.status === "rekrutacja";
-            const isInProgress = pilot.status === "in_progress" || pilot.status === "w_trakcie";
-            const isCompleted = pilot.status === "completed" || pilot.status === "zakonczony";
+        </section>
+      )}
 
-            const maxTesters = pilot.max_testers || pilot.target_testers_count || 10;
-            const currentTesters = pilot.current_testers_count || 0;
-            const percent = Math.min(100, Math.round((currentTesters / maxTesters) * 100));
-            const freeSlots = Math.max(0, maxTesters - currentTesters);
+      {notice && <Alert description={notice} title="Dane pilotaży" variant="warning" />}
+
+      <section aria-label="Wyszukiwanie pilotaży" className="pilot-tester__filters">
+        <SearchField
+          label="Szukaj pilotażu"
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Nazwa pilotażu, innowacja lub miejscowość"
+          value={query}
+        />
+        <SelectField
+          label="Powiat"
+          onChange={(e) => setCounty(e.target.value)}
+          options={countyOptions}
+          value={county}
+        />
+        <RadioGroup
+          className="pilot-tester__stages"
+          label="Etap pilotażu"
+          name="pilot-stage"
+          onValueChange={setStage}
+          options={[
+            { label: `Wszystkie (${pilots.length})`, value: "all" },
+            {
+              label: `Nabór otwarty (${pilots.filter(isRecruiting).length})`,
+              value: "recruiting",
+            },
+            { label: "W toku", value: "in_progress" },
+            { label: "Zakończone", value: "completed" },
+          ]}
+          value={stage}
+        />
+      </section>
+
+      <p className="pilot-tester__result-count" role="status">
+        {visiblePilots.length === 1
+          ? "Znaleziono 1 pilotaż."
+          : `Znaleziono ${visiblePilots.length} pilotaży.`}
+      </p>
+
+      {visiblePilots.length > 0 ? (
+        <div className="pilot-tester__grid">
+          {visiblePilots.map((pilot) => {
+            const capacity = pilot.max_testers || pilot.target_testers_count || 10;
+            const enrolled = pilot.current_testers_count || 0;
+            const placesLeft = Math.max(capacity - enrolled, 0);
+            const statusMeta = getStatusBadge(pilot);
+            const recruitingOpen = isRecruiting(pilot);
 
             return (
-              <article
-                key={pilot.id}
-                className="hub-card p-6 bg-white rounded-2xl border border-slate-200 hover:border-slate-300 shadow-sm flex flex-col justify-between transition-all"
-              >
-                <div className="space-y-4">
-                  {/* Status i lokalizacja */}
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <Badge
-                      label={
-                        isRecruiting
-                          ? "Nabór testerów otwarty"
-                          : isInProgress
-                          ? "Pilotaż w toku"
-                          : "Pilotaż zakończony / Wyniki WCAG"
-                      }
-                      variant={isRecruiting ? "success" : isInProgress ? "warning" : "info"}
-                    />
-                    <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-                      <MapPin size={16} className="text-slate-400" />
-                      <span>
-                        {pilot.municipality_name || pilot.municipality || ""},{" "}
-                        {pilot.county_name}
-                      </span>
-                    </div>
-                  </div>
+              <article className="pilot-card" key={pilot.id}>
+                <header className="pilot-card__header">
+                  <Badge label={statusMeta.label} variant={statusMeta.variant} />
+                  <span className="pilot-card__location">
+                    <MapPin aria-hidden="true" size={16} />
+                    {pilot.municipality_name || pilot.municipality || "Małopolska"}
+                    {pilot.county_name ? `, ${pilot.county_name}` : ""}
+                  </span>
+                </header>
 
-                  {/* Tytuł i powiązanie z innowacją */}
-                  <div>
-                    <h3 className="type-h3 text-slate-900 leading-snug">{pilot.title}</h3>
-                    <div className="mt-1 flex items-center gap-1.5 text-xs text-emerald-800 font-medium">
-                      <Sparkle size={14} weight="fill" className="text-emerald-600" />
-                      <span>Innowacja: </span>
-                      <Link
-                        href={`/solutions/${pilot.innovation_slug}`}
-                        className="hover:underline font-semibold"
-                      >
-                        {pilot.innovation_title}
-                      </Link>
-                    </div>
-                  </div>
-
-                  {/* Opis */}
-                  <p className="type-body text-slate-600 text-sm leading-relaxed">
-                    {pilot.description || pilot.summary}
+                <div className="pilot-card__body">
+                  <p className="pilot-card__innovation">
+                    Rozwiązanie:{" "}
+                    <Link href={`/innowacje/${pilot.innovation_slug}`}>
+                      {pilot.innovation_title}
+                    </Link>
                   </p>
 
-                  {/* Kwalifikowani testerzy */}
+                  <h3>{pilot.title}</h3>
+
+                  <p>{pilot.summary || pilot.description}</p>
+
                   {pilot.eligible_roles_description && (
-                    <div className="p-3 bg-slate-50 rounded-xl text-xs text-slate-700 flex items-start gap-2">
-                      <Users size={16} className="text-slate-500 shrink-0 mt-0.5" />
-                      <div>
-                        <strong className="font-semibold text-slate-900">Kogo zapraszamy:</strong>{" "}
-                        {pilot.eligible_roles_description}
-                      </div>
+                    <div className="pilot-card__audience">
+                      <UsersThree aria-hidden="true" size={18} />
+                      <span>
+                        <strong>Kogo zapraszamy:</strong> {pilot.eligible_roles_description}
+                      </span>
                     </div>
                   )}
 
-                  {/* Postęp rekrutacji testerów */}
-                  <div className="p-3 bg-slate-50 rounded-xl space-y-2 border border-slate-100">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-600 font-medium">
-                        Rekrutacja testerów: <strong>{currentTesters} z {maxTesters}</strong> ({percent}%)
-                      </span>
-                      {isRecruiting && (
-                        <span className="text-emerald-700 font-semibold">
-                          {freeSlots > 0 ? `${freeSlots} wolnych miejsc` : "Komplet zgłoszeń"}
-                        </span>
-                      )}
+                  {recruitingOpen && (
+                    <div className="pilot-card__capacity">
+                      <div>
+                        <span>Zaproszeni testerzy</span>
+                        <strong>
+                          {enrolled} z {capacity}
+                        </strong>
+                      </div>
+                      <LinearProgress
+                        label={`Zapełnienie naboru: ${enrolled} z ${capacity}`}
+                        value={capacity ? Math.round((enrolled / capacity) * 100) : 0}
+                        variant="success"
+                      />
+                      <p>
+                        {placesLeft > 0
+                          ? `Pozostało ${placesLeft} ${placesLeft === 1 ? "miejsce" : "miejsc"}.`
+                          : "Lista testerów jest pełna."}
+                      </p>
                     </div>
-                    <LinearProgress
-                      label="Postęp naboru testerów"
-                      value={percent}
-                      variant={isRecruiting ? "success" : "info"}
-                    />
-                  </div>
+                  )}
 
-                  {/* Podsumowanie ocen WCAG jeśli istnieją */}
-                  {pilot.evaluations_count && pilot.evaluations_count > 0 ? (
-                    <div className="p-3.5 bg-emerald-50/70 border border-emerald-200/80 rounded-xl space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="type-caption font-semibold text-emerald-950 flex items-center gap-1.5">
-                          <Star size={16} weight="fill" className="text-amber-500" />
-                          Średnia ocena ewaluacji: {pilot.average_overall_score ?? "4.8"} / 5.0
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedPilot(pilot);
-                            setIsDetailsOpen(true);
-                          }}
-                          className="text-xs text-emerald-800 font-semibold hover:underline"
-                        >
-                          Zobacz opinie ({pilot.evaluations?.length || pilot.evaluations_count}) ›
-                        </button>
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 text-center text-xs pt-1 border-t border-emerald-200/60">
-                        <div>
-                          <div className="text-slate-500">Użyteczność</div>
-                          <div className="font-bold text-slate-800">{pilot.average_usability_score ?? "5.0"}/5</div>
-                        </div>
-                        <div>
-                          <div className="text-slate-500">Skuteczność</div>
-                          <div className="font-bold text-slate-800">{pilot.average_effectiveness_score ?? "4.7"}/5</div>
-                        </div>
-                        <div>
-                          <div className="text-slate-500">WCAG Dostępność</div>
-                          <div className="font-bold text-slate-800">{pilot.average_accessibility_score ?? "4.7"}/5</div>
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
+                  {pilot.average_overall_score != null && (
+                    <p className="pilot-card__rating">
+                      <Star aria-hidden="true" size={18} weight="fill" />
+                      Średnia z opinii: <strong>{pilot.average_overall_score.toFixed(1)} / 5</strong>
+                      {pilot.evaluations_count ? ` · ${pilot.evaluations_count} opinii` : ""}
+                    </p>
+                  )}
                 </div>
 
-                {/* Przyciski akcji */}
-                <div className="flex flex-wrap items-center gap-2.5 pt-4 mt-4 border-t border-slate-100">
-                  {isRecruiting && (
-                    <Button
-                      size="sm"
-                      variant="primary"
-                      leadingIcon={HandHeart}
-                      onClick={() => openApplyDialog(pilot)}
-                    >
+                <footer className="pilot-card__actions">
+                  {recruitingOpen && placesLeft > 0 && (
+                    <Button onClick={() => handleOpenApply(pilot)} size="sm" variant="primary">
                       Zgłoś się do testów
                     </Button>
                   )}
 
-                  <Button
-                    size="sm"
-                    variant={isCompleted ? "primary" : "secondary"}
-                    leadingIcon={Star}
-                    onClick={() => openEvalDialog(pilot)}
-                  >
-                    Oceń innowację (Ankieta WCAG)
-                  </Button>
+                  {!recruitingOpen && (
+                    <Button
+                      onClick={() => handleOpenEvaluation(pilot)}
+                      size="sm"
+                      variant="secondary"
+                    >
+                      Przekaż ocenę
+                    </Button>
+                  )}
 
-                  <Button
-                    size="sm"
-                    variant="tertiary"
-                    leadingIcon={ChatText}
-                    onClick={() => {
-                      setSelectedPilot(pilot);
-                      setIsDetailsOpen(true);
-                    }}
-                  >
-                    Raport i instrukcja
+                  <Button onClick={() => handleOpenDetails(pilot)} size="sm" variant="tertiary">
+                    Szczegóły
                   </Button>
-                </div>
+                </footer>
               </article>
             );
           })}
         </div>
+      ) : (
+        <section aria-labelledby="no-pilots" className="pilot-tester__empty">
+          <Flask aria-hidden="true" size={32} />
+          <h3 id="no-pilots">Nie znaleźliśmy pasującego pilotażu</h3>
+          <p>Spróbuj zmienić wyszukiwaną frazę lub wybierz wszystkie powiaty i etapy.</p>
+          <Button onClick={handleResetFilters} variant="secondary">
+            Wyczyść filtry
+          </Button>
+        </section>
       )}
 
-      {/* 4. Dialog Zgłoszenia do Testów */}
+      {/* Szczegóły pilotażu */}
       <Dialog
-        open={isApplyOpen}
-        onOpenChange={setIsApplyOpen}
-        title={`Zgłoszenie do testów: ${selectedPilot?.title || ""}`}
-        description="Dołącz do bezpłatnego pilotażu w Małopolsce. Testerzy otrzymują materiały prototypowe oraz wsparcie koordynatora ROPS Kraków."
+        description={selected ? `Rozwiązanie: ${selected.innovation_title}` : undefined}
+        onOpenChange={(open) => !open && closeDialog()}
+        open={activeDialog === "details"}
+        title={selected?.title || "Szczegóły pilotażu"}
       >
-        {applySuccess ? (
-          <div className="p-6 text-center space-y-3">
-            <CheckCircle size={56} className="text-emerald-600 mx-auto" weight="fill" />
-            <h4 className="type-h3 text-slate-900">Zgłoszenie zostało pomyślnie przyjęte!</h4>
-            <p className="type-body text-slate-600 max-w-md mx-auto">
-              {applyMessage || "Dziękujemy za chęć testowania innowacji. Koordynator ROPS skontaktuje się z Tobą."}
-            </p>
-            <div className="p-3 bg-slate-50 rounded-xl text-xs text-slate-600 text-left space-y-1">
-              <strong>Kolejne kroki:</strong>
-              <div>1. Weryfikacja formalna zgłoszenia przez zespół ROPS (do 48h).</div>
-              <div>2. Bezpłatne przekazanie pakietu prototypowego lub dostępów do platformy.</div>
-              <div>3. Krótka 15-minutowa sesja wdrożeniowa online.</div>
+        {selected && (
+          <div className="pilot-dialog">
+            <div className="pilot-dialog__meta">
+              <Badge
+                label={getStatusBadge(selected).label}
+                variant={getStatusBadge(selected).variant}
+              />
+              {selected.start_date && (
+                <span>
+                  <Calendar aria-hidden="true" size={18} />
+                  {formatDate(selected.start_date)}
+                  {selected.end_date ? ` – ${formatDate(selected.end_date)}` : ""}
+                </span>
+              )}
             </div>
-            <Button variant="primary" onClick={() => setIsApplyOpen(false)} className="mt-4">
-              Wróć do listy pilotaży
-            </Button>
+
+            <div>
+              <h3>Jak przebiegają testy</h3>
+              <p>
+                {selected.instructions ||
+                  "Po zakwalifikowaniu otrzymasz harmonogram i materiały potrzebne do udziału w testach."}
+              </p>
+            </div>
+
+            <div>
+              <h3>Opinie i oceny uczestników</h3>
+              {selected.evaluations && selected.evaluations.length > 0 ? (
+                <ul className="pilot-dialog__evaluations">
+                  {selected.evaluations.map((item) => (
+                    <li key={item.id ?? item.evaluator_name}>
+                      <strong>{item.evaluator_name}</strong>
+                      <span>
+                        {item.evaluator_role_display} · {item.usability_score}/5 użyteczność ·{" "}
+                        {item.accessibility_score}/5 dostępność
+                      </span>
+                      {item.proposed_improvements && <p>{item.proposed_improvements}</p>}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>Nie ma jeszcze opublikowanych opinii. Po testach możesz przekazać swoją ocenę.</p>
+              )}
+            </div>
+
+            <div className="dialog__actions">
+              {isRecruiting(selected) &&
+              (selected.current_testers_count || 0) <
+                (selected.max_testers || selected.target_testers_count || 10) ? (
+                <Button onClick={() => handleOpenApply(selected)} variant="primary">
+                  Zgłoś się do testów
+                </Button>
+              ) : (
+                <Button onClick={() => handleOpenEvaluation(selected)} variant="primary">
+                  Przekaż ocenę
+                </Button>
+              )}
+              <Button onClick={closeDialog} variant="tertiary">
+                Zamknij
+              </Button>
+            </div>
           </div>
+        )}
+      </Dialog>
+
+      {/* Zgłoszenie do udziału */}
+      <Dialog
+        description={selected ? `Pilotaż: ${selected.title}` : undefined}
+        onOpenChange={(open) => !open && closeDialog()}
+        open={activeDialog === "apply"}
+        title="Zgłoszenie do testów"
+      >
+        {applyState === "success" ? (
+          <DialogSuccessState
+            message={applyMessage}
+            onClose={closeDialog}
+            title="Zgłoszenie przyjęte"
+          />
         ) : (
-          <form onSubmit={handleApply} className="space-y-4">
-            <div className="p-3 bg-emerald-50/70 border border-emerald-200/80 rounded-xl text-xs text-emerald-950 space-y-1">
-              <strong>Co zyskujesz jako tester?</strong>
-              <div className="flex items-center gap-1.5">
-                <Check size={14} className="text-emerald-700" />
-                <span>Bezpłatny dostęp do prototypu innowacji na czas pilotażu</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Check size={14} className="text-emerald-700" />
-                <span>Bezpośredni wpływ na kształt usług społecznych w Małopolsce</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Check size={14} className="text-emerald-700" />
-                <span>Certyfikat Testera Innowacji Społecznych ROPS Kraków</span>
-              </div>
-            </div>
+          <form className="pilot-dialog" onSubmit={handleApplySubmit}>
+            <p>
+              Podaj dane potrzebne do organizacji tego pilotażu. Udział w testach jest bezpłatny.
+            </p>
 
             <TextField
               label="Imię i nazwisko"
-              name="name"
+              name="applicant-name"
+              onChange={(e) => setApplication({ ...application, name: e.target.value })}
               required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={application.name}
             />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="pilot-dialog__two-columns">
               <TextField
                 label="Adres e-mail"
-                name="email"
-                type="email"
+                name="applicant-email"
+                onChange={(e) => setApplication({ ...application, email: e.target.value })}
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                type="email"
+                value={application.email}
               />
               <TextField
-                label="Numer telefonu"
-                name="phone"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="np. 501 234 567"
+                label="Telefon"
+                name="applicant-phone"
+                onChange={(e) => setApplication({ ...application, phone: e.target.value })}
+                value={application.phone}
               />
             </div>
 
             <SelectField
-              label="Rola zgłaszającego testera"
-              name="role"
-              required
+              label="Rola"
+              onChange={(e) => setApplication({ ...application, role: e.target.value })}
               options={ROLE_OPTIONS}
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-            />
-
-            <TextField
-              label="Instytucja / Organizacja / Miejscowość"
-              name="institution"
-              value={institution}
-              onChange={(e) => setInstitution(e.target.value)}
-              placeholder="np. DPS Grybów / Klub Seniora / osoba prywatna"
+              value={application.role}
             />
 
             <TextAreaField
-              label="Dlaczego chcesz wziąć udział w testach?"
+              label="Dlaczego chcesz testować to rozwiązanie?"
               name="motivation"
-              rows={3}
-              value={motivation}
-              onChange={(e) => setMotivation(e.target.value)}
-              placeholder="Opisz krótko swoje doświadczenie lub sytuację podopiecznych, u których planujesz testy..."
+              onChange={(e) => setApplication({ ...application, motivation: e.target.value })}
+              optional
+              value={application.motivation}
             />
 
-            <div className="flex items-start gap-2 pt-2">
+            <label className="pilot-dialog__consent">
               <input
-                id="apply-consent"
-                type="checkbox"
-                checked={consent}
-                onChange={(e) => setConsent(e.target.checked)}
-                className="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                checked={application.consent}
+                onChange={(e) => setApplication({ ...application, consent: e.target.checked })}
                 required
+                type="checkbox"
               />
-              <label htmlFor="apply-consent" className="text-xs text-slate-600">
-                Wyrażam zgodę na kontakt koordynatora ROPS Kraków w celach organizacji pilotażu oraz
-                przetwarzanie danych zgodnie z regulaminem naboru testerów.
-              </label>
-            </div>
+              <span>Wyrażam zgodę na kontakt w sprawie organizacji tego pilotażu.</span>
+            </label>
 
-            {applyError && (
-              <Alert title="Błąd zgłoszenia" description={applyError} variant="danger" />
+            {applyState === "error" && (
+              <Alert
+                description={applyMessage}
+                title="Nie udało się wysłać zgłoszenia"
+                variant="danger"
+              />
             )}
 
-            <div className="dialog__actions">
-              <Button type="button" variant="tertiary" onClick={() => setIsApplyOpen(false)}>
-                Anuluj
-              </Button>
-              <Button type="submit" variant="primary" disabled={isApplying || !consent}>
-                {isApplying ? "Wysyłanie zgłoszenia..." : "Wyślij zgłoszenie na testera"}
-              </Button>
-            </div>
+            <DialogActionButtons
+              close={closeDialog}
+              pending={applyState === "sending"}
+              pendingLabel="Wysyłanie…"
+              submitLabel="Wyślij zgłoszenie"
+            />
           </form>
         )}
       </Dialog>
 
-      {/* 5. Dialog Ankiety Ewaluacji Dostępności WCAG 2.2 AA */}
+      {/* Ankieta ewaluacyjna */}
       <Dialog
-        open={isEvalOpen}
-        onOpenChange={setIsEvalOpen}
-        title="Ankieta Ewaluacji Użyteczności i Dostępności WCAG 2.2 AA"
-        description={`Oceń innowację: ${selectedPilot?.title || ""}. Twoja opinia zasila wskaźniki gotowości do replikacji w gminach Małopolski.`}
+        description="Krótka opinia pomoże twórcom dopracować rozwiązanie przed kolejnym etapem wdrożenia."
+        onOpenChange={(open) => !open && closeDialog()}
+        open={activeDialog === "evaluate"}
+        title="Podziel się doświadczeniem z testów"
       >
-        {evalSuccess ? (
-          <div className="p-6 text-center space-y-3">
-            <CheckCircle size={56} className="text-emerald-600 mx-auto" weight="fill" />
-            <h4 className="type-h3 text-slate-900">Ewaluacja została pomyślnie zapisana!</h4>
-            <p className="type-body text-slate-600 max-w-md mx-auto">
-              Dziękujemy za rzetelną ocenę prototypu. Wyniki badania trafiają bezpośrednio do zespołu
-              ROPS Kraków i autorów innowacji.
-            </p>
-            <Button variant="primary" onClick={() => setIsEvalOpen(false)} className="mt-4">
-              Zamknij
-            </Button>
-          </div>
+        {evalState === "success" ? (
+          <DialogSuccessState
+            message="Ocena została zapisana i zasili podsumowanie pilotażu."
+            onClose={closeDialog}
+            title="Dziękujemy za opinię"
+          />
         ) : (
-          <form onSubmit={handleEval} className="space-y-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <TextField
-                label="Imię i nazwisko oceniającego"
-                name="evalName"
-                required
-                value={evalName}
-                onChange={(e) => setEvalName(e.target.value)}
-              />
-              <SelectField
-                label="Rola w ewaluacji"
-                name="evalRole"
-                required
-                options={ROLE_OPTIONS}
-                value={evalRole}
-                onChange={(e) => setEvalRole(e.target.value)}
-              />
-            </div>
-
+          <form className="pilot-dialog" onSubmit={handleEvaluationSubmit}>
             <TextField
-              label="Środowisko testowe / Instytucja"
-              name="evalInstitution"
-              value={evalInstitution}
-              onChange={(e) => setEvalInstitution(e.target.value)}
-              placeholder="np. Dom podopiecznego w Grybowie, WTZ Myślenice, CUS"
+              label="Imię i nazwisko"
+              name="evaluator-name"
+              onChange={(e) => setEvaluation({ ...evaluation, name: e.target.value })}
+              required
+              value={evaluation.name}
             />
 
-            {/* Trzy kryteria jakościowe WCAG */}
-            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
-              <h4 className="type-caption font-semibold text-slate-900 uppercase tracking-wider">
-                Kryteria oceny jakościowej (Skala 1–5)
-              </h4>
-
-              <Slider
-                label={`1. Użyteczność i łatwość wdrożenia: ${usabilityScore} / 5`}
-                helperText="Czy instrukcja jest klarowna, a narzędzie nie wymaga specjalistycznej wiedzy?"
-                min={1}
-                max={5}
-                step={1}
-                value={usabilityScore}
-                formatValue={(v) => `${v} z 5`}
-                onValueChange={setUsabilityScore}
+            <div className="pilot-dialog__two-columns">
+              <SelectField
+                label="Rola w testach"
+                onChange={(e) => setEvaluation({ ...evaluation, role: e.target.value })}
+                options={ROLE_OPTIONS}
+                value={evaluation.role}
               />
-
-              <Slider
-                label={`2. Skuteczność i rozwiązanie problemu: ${effectivenessScore} / 5`}
-                helperText="W jakim stopniu rozwiązanie poprawia jakość życia i samodzielność podopiecznych?"
-                min={1}
-                max={5}
-                step={1}
-                value={effectivenessScore}
-                formatValue={(v) => `${v} z 5`}
-                onValueChange={setEffectivenessScore}
+              <TextField
+                label="Instytucja lub miejscowość"
+                name="evaluator-institution"
+                onChange={(e) => setEvaluation({ ...evaluation, institution: e.target.value })}
+                optional
+                value={evaluation.institution}
               />
+            </div>
 
+            <div className="pilot-dialog__scores">
               <Slider
-                label={`3. Dostępność sensoryczna i cyfrowa (WCAG 2.2 AA): ${accessibilityScore} / 5`}
-                helperText="Brak barier dotykowych, architektonicznych, odpowiedni kontrast i czytelność dla osób z niepełnosprawnościami."
-                min={1}
+                formatValue={(v) => `${v} / 5`}
+                label="Użyteczność"
                 max={5}
-                step={1}
-                value={accessibilityScore}
-                formatValue={(v) => `${v} z 5`}
-                onValueChange={setAccessibilityScore}
+                min={1}
+                onValueChange={(v) => setEvaluation({ ...evaluation, usability: v })}
+                value={evaluation.usability}
+              />
+              <Slider
+                formatValue={(v) => `${v} / 5`}
+                label="Skuteczność"
+                max={5}
+                min={1}
+                onValueChange={(v) => setEvaluation({ ...evaluation, effectiveness: v })}
+                value={evaluation.effectiveness}
+              />
+              <Slider
+                formatValue={(v) => `${v} / 5`}
+                label="Dostępność (WCAG)"
+                max={5}
+                min={1}
+                onValueChange={(v) => setEvaluation({ ...evaluation, accessibility: v })}
+                value={evaluation.accessibility}
               />
             </div>
 
             <TextAreaField
-              label="Napotkane bariery i trudności w trakcie testów"
-              name="barriersEncountered"
-              rows={2}
-              value={barriersEncountered}
-              onChange={(e) => setBarriersEncountered(e.target.value)}
-              placeholder="np. Zapięcie walizki wymagało zbyt dużej siły / czcionka w instrukcji była zbyt mała dla osób słabowidzących..."
+              label="Napotkane trudności i bariery"
+              name="barriers"
+              onChange={(e) => setEvaluation({ ...evaluation, barriers: e.target.value })}
+              optional
+              value={evaluation.barriers}
             />
 
             <TextAreaField
-              label="Proponowane usprawnienia i rekomendacje zmian"
-              name="proposedImprovements"
-              rows={2}
-              value={proposedImprovements}
-              onChange={(e) => setProposedImprovements(e.target.value)}
-              placeholder="Co warto udoskonalić przed wdrożeniem na stałe w innych gminach?"
+              label="Co warto poprawić lub zmienić?"
+              name="improvements"
+              onChange={(e) => setEvaluation({ ...evaluation, improvements: e.target.value })}
+              required
+              value={evaluation.improvements}
+            />
+
+            <TextAreaField
+              label="Warunki i okoliczności testowania"
+              name="environment"
+              onChange={(e) => setEvaluation({ ...evaluation, environment: e.target.value })}
+              optional
+              value={evaluation.environment}
             />
 
             <RadioGroup
-              label="Czy rekomendujesz skalowanie tej innowacji do innych gmin Małopolski?"
-              name="recommendToScale"
-              value={recommendToScale}
-              onValueChange={setRecommendToScale}
+              label="Czy rekomendujesz dalsze wdrożenie tego rozwiązania?"
+              name="recommend"
+              onValueChange={(recommend) => setEvaluation({ ...evaluation, recommend })}
               options={[
-                { label: "Tak, rekomenduję do upowszechnienia w CUS / samorządach", value: "true" },
-                { label: "Wymaga gruntownych poprawek przed kolejnymi wdrożeniami", value: "false" },
+                { label: "Tak, warto rozwijać", value: "true" },
+                { label: "Jeszcze nie", value: "false" },
               ]}
+              value={evaluation.recommend}
             />
 
-            {evalError && (
-              <Alert title="Błąd zapisu oceny" description={evalError} variant="danger" />
+            {evalState === "error" && (
+              <Alert
+                description={evalError}
+                title="Nie udało się zapisać oceny"
+                variant="danger"
+              />
             )}
 
-            <div className="dialog__actions">
-              <Button type="button" variant="tertiary" onClick={() => setIsEvalOpen(false)}>
-                Anuluj
-              </Button>
-              <Button type="submit" variant="primary" disabled={isSubmittingEval}>
-                {isSubmittingEval ? "Zapisywanie oceny..." : "Zapisz ewaluację WCAG"}
-              </Button>
-            </div>
+            <DialogActionButtons
+              close={closeDialog}
+              pending={evalState === "sending"}
+              pendingLabel="Zapisywanie…"
+              submitLabel="Zapisz ocenę"
+            />
           </form>
         )}
       </Dialog>
 
-      {/* 6. Dialog Szczegółów, Instrukcji i Raportu Ewaluacji */}
+      {/* Dodawanie pilotażu (tylko koordynator) */}
       <Dialog
-        open={isDetailsOpen}
-        onOpenChange={setIsDetailsOpen}
-        title={selectedPilot?.title || "Szczegóły pilotażu"}
-        description={`Innowacja: ${selectedPilot?.innovation_title || ""} • ${selectedPilot?.county_name || ""}`}
+        description="Uzupełnij podstawowe informacje, aby rozpocząć nabór testerów w regionie."
+        onOpenChange={(open) => !open && closeDialog()}
+        open={activeDialog === "create"}
+        title="Dodaj pilotaż"
       >
-        <div className="space-y-6 max-h-[75vh] overflow-y-auto pr-1">
-          {/* Instrukcja dla testerów */}
-          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
-            <h4 className="type-caption font-semibold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-              <Info size={16} className="text-emerald-700" />
-              Wytyczne i instrukcja testowania
-            </h4>
-            <p className="type-body text-slate-700 text-sm leading-relaxed whitespace-pre-line">
-              {selectedPilot?.instructions ||
-                "Prosimy o systematyczne testowanie prototypu zgodnie z wytycznymi zespołu autorskiego. W przypadku wątpliwości skontaktuj się z koordynatorem ROPS Kraków."}
-            </p>
-            {selectedPilot?.start_date && (
-              <div className="flex items-center gap-2 pt-2 text-xs text-slate-500 border-t border-slate-200/80">
-                <Calendar size={14} />
-                <span>
-                  Okres testów: {selectedPilot.start_date} do {selectedPilot.end_date || "zakończenia naboru"}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Oceny i opinie testerów */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h4 className="type-h3 text-slate-900 text-base">
-                Opinie i ankiety ewaluacyjne ({selectedPilot?.evaluations?.length || selectedPilot?.evaluations_count || 0})
-              </h4>
-              <Button
-                size="sm"
-                variant="secondary"
-                leadingIcon={Star}
-                onClick={() => {
-                  setIsDetailsOpen(false);
-                  openEvalDialog();
-                }}
-              >
-                Dodaj własną ocenę
-              </Button>
-            </div>
-
-            {selectedPilot?.evaluations && selectedPilot.evaluations.length > 0 ? (
-              <div className="space-y-3">
-                {selectedPilot.evaluations.map((ev, index) => (
-                  <div
-                    key={ev.id || index}
-                    className="p-4 bg-white rounded-xl border border-slate-200 shadow-xs space-y-2.5"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <strong className="text-slate-900 text-sm">{ev.evaluator_name}</strong>
-                        <div className="text-xs text-slate-500">
-                          {ev.evaluator_role_display || ev.evaluator_role}
-                          {ev.evaluator_institution ? ` • ${ev.evaluator_institution}` : ""}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1 text-amber-600 font-bold text-sm bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200">
-                        <Star size={14} weight="fill" />
-                        <span>
-                          {((ev.usability_score + ev.effectiveness_score + ev.accessibility_score) / 3).toFixed(1)}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-2 text-xs p-2 bg-slate-50 rounded-lg text-center">
-                      <div>
-                        <span className="text-slate-500">Użyteczność:</span>{" "}
-                        <strong>{ev.usability_score}/5</strong>
-                      </div>
-                      <div>
-                        <span className="text-slate-500">Skuteczność:</span>{" "}
-                        <strong>{ev.effectiveness_score}/5</strong>
-                      </div>
-                      <div>
-                        <span className="text-slate-500">WCAG Dostępność:</span>{" "}
-                        <strong>{ev.accessibility_score}/5</strong>
-                      </div>
-                    </div>
-
-                    {ev.barriers_encountered && (
-                      <div className="text-xs text-slate-700 bg-rose-50/70 p-2.5 rounded-lg border border-rose-200/60">
-                        <strong className="text-rose-900">Zidentyfikowane bariery:</strong>{" "}
-                        {ev.barriers_encountered}
-                      </div>
-                    )}
-
-                    {ev.proposed_improvements && (
-                      <div className="text-xs text-slate-700 bg-emerald-50/70 p-2.5 rounded-lg border border-emerald-200/60">
-                        <strong className="text-emerald-950">Rekomendowane ulepszenia:</strong>{" "}
-                        {ev.proposed_improvements}
-                      </div>
-                    )}
-
-                    {ev.test_environment_notes && (
-                      <div className="text-xs text-slate-500 italic">
-                        Warunki: {ev.test_environment_notes}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="p-6 bg-slate-50 rounded-xl text-center text-slate-500 text-sm">
-                Brak zarejestrowanych opinii dla tego pilotażu. Bądź pierwszym testerem, który oceni rozwiązanie!
-              </div>
-            )}
-          </div>
-
-          <div className="dialog__actions pt-2">
-            <Button variant="secondary" onClick={() => setIsDetailsOpen(false)}>
-              Zamknij
-            </Button>
-            <Button
-              variant="primary"
-              leadingIcon={HandHeart}
-              onClick={() => {
-                setIsDetailsOpen(false);
-                openApplyDialog();
-              }}
-            >
-              Zgłoś się do testów
-            </Button>
-          </div>
-        </div>
-      </Dialog>
-
-      {/* 7. Dialog Tworzenia Nowego Pilotażu (Koordynator ROPS Kraków) */}
-      <Dialog
-        open={isCreateOpen}
-        onOpenChange={setIsCreateOpen}
-        title="Uruchomienie nowego pilotażu innowacji"
-        description="Formularz koordynatora ROPS Kraków: otwórz nabór testerów lub zarejestruj testy terenowe w Małopolsce."
-      >
-        {createSuccess ? (
-          <div className="p-6 text-center space-y-3">
-            <CheckCircle size={56} className="text-emerald-600 mx-auto" weight="fill" />
-            <h4 className="type-h3 text-slate-900">Pilotaż został pomyślnie uruchomiony!</h4>
-            <p className="type-body text-slate-600">
-              Nowy projekt testowy jest już widoczny na platformie i otwarty na zgłoszenia mieszkańców oraz kadry CUS.
-            </p>
-            <Button variant="primary" onClick={() => setIsCreateOpen(false)} className="mt-4">
-              Przejdź do listy
-            </Button>
-          </div>
+        {createState === "success" ? (
+          <DialogSuccessState
+            message="Nowy nabór jest już widoczny na liście pilotaży."
+            onClose={closeDialog}
+            title="Pilotaż został dodany"
+          />
         ) : (
-          <form onSubmit={handleCreatePilot} className="space-y-4">
+          <form className="pilot-dialog" onSubmit={handleCreateSubmit}>
             <SelectField
-              label="Wybierz innowację społeczną ROPS"
-              name="newInnId"
-              required
-              value={newInnId}
-              onChange={(e) => setNewInnId(e.target.value)}
-              options={innovations.map((inn) => ({
-                label: inn.title,
-                value: String(inn.id),
+              label="Rozwiązanie społeczne"
+              onChange={(e) => setNewPilot({ ...newPilot, innovation: e.target.value })}
+              options={innovations.map((item) => ({
+                label: item.title,
+                value: String(item.id),
               }))}
+              required
+              value={newPilot.innovation}
             />
 
             <TextField
               label="Tytuł pilotażu"
-              name="newTitle"
+              name="pilot-title"
+              onChange={(e) => setNewPilot({ ...newPilot, title: e.target.value })}
               required
-              placeholder="np. Pilotażowe wdrożenie w środowisku wiejskim..."
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
+              value={newPilot.title}
             />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="pilot-dialog__two-columns">
               <SelectField
-                label="Powiat realizacji"
-                name="newCounty"
-                required
-                value={newCounty}
-                onChange={(e) => setNewCounty(e.target.value)}
-                options={COUNTY_OPTIONS.filter((c) => c.value !== "all")}
+                label="Powiat"
+                onChange={(e) => setNewPilot({ ...newPilot, county: e.target.value })}
+                options={countyOptions.filter((c) => c.value !== "all")}
+                value={newPilot.county}
               />
               <TextField
-                label="Gmina / Miejscowość"
-                name="newMunicipality"
+                label="Gmina lub miejscowość"
+                name="pilot-municipality"
+                onChange={(e) => setNewPilot({ ...newPilot, municipality: e.target.value })}
                 required
-                placeholder="np. Grybów, Piwniczna-Zdrój, Myślenice"
-                value={newMunicipality}
-                onChange={(e) => setNewMunicipality(e.target.value)}
+                value={newPilot.municipality}
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <TextField
-                label="Liczba testerów (limit miejsc)"
-                name="newMaxTesters"
-                type="number"
-                min="1"
-                required
-                value={newMaxTesters}
-                onChange={(e) => setNewMaxTesters(e.target.value)}
-              />
-              <TextField
-                label="Grupa docelowa testerów"
-                name="newEligibleRoles"
-                required
-                value={newEligibleRoles}
-                onChange={(e) => setNewEligibleRoles(e.target.value)}
-              />
-            </div>
-
-            <TextAreaField
-              label="Krótki opis celu testów"
-              name="newSummary"
-              rows={2}
+            <TextField
+              label="Liczba testerów"
+              min={1}
+              name="pilot-capacity"
+              onChange={(e) => setNewPilot({ ...newPilot, capacity: Number(e.target.value) })}
               required
-              value={newSummary}
-              onChange={(e) => setNewSummary(e.target.value)}
-              placeholder="Jaki problem weryfikujemy w ramach tego pilotażu?"
+              type="number"
+              value={newPilot.capacity}
+            />
+
+            <TextField
+              label="Kogo zapraszamy"
+              name="pilot-roles"
+              onChange={(e) => setNewPilot({ ...newPilot, roles: e.target.value })}
+              required
+              value={newPilot.roles}
             />
 
             <TextAreaField
-              label="Instrukcja i zadania dla testerów"
-              name="newInstructions"
-              rows={2}
-              value={newInstructions}
-              onChange={(e) => setNewInstructions(e.target.value)}
-              placeholder="Jak często testerzy mają używać innowacji i co odnotowywać?"
+              label="Cel i zakres pilotażu"
+              name="pilot-summary"
+              onChange={(e) => setNewPilot({ ...newPilot, summary: e.target.value })}
+              required
+              value={newPilot.summary}
             />
 
-            {createError && (
-              <Alert title="Błąd tworzenia pilotażu" description={createError} variant="danger" />
+            <TextAreaField
+              label="Instrukcja dla testerów"
+              name="pilot-instructions"
+              onChange={(e) => setNewPilot({ ...newPilot, instructions: e.target.value })}
+              optional
+              value={newPilot.instructions}
+            />
+
+            {createState === "error" && (
+              <Alert
+                description={createError}
+                title="Nie udało się dodać pilotażu"
+                variant="danger"
+              />
             )}
 
-            <div className="dialog__actions">
-              <Button type="button" variant="tertiary" onClick={() => setIsCreateOpen(false)}>
-                Anuluj
-              </Button>
-              <Button type="submit" variant="primary">
-                Utwórz i ogłoś pilotaż
-              </Button>
-            </div>
+            <DialogActionButtons
+              close={closeDialog}
+              pending={createState === "sending"}
+              pendingLabel="Dodawanie…"
+              submitLabel="Rozpocznij nabór"
+            />
           </form>
         )}
       </Dialog>
+    </div>
+  );
+}
+
+function DialogActionButtons({
+  close,
+  pending,
+  submitLabel,
+  pendingLabel,
+}: {
+  close: () => void;
+  pending: boolean;
+  submitLabel: string;
+  pendingLabel: string;
+}) {
+  return (
+    <div className="dialog__actions">
+      <Button onClick={close} variant="tertiary">
+        Anuluj
+      </Button>
+      <Button disabled={pending} type="submit" variant="primary">
+        {pending ? pendingLabel : submitLabel}
+      </Button>
+    </div>
+  );
+}
+
+function DialogSuccessState({
+  title,
+  message,
+  onClose,
+}: {
+  title: string;
+  message: string;
+  onClose: () => void;
+}) {
+  return (
+    <div className="pilot-dialog__success">
+      <CheckCircle aria-hidden="true" size={44} weight="fill" />
+      <h3>{title}</h3>
+      <p>{message}</p>
+      <Button onClick={onClose} variant="primary">
+        Wróć do pilotaży
+      </Button>
     </div>
   );
 }

@@ -28,8 +28,8 @@ export default async function WyzwaniaPage() {
       </nav>
 
       <PageHeader
-        description="Poznaj kluczowe wyzwania społeczne Małopolski na podstawie raportów ROPS Kraków, wskaźniki demograficzne 22 powiatów oraz analitykę Białych Plam."
-        title="Kondycja Małopolski & Mapa Wyzwań"
+        description="Przeglądaj wyzwania społeczne w 22 powiatach regionu, gotowe rozwiązania i obszary wymagające nowych działań."
+        title="Wyzwania Małopolski"
       />
 
       <ChallengesRegionalView
