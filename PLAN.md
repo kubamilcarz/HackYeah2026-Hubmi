@@ -139,18 +139,18 @@ Aby pogodzić **błyskawiczną prezentację bez wpisywania haseł** z **brakiem 
 ---
 
 ### Faza 7: Moduł VII – Middleman Innowacji (Asystent AI dla JST) (+5%)
-- [ ] **7.1. Konfigurator uwarunkowań gminy (`/middleman`)**:
+- [x] **7.1. Konfigurator uwarunkowań gminy (`/middleman`)**:
   - Dedykowany moduł dla samorządów (JST, CUS, OPS, wójtowie/burmistrzowie): wybór innowacji z Biblioteki ROPS (np. *BaWita* lub *Organizator opieki*).
   - Parametry lokalne: typ gminy (wiejska, miejsko-wiejska, miejska), populacja, obecność CUS, model realizacji (kadra własna vs zlecenie zadania do NGO/PES).
   - Gotowy profil demonstracyjny: *Centrum Usług Społecznych w Myślenicach* (1 kliknięcie autofill).
-- [ ] **7.2. Silnik Middleman AI (Generowanie Pakietu Wdrożeniowego Usługi)**:
+- [x] **7.2. Silnik Middleman AI (Generowanie Pakietu Wdrożeniowego Usługi)**:
   - Automatyczne wygenerowanie standardu usługi społecznej dla gminy (cele, wymiar godzinowy, kryteria kwalifikacji odbiorców).
   - Wymogi kadrowe (liczba etatów/zleceń, profil kompetencyjny).
-  - Kalkulacja rocznych kosztów oraz montaż finansowy z programów ROPS, FERS i PFRON.
+  - Kalkulacja rocznych kosztów oraz montaż finansowy z programów ROPS, FERS i PFRON (70% FERS / 15% PFRON / 15% wkład własny).
   - Harmonogram wdrożenia (Roadmapa 3-6 miesięcy).
   - Bezpośrednia synergetyczna akcja: przycisk *„Zleć usługę lokalnemu NGO na Tablicy Partnerstw (Moduł V)”*.
-  - Eksport kompletnego pakietu wdrożeniowego do dokumentu PDF dla wójta / Rady Gminy.
-- [ ] **7.3. Ziarno demonstracyjne (Seed data)**:
+  - Eksport kompletnego pakietu wdrożeniowego do dokumentu PDF dla wójta / Rady Gminy oraz wzór uchwały intencyjnej.
+- [x] **7.3. Ziarno demonstracyjne (Seed data)**:
   - Gotowy, przykładowy plan wdrożenia innowacji dla CUS Myślenice dostępny od ręki do prezentacji przed jury.
 
 ---

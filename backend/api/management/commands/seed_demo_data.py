@@ -778,6 +778,15 @@ class Command(BaseCommand):
                     {"month": "Miesiąc 2", "step": "Dostawa 4 zestawów BaWita i szkolenie kadry w ROPS Kraków."},
                     {"month": "Miesiące 3-6", "step": "Realizacja 240 sesji mobilnych u mieszkańców i raport ewaluacyjny."},
                 ],
+                "resolution_template": (
+                    "UCHWAŁA NR XXII/184/2026 RADY MIEJSKIEJ W MYŚLENICACH\n"
+                    "z dnia 25 marca 2026 r.\n\n"
+                    "w sprawie przyjęcia Programu Wdrożenia Usługi Społecznej 'BaWita – tablica sensoryczna dla seniorów' "
+                    "w Centrum Usług Społecznych w Myślenicach.\n\n"
+                    "Na podstawie art. 18 ust. 2 pkt 15 ustawy z dnia 8 marca 1990 r. o samorządzie gminnym oraz "
+                    "art. 4 ust. 1 ustawy z dnia 19 lipca 2019 r. o realizowaniu usług społecznych przez centrum usług społecznych, "
+                    "Rada Miejska w Myślenicach uchwala realizację programu ze wsparciem FERS Działanie 5.1 (70%) i PFRON (15%)."
+                ),
             },
         )
 

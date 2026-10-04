@@ -537,14 +537,26 @@ class MiddlemanGenerateRequestSerializer(serializers.Serializer):
     innovation_id = serializers.IntegerField(required=True)
     county_id = serializers.IntegerField(required=True)
     municipality_name = serializers.CharField(required=True)
-    municipality_type = serializers.ChoiceField(
-        choices=["wiejska", "miejsko-wiejska", "miejska"], default="wiejska"
-    )
+    municipality_type = serializers.CharField(required=False, default="wiejska")
     population = serializers.IntegerField(default=15000)
     has_cus = serializers.BooleanField(default=True)
-    execution_model = serializers.ChoiceField(
-        choices=["wlasna_kadra", "zlecenie_ngo", "hybrydowy"], default="zlecenie_ngo"
-    )
+    execution_model = serializers.CharField(required=False, default="zlecenie_ngo")
+
+    def validate_municipality_type(self, value):
+        val = str(value).lower().strip()
+        if "miejsko" in val:
+            return "miejsko-wiejska"
+        if "miejsk" in val:
+            return "miejska"
+        return "wiejska"
+
+    def validate_execution_model(self, value):
+        val = str(value).lower().strip()
+        if "wlasn" in val or "cus" in val:
+            return "wlasna_kadra"
+        if "porozum" in val or "hybryd" in val or "partner" in val:
+            return "hybrydowy"
+        return "zlecenie_ngo"
 
 
 class MiddlemanPackageSerializer(serializers.ModelSerializer):
@@ -570,6 +582,7 @@ class MiddlemanPackageSerializer(serializers.ModelSerializer):
             "cost_breakdown",
             "funding_sources",
             "implementation_steps",
+            "resolution_template",
             "created_at",
         ]
 

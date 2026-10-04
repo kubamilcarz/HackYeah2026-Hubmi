@@ -514,6 +514,7 @@ class MiddlemanPackage(models.Model):
     cost_breakdown = models.JSONField(default=dict, help_text="Szacunkowy roczny budżet i montaż finansowy")
     funding_sources = models.JSONField(default=list, help_text="Źródła finansowania (FERS, PFRON, środki własne)")
     implementation_steps = models.JSONField(default=list, help_text="Harmonogram wdrożenia (3-6 m-cy)")
+    resolution_template = models.TextField(blank=True, default="", help_text="Wzór uchwały intencyjnej lub zarządzenia")
 
     created_at = models.DateTimeField(default=timezone.now)
 
