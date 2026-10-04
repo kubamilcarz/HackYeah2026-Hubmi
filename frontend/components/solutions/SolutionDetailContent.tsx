@@ -10,6 +10,7 @@ import { DetailMetadataSection, SolutionDetailSidebar } from "@/components/ui/So
 import { FavoriteButton } from "@/components/ui/SolutionInterestActions";
 import { Badge, Tag } from "@/components/ui/Tag";
 import { TabSwitcher } from "@/components/ui/TabSwitcher";
+import { PdfEmbed } from "@/components/ui/PdfEmbed";
 
 export function SolutionDetailContent({ solution }: { solution: Solution }) {
   const [contacted, setContacted] = useState(false);
@@ -20,7 +21,7 @@ export function SolutionDetailContent({ solution }: { solution: Solution }) {
         { id: "opis", label: "Opis", panel: <section className="solution-detail__tab-content"><div className="solution-detail__overview"><div><h2 className="type-h2">O rozwiązaniu</h2><ExpandableDescription description={solution.description} previewLength={210} /></div><div className="solution-detail__actions"><Button aria-pressed={contacted} leadingIcon={HandHeart} onClick={() => setContacted((value) => !value)}>{contacted ? "Zainteresowanie zapisane" : "Skontaktuj się"}</Button><FavoriteButton /></div></div>{contacted && <Alert description="To demonstracja — kontakt nie został jeszcze przekazany organizacji." title="Zainteresowanie zapisane lokalnie" variant="info" />}</section> },
         { id: "jak-dziala", label: "Jak działa", panel: <section className="solution-detail__tab-content"><h2 className="type-h2">Jak działa program</h2><ol className="solution-detail__steps"><li><strong>Rozmowa wstępna</strong><span>Wspólnie ustalacie, jakiego wsparcia potrzebujesz.</span></li><li><strong>Dobór formy pomocy</strong><span>Organizacja proponuje spotkania lub działania dopasowane do sytuacji.</span></li><li><strong>Wsparcie w działaniu</strong><span>Otrzymujesz pomoc w bezpiecznym, własnym tempie.</span></li></ol></section> },
         { id: "efekty", label: "Efekty", panel: <section className="solution-detail__tab-content"><h2 className="type-h2">Co może się zmienić</h2><div className="solution-detail__outcomes"><div><ChartLineUp aria-hidden="true" size={28} weight="duotone" /><strong>Więcej samodzielności</strong><span>Praktyczne umiejętności przydatne na co dzień.</span></div><div><UsersThree aria-hidden="true" size={28} weight="duotone" /><strong>Wsparcie blisko ludzi</strong><span>Kontakt z osobami, które rozumieją sytuację.</span></div></div></section> },
-        { id: "do-pobrania", label: "Do pobrania", panel: <section className="solution-detail__tab-content"><h2 className="type-h2">Materiały</h2><Alert description="Materiały informacyjne do tego rozwiązania są jeszcze przygotowywane." title="Brak plików do pobrania" variant="info" /><Button disabled leadingIcon={DownloadSimple}>Pobierz materiały</Button></section> },
+        { id: "do-pobrania", label: "Do pobrania", panel: <section className="solution-detail__tab-content flex flex-col gap-4"><div><h2 className="type-h2">Materiały wdrożeniowe (PDF)</h2><p className="type-body text-[var(--content-secondary)]">Oficjalny pakiet instrukcji i standardu organizacyjnego ROPS Kraków dla programu społecznego.</p></div><PdfEmbed description="Oficjalny standard wdrożeniowy ROPS Kraków" fileSize="1.8 MB" title={`Przewodnik wdrożeniowy: ${solution.title}`} url="/documents/standard_osl_rops.pdf" /></section> },
       ]} />
     </div>
     <SolutionDetailSidebar label="Kluczowe informacje o rozwiązaniu">

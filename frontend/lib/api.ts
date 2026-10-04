@@ -649,7 +649,7 @@ export const FALLBACK_INNOVATIONS: SocialInnovation[] = [
     full_description: "Kawiarenka Naprawcza (Repair Cafe) łączy cele ekologiczne z włączeniem społecznym i reintegracją zawodową. Seniorzy odyskują poczucie sprawczości, a młodzież zdobywa praktyczne kompetencje techniczne i rzemieślnicze pod okiem mentorów.",
     target_audience: "Seniorzy rzemieślnicy, młodzież szkolna, rodziny z dziećmi, samorządy",
     implementation_guide: "Zestaw narzędzi w skrzynce, regulamin BHP punktu naprawczego i wzory plakatów promocyjnych.",
-    video_url: "https://www.youtube.com/watch?v=sample_kawiarenka",
+    video_url: "https://www.youtube.com/watch?v=o5TP10ZStNA",
     video_transcript: "Transkrypcja WCAG 2.2 AA:\n[0:00 - 0:45] Katarzyna Zielińska: Kawiarenka Naprawcza to nie tylko serwis, to przede wszystkim spotkanie pokoleń przy stole warsztatowym.\n[0:45 - 1:30] Senior instruuje nastolatka, jak wymienić bezpiecznik i przylutować kabel w zabytkowej lampce.\n[1:30 - 2:00] Efekt: Sprzęt działa, a uczestnicy umawiają się na kolejne spotkanie w świetlicy wiejskiej.",
     handbook_pdf_url: "/documents/kawiarenka_naprawcza_poradnik.pdf",
     author_name: "Katarzyna Zielińska",

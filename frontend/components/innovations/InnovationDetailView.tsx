@@ -23,6 +23,8 @@ import { TabSwitcher } from "@/components/ui/TabSwitcher";
 import { Badge, Tag, type TagVariant } from "@/components/ui/Tag";
 import { LinearProgress } from "@/components/ui/Progress";
 import { Alert } from "@/components/ui/Alert";
+import { VideoEmbed } from "@/components/ui/VideoEmbed";
+import { PdfEmbed } from "@/components/ui/PdfEmbed";
 
 type InnovationDetailViewProps = {
   innovation: SocialInnovation;
@@ -64,6 +66,26 @@ export function InnovationDetailView({ innovation }: InnovationDetailViewProps) 
   const [isLiked, setIsLiked] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
   const [showCopyAlert, setShowCopyAlert] = useState(false);
+  const [selectedDocId, setSelectedDocId] = useState<"handbook" | "kalkulacja">("handbook");
+
+  const availableDocuments = [
+    {
+      id: "handbook" as const,
+      title: `Podręcznik wdrożeniowy: ${innovation.title}`,
+      description: "Kompleksowy opis metodologii, wytyczne BHP, standard pracy z podopiecznymi oraz formularze ewaluacyjne.",
+      url: innovation.handbook_pdf_url || "/documents/podrecznik_bawita_rops.pdf",
+      fileSize: "3.4 MB",
+    },
+    {
+      id: "kalkulacja" as const,
+      title: "Wzór kalkulacji kosztów i montażu finansowego",
+      description: "Arkusz szacunkowy dla Centrum Usług Społecznych z montażem funduszy FERS, PFRON i środków własnych.",
+      url: "/documents/wzor_kalkulacji_rops.pdf",
+      fileSize: "850 KB",
+    },
+  ];
+
+  const currentDoc = availableDocuments.find((d) => d.id === selectedDocId) || availableDocuments[0];
 
   const stage = stageBadge(innovation.maturity_stage);
   const categoryName =
@@ -185,26 +207,12 @@ export function InnovationDetailView({ innovation }: InnovationDetailViewProps) 
         </p>
       </div>
 
-      {/* Video box */}
-      <div className="innovation-detail__video-wrapper">
-        <div className="innovation-detail__video-placeholder">
-          <VideoCamera aria-hidden="true" size={56} weight="duotone" />
-          <div className="innovation-detail__video-info">
-            <h4 className="type-h3">Wideo demonstracyjne: {innovation.title}</h4>
-            <p className="type-caption">Czas trwania: 2 minuty 15 sekund • Dźwięk, napisy i audiodeskrypcja</p>
-            {innovation.video_url && (
-              <a
-                className="innovation-detail__video-link"
-                href={innovation.video_url}
-                rel="noreferrer"
-                target="_blank"
-              >
-                Otwórz wideo w serwisie zewnętrznym (nowe okno)
-              </a>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* Embedded YouTube video player */}
+      <VideoEmbed
+        caption={`Prezentacja rozwiązania "${innovation.title}" – lektor w PJM, audiodeskrypcja i napisy rozszerzone.`}
+        title={`Wideo demonstracyjne: ${innovation.title}`}
+        url={innovation.video_url}
+      />
 
       {/* WCAG Video Transcript Section */}
       <div className="innovation-detail__transcript-box">
@@ -246,7 +254,7 @@ export function InnovationDetailView({ innovation }: InnovationDetailViewProps) 
     </div>
   );
 
-  // Zakładka 4: Materiały do pobrania
+  // Zakładka 4: Materiały do pobrania i podgląd PDF
   const downloadsPanel = (
     <div className="innovation-detail__panel">
       <div className="innovation-detail__section">
@@ -254,6 +262,36 @@ export function InnovationDetailView({ innovation }: InnovationDetailViewProps) 
         <p className="type-body">
           Oficjalne przewodniki, karty technologiczne oraz wzory dokumentów przygotowane przez ROPS Kraków do bezpłatnego wykorzystania.
         </p>
+      </div>
+
+      {/* Interaktywny podgląd dokumentu PDF z możliwością wyboru */}
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <span className="type-label font-semibold">Wybierz dokument do wyświetlenia na stronie:</span>
+          <div className="flex gap-2">
+            {availableDocuments.map((doc) => (
+              <button
+                key={doc.id}
+                type="button"
+                className={`button button--sm ${selectedDocId === doc.id ? "button--primary" : "button--secondary"}`}
+                onClick={() => setSelectedDocId(doc.id)}
+              >
+                {doc.id === "handbook" ? "Podręcznik innowacji (PDF)" : "Wzór kalkulacji (PDF)"}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <PdfEmbed
+          url={currentDoc.url}
+          title={currentDoc.title}
+          description={currentDoc.description}
+          fileSize={currentDoc.fileSize}
+        />
+      </div>
+
+      <div className="innovation-detail__section mt-4">
+        <h4 className="type-h3">Wszystkie pliki do pobrania</h4>
       </div>
 
       <div className="innovation-detail__downloads-list">
