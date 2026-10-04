@@ -64,6 +64,11 @@ remain visible and the search field keeps its associated Polish label.
 | Component | Source | Contract |
 | --- | --- | --- |
 | `KnowledgeResourceBrowser` | `ui/KnowledgeResourceBrowser.tsx` | Client-side knowledge-hub composition of `PageHeader`, `SearchFilterBar`, `TabSwitcher`, `Dialog`, `CheckboxChipGroup`, `Button`, and `Tag`. Its current in-memory resources are reference data; product routes provide real data and persistence outside this component. |
+| `VideoEmbed` | `ui/VideoEmbed.tsx` | Responsive 16:9 privacy-preserving YouTube player (`youtube-nocookie`) with accessible `title`, WCAG 2.2 AA badges, clipboard link copy action, and direct YouTube external navigation. |
+| `PdfEmbed` | `ui/PdfEmbed.tsx` | Interactive PDF document viewer embedding native `<object>` and `<iframe>` with fallback download link, collapsibility toggle, full-window view, and direct download button. |
+
+- `VideoEmbed` provides a semantic `figure`/`figcaption` structure with an accessible `iframe` title attribute, keyboard navigation for actions, and seamless integration with WCAG transcript regions.
+- `PdfEmbed` provides an accessible `article` landmark with document metadata header, interactive PDF reader viewport, and multi-tier fallbacks ensuring accessibility across mobile devices and assistive technologies.
 
 - `PageHeader` is a static semantic `header`; use its default `h1` once per
   route. Set `headingLevel` only when demonstrating it inside an existing

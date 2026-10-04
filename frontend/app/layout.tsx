@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Script from "next/script";
 import { AccessibilityMenu } from "@/components/accessibility/AccessibilityMenu";
 import { AccessibilityProvider } from "@/components/accessibility/AccessibilityProvider";
 import { PersonaProvider } from "@/contexts/PersonaContext";
@@ -60,10 +59,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{ __html: preferenceScript }}
+          id="accessibility-preferences"
+        />
+      </head>
       <body className="min-h-full flex flex-col">
-        <Script id="accessibility-preferences" strategy="beforeInteractive">
-          {preferenceScript}
-        </Script>
         <AccessibilityProvider>
           <PersonaProvider>
             {children}

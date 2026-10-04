@@ -1,17 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, FileText, Lightbulb } from "@phosphor-icons/react";
+import { ArrowRight, FileText, Lightbulb, ShieldCheck } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/Button";
 import {
   SelectField,
   TextAreaField,
   TextField,
 } from "@/components/ui/FormControls";
-import { Alert } from "@/components/ui/Alert";
 import { Badge } from "@/components/ui/Tag";
-import type { InnovationCategory, County, IdeaSubmissionPayload } from "@/lib/api";
-import { aiAssistIdea } from "@/lib/api";
+import { AiValidationCard } from "@/components/kreator/AiValidationCard";
+import type { InnovationCategory, County, IdeaSubmissionPayload, AiValidationResult } from "@/lib/api";
+import { aiAssistIdea, aiValidateIdea } from "@/lib/api";
 
 type IdeaQuickNoteFormProps = {
   categories: InnovationCategory[];
@@ -58,8 +58,17 @@ export function IdeaQuickNoteForm({
   const [recipients, setRecipients] = useState("Mieszkańcy Małopolski, w tym osoby zależne i opiekunowie");
   const [stage, setStage] = useState("koncepcja");
   const [supportNeeded, setSupportNeeded] = useState("doradztwo");
-  const [aiTip, setAiTip] = useState<string | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [validationResult, setValidationResult] = useState<AiValidationResult | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
+
+  function cleanAiText(raw: string) {
+    return (raw || "")
+      .replace(/^(?:Rekomendacja[^\:]*\:|Wskazówka[^\:]*\:|Podpowiedź[^\:]*\:|Wyróżniki[^\:]*\:|Model replikacji[^\:]*\:)\s*(?:Wpisz[^\.]*\.\s*)?/i, "")
+      .replace(/^Wskazówka ROPS[^\:]*\:\s*/i, "")
+      .replace(/^Zadbaj, aby Twój pomysł rozwijał\s*/i, "Rozwój ")
+      .trim();
+  }
 
   async function handleAiAssist() {
     setIsAiLoading(true);
@@ -70,13 +79,37 @@ export function IdeaQuickNoteForm({
         category: categoryId,
         county: countyId,
       });
-      setAiTip(res.suggestion || null);
+      const clean = cleanAiText(res.suggestion || "");
+      if (clean) {
+        setConcept(clean);
+      }
     } catch {
-      setAiTip(
-        "Wskazówka ROPS: Zadbaj, aby Twój pomysł rozwijał usługi w lokalnym środowisku zamieszkania (np. kluby seniora, opieka wytchnieniowa, wsparcie sąsiedzkie), ograniczając konieczność kierowania osób do placówek całodobowych."
+      setConcept(
+        "model usług świadczonych w środowisku lokalnym jako alternatywę dla opieki całodobowej w DPS. Zapewnij wsparcie sąsiedzkie i mobilne punkty dojazdu."
       );
     } finally {
       setIsAiLoading(false);
+    }
+  }
+
+  async function handleValidateConcept() {
+    setIsValidating(true);
+    try {
+      const res = await aiValidateIdea({
+        field: "concept",
+        content: concept || "",
+        title: title || "Innowacja Społeczna",
+        category: categoryId,
+        county: countyId,
+        target_recipients: recipients,
+      });
+      if (!("batch" in res)) {
+        setValidationResult(res);
+      }
+    } catch {
+      // Ignore
+    } finally {
+      setIsValidating(false);
     }
   }
 
@@ -201,25 +234,29 @@ export function IdeaQuickNoteForm({
       <div className="creator-section">
         <div className="creator-section__header">
           <h3 className="type-h3">3. Istota innowacji i odbiorcy</h3>
-          <Button
-            type="button"
-            variant="tertiary"
-            size="sm"
-            leadingIcon={Lightbulb}
-            disabled={isAiLoading}
-            onClick={handleAiAssist}
-          >
-            {isAiLoading ? "Przygotowuję..." : "Wskazówka doradcy"}
-          </Button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button
+              type="button"
+              variant="tertiary"
+              size="sm"
+              leadingIcon={Lightbulb}
+              disabled={isAiLoading}
+              onClick={handleAiAssist}
+            >
+              {isAiLoading ? "Wstawianie..." : "Podpowiedz odpowiedź (AI)"}
+            </Button>
+            <Button
+              type="button"
+              variant="tertiary"
+              size="sm"
+              leadingIcon={ShieldCheck}
+              disabled={isValidating}
+              onClick={handleValidateConcept}
+            >
+              {isValidating ? "Sprawdzanie..." : "Sprawdź pomysł (AI)"}
+            </Button>
+          </div>
         </div>
-
-        {aiTip && (
-          <Alert
-            title="Podpowiedź merytoryczna"
-            description={aiTip}
-            variant="info"
-          />
-        )}
 
         <TextAreaField
           label="Na czym polega Twój pomysł? (istota innowacji)"
@@ -231,6 +268,21 @@ export function IdeaQuickNoteForm({
           placeholder="Jaki problem rozwiązujesz, jak działa usługa i co wyróżnia to podejście?"
           helperText="Wystarczą 2–4 zdania opisujące sedno pomysłu."
         />
+
+        {validationResult && (
+          <div className="mt-3">
+            <AiValidationCard
+              result={validationResult}
+              onDismiss={() => setValidationResult(null)}
+              onApplyAiFix={async () => {
+                await handleAiAssist();
+              }}
+              onRevalidate={handleValidateConcept}
+              isFixing={isAiLoading}
+              isValidating={isValidating}
+            />
+          </div>
+        )}
 
         <TextField
           label="Do kogo skierowana jest innowacja? (grupa odbiorców)"

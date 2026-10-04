@@ -43,7 +43,7 @@ from .serializers import (
     AdminTrendsResponseSerializer,
     AdminModerationSerializer,
 )
-from .llm_service import generate_fers_field_assist
+from .llm_service import generate_fers_field_assist, validate_fers_field_or_idea
 
 
 STOP_WORDS = {
@@ -448,18 +448,16 @@ class IdeaSubmissionViewSet(viewsets.ModelViewSet):
         # 2. Rezerwowy silnik deterministyczny (fallback)
         if field_type == "deinstitutionalization":
             suggestion = (
-                f"Rekomendacja deinstytucjonalizacji (ROPS Kraków): Wpisz innowację w model usług "
-                f"świadczonych w środowisku lokalnym jako alternatywę dla opieki całodobowej w instytucjach (DPS/ZOL). "
-                f"Dla kategorii «{cat_name}» wskaż, jak {title} umożliwia beneficjentom samodzielne funkcjonowanie "
+                f"Model usług świadczonych w środowisku lokalnym w duchu deinstytucjonalizacji jako alternatywa dla opieki "
+                f"całodobowej w instytucjach (DPS/ZOL). Rozwiązanie umożliwia beneficjentom samodzielne funkcjonowanie "
                 f"we własnym mieszkaniu, opierając się na wsparciu sąsiedzkim, mobilnych opiekunach i technologii asystującej."
             )
             return Response({"field": field_type, "suggestion": suggestion})
 
         elif field_type == "innovation_uniqueness":
             suggestion = (
-                f"Wyróżniki innowacyjności (na tle Polski i UE): W odróżnieniu od tradycyjnych form wsparcia, "
-                f"projekt «{title}» eliminuje bariery geograficzne w powiatach Małopolski, obniża koszty "
-                f"jednostkowe wsparcia o min. 35% w porównaniu z placówkami stacjonarnymi oraz włącza lokalną społeczność "
+                f"W odróżnieniu od tradycyjnych form wsparcia, projekt eliminuje bariery geograficzne w powiecie {county_name}, "
+                f"obniża koszty jednostkowe wsparcia o min. 35% w porównaniu z placówkami stacjonarnymi oraz włącza lokalną społeczność "
                 f"w rolę współtwórców rozwiązania (co-design zgodny ze standardami FERS Działanie 5.1)."
             )
             return Response({"field": field_type, "suggestion": suggestion})
@@ -483,12 +481,9 @@ class IdeaSubmissionViewSet(viewsets.ModelViewSet):
                 ", ".join(challenges) if challenges else "dostępność usług społecznych, samotność i starzenie się społeczności"
             )
             diagnosis_text = (
-                f"Na podstawie Raportu Obserwatorium Polityki Społecznej ROPS Kraków dla obszaru: {county_name}.\n"
-                f"• Liczba ludności powiatu: {population_str}.\n"
-                f"• Wskaźnik starości demograficznej: {senior_ratio}% mieszkańców w wieku senioralnym (60+).\n"
-                f"• Zdiagnozowane wyzwania strategiczne: {challenges_str}.\n"
-                f"Diagnoza wskazuje na pilną konieczność wdrożenia innowacji «{title}» z uwagi na deficyt lokalnych "
-                f"kadr opiekuńczych i dysproporcje w dostępie do usług między ośrodkami miejskimi a sołectwami."
+                f"W powiecie {county_name} (ludność: {population_str}) wskaźnik starości demograficznej wynosi {senior_ratio}% "
+                f"mieszkańców w wieku senioralnym (60+). Główne zdiagnozowane wyzwania strategiczne: {challenges_str}. "
+                f"Występuje deficyt lokalnych kadr opiekuńczych oraz dysproporcje w dostępie do usług między ośrodkami miejskimi a sołectwami."
             )
             return Response({
                 "field": field_type,
@@ -500,10 +495,9 @@ class IdeaSubmissionViewSet(viewsets.ModelViewSet):
 
         elif field_type == "scalability":
             suggestion = (
-                f"Model replikacji w Małopolsce: Rozwiązanie zostało zaprojektowane modularnie, dzięki czemu "
-                f"po zakończeniu grantu mikroinnowacji (FERS) może zostać zaadaptowane przez dowolne Centrum Usług Społecznych "
-                f"(CUS) lub Ośrodek Pomocy Społecznej w Małopolsce w formie Programu Usług Społecznych (PUS). "
-                f"Podręcznik wdrożeniowy i standardy procedur zostaną udostępnione w formule Open Source na platformie Splot."
+                f"Rozwiązanie zostało zaprojektowane modularnie – po zakończeniu grantu mikroinnowacji (FERS) może zostać "
+                f"zaadaptowane przez dowolne Centrum Usług Społecznych (CUS) lub Ośrodek Pomocy Społecznej w Małopolsce w formie Programu Usług Społecznych (PUS). "
+                f"Podręcznik wdrożeniowy i standardy procedur są udostępniane w formule Open Source na platformie Splot."
             )
             return Response({"field": field_type, "suggestion": suggestion})
 
@@ -565,6 +559,82 @@ class IdeaSubmissionViewSet(viewsets.ModelViewSet):
             })
 
         return Response({"field": field_type, "suggestion": "Wskazówka asystenta innowacji ROPS Kraków."})
+
+    @extend_schema(
+        summary="Szybka walidacja AI formularza wniosku FERS",
+        description="Weryfikuje jakość wpisanej treści (m.in. diagnozy problemu, deinstytucjonalizacji, wyróżników, odbiorców). Zwraca status (valid/warning/needs_work), ocenę punktową, werdykt, mocne strony i konkretne wskazówki poprawy.",
+    )
+    @action(detail=False, methods=["post"], url_path="ai-validate")
+    def ai_validate(self, request):
+        title = request.data.get("title", "Innowacja społeczna")
+        category_val = request.data.get("category")
+        county_val = request.data.get("county")
+
+        category_obj = None
+        if category_val:
+            category_obj = InnovationCategory.objects.filter(
+                Q(id=category_val) if str(category_val).isdigit() else Q(code=category_val)
+            ).first()
+
+        county_obj = None
+        if county_val:
+            county_obj = County.objects.filter(
+                Q(id=county_val) if str(county_val).isdigit() else Q(slug=county_val)
+            ).first()
+
+        cat_name = category_obj.name if category_obj else "Włączenie społeczne"
+        county_name = county_obj.name if county_obj else "Małopolska"
+
+        county_stats = {
+            "senior_ratio": f"{county_obj.senior_ratio:.1f}%" if (county_obj and county_obj.senior_ratio) else "22.8%",
+            "population": f"{county_obj.population:,}".replace(",", " ") if (county_obj and county_obj.population) else "powyżej 100 tys.",
+            "challenges": list(county_obj.main_challenges or []) if county_obj else [],
+        }
+        if county_obj:
+            for rc in RegionalChallenge.objects.filter(county=county_obj):
+                if rc.title not in county_stats["challenges"]:
+                    county_stats["challenges"].append(rc.title)
+
+        fields_dict = request.data.get("fields")
+        if isinstance(fields_dict, dict) and fields_dict:
+            results = {}
+            total_score = 0
+            worst_status = "valid"
+            for f_key, f_content in fields_dict.items():
+                res = validate_fers_field_or_idea(
+                    field_type=f_key,
+                    content=str(f_content or ""),
+                    title=title,
+                    category_name=cat_name,
+                    county_name=county_name,
+                    county_stats=county_stats,
+                )
+                results[f_key] = res
+                total_score += res.get("score", 70)
+                if res.get("status") == "needs_work":
+                    worst_status = "needs_work"
+                elif res.get("status") == "warning" and worst_status != "needs_work":
+                    worst_status = "warning"
+
+            avg_score = int(total_score / max(len(fields_dict), 1))
+            return Response({
+                "batch": True,
+                "overall_status": worst_status,
+                "overall_score": avg_score,
+                "results": results,
+            })
+
+        field_type = request.data.get("field", "problem_diagnosis")
+        content = request.data.get("content", "")
+        res = validate_fers_field_or_idea(
+            field_type=field_type,
+            content=str(content or ""),
+            title=title,
+            category_name=cat_name,
+            county_name=county_name,
+            county_stats=county_stats,
+        )
+        return Response(res)
 
     @action(detail=True, methods=["post"], url_path="evaluate")
     def evaluate(self, request, pk=None):
