@@ -12,23 +12,21 @@ type SolutionDetailPageProps = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: SolutionDetailPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const solution = getSolution(slug);
-  if (solution) return { title: `${solution.title} | Splot`, description: solution.summary };
-
   const innovation = await getInnovationBySlug(slug);
   if (innovation) return { title: `${innovation.title} | Splot`, description: innovation.short_summary };
+
+  const solution = getSolution(slug);
+  if (solution) return { title: `${solution.title} | Splot`, description: solution.summary };
 
   return {};
 }
 
 export default async function SolutionDetailPage({ params }: SolutionDetailPageProps) {
   const { slug } = await params;
-  const solution = getSolution(slug);
 
-  if (!solution) {
-    const innovation = await getInnovationBySlug(slug);
-    if (!innovation) notFound();
-
+  // 1. Sprawdź najpierw pełny Zasobnik Wiedzy ROPS (filmy WCAG, transkrypcje, podręczniki PDF, generator JST)
+  const innovation = await getInnovationBySlug(slug);
+  if (innovation) {
     return (
       <HubShell activeItem="solutions">
         <nav aria-label="Okruszki" className="hub-breadcrumbs">
@@ -43,11 +41,26 @@ export default async function SolutionDetailPage({ params }: SolutionDetailPageP
     );
   }
 
+  // 2. Fallback do skróconej karty rozwiązania
+  const solution = getSolution(slug);
+  if (!solution) notFound();
+
   return (
     <HubShell activeItem="solutions">
-      <nav aria-label="Okruszki" className="hub-breadcrumbs"><Link href="/">Strona główna</Link><span aria-hidden="true">›</span><Link href="/solutions">Rozwiązania</Link><span aria-hidden="true">›</span><span aria-current="page">{solution.title}</span></nav>
+      <nav aria-label="Okruszki" className="hub-breadcrumbs">
+        <Link href="/">Strona główna</Link>
+        <span aria-hidden="true">›</span>
+        <Link href="/solutions">Rozwiązania</Link>
+        <span aria-hidden="true">›</span>
+        <span aria-current="page">{solution.title}</span>
+      </nav>
       <article className="solution-detail">
-        <SolutionDetailHero image={solution.image} matchLabel={`${solution.matchScore}% dopasowania`} summary={solution.summary} title={solution.title} />
+        <SolutionDetailHero
+          image={solution.image}
+          matchLabel={`${solution.matchScore}% dopasowania`}
+          summary={solution.summary}
+          title={solution.title}
+        />
         <SolutionDetailContent solution={solution} />
       </article>
     </HubShell>
