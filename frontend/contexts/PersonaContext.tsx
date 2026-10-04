@@ -171,27 +171,75 @@ const STORAGE_KEY = "splot_active_persona";
 const DEFAULT_KEY: PersonaKey = "anna_nowak";
 const CHANGE_EVENT = "splot_persona_change";
 
+let cachedPersonaKey: PersonaKey = DEFAULT_KEY;
+let hasHydrated = false;
+const storeListeners = new Set<() => void>();
+
+function notifyStoreListeners() {
+  for (const listener of storeListeners) {
+    listener();
+  }
+}
+
 function subscribe(callback: () => void) {
-  if (typeof window === "undefined") return () => {};
-  window.addEventListener(CHANGE_EVENT, callback);
-  window.addEventListener("storage", callback);
+  storeListeners.add(callback);
+
+  function handleStorage(e: StorageEvent) {
+    if (e.key === STORAGE_KEY && e.newValue && e.newValue in DEMO_PERSONAS) {
+      cachedPersonaKey = e.newValue as PersonaKey;
+      notifyStoreListeners();
+    }
+  }
+
+  function handleCustom() {
+    try {
+      const stored = window.localStorage.getItem(STORAGE_KEY);
+      if (stored && stored in DEMO_PERSONAS) {
+        cachedPersonaKey = stored as PersonaKey;
+        notifyStoreListeners();
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  if (typeof window !== "undefined") {
+    window.addEventListener(CHANGE_EVENT, handleCustom);
+    window.addEventListener("storage", handleStorage);
+  }
+
   return () => {
-    window.removeEventListener(CHANGE_EVENT, callback);
-    window.removeEventListener("storage", callback);
+    storeListeners.delete(callback);
+    if (typeof window !== "undefined") {
+      window.removeEventListener(CHANGE_EVENT, handleCustom);
+      window.removeEventListener("storage", handleStorage);
+    }
   };
 }
 
 function getSnapshot(): PersonaKey {
-  if (typeof window === "undefined") return DEFAULT_KEY;
-  try {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored && stored in DEMO_PERSONAS) {
-      return stored as PersonaKey;
-    }
-  } catch {
-    // ignore
+  if (typeof window === "undefined") {
+    return DEFAULT_KEY;
   }
-  return DEFAULT_KEY;
+
+  // During the first pass / hydration, keep matching getServerSnapshot() to prevent hydration errors.
+  if (!hasHydrated) {
+    hasHydrated = true;
+    queueMicrotask(() => {
+      try {
+        const stored = window.localStorage.getItem(STORAGE_KEY);
+        if (stored && stored in DEMO_PERSONAS && stored !== cachedPersonaKey) {
+          cachedPersonaKey = stored as PersonaKey;
+          notifyStoreListeners();
+        }
+      } catch {
+        // ignore
+      }
+    });
+    return DEFAULT_KEY;
+  }
+
+  return cachedPersonaKey;
 }
 
 function getServerSnapshot(): PersonaKey {
@@ -206,19 +254,24 @@ export function PersonaProvider({ children }: { children: ReactNode }) {
 
   const setActivePersonaKey = useCallback((key: PersonaKey) => {
     if (key in DEMO_PERSONAS) {
+      cachedPersonaKey = key;
       try {
         window.localStorage.setItem(STORAGE_KEY, key);
         window.dispatchEvent(new Event(CHANGE_EVENT));
       } catch {
         // ignore storage error
       }
+      notifyStoreListeners();
     }
   }, []);
 
   const openPersonaModal = useCallback(() => setIsModalOpen(true), []);
   const closePersonaModal = useCallback(() => setIsModalOpen(false), []);
 
-  const activePersona = useMemo(() => DEMO_PERSONAS[activePersonaKey] ?? DEMO_PERSONAS[DEFAULT_KEY], [activePersonaKey]);
+  const activePersona = useMemo(
+    () => DEMO_PERSONAS[activePersonaKey] ?? DEMO_PERSONAS[DEFAULT_KEY],
+    [activePersonaKey]
+  );
 
   const value = useMemo<PersonaContextValue>(
     () => ({
