@@ -447,6 +447,12 @@ html {
   background: var(--surface-canvas);
 }
 
+/* Grayscale is a global presentation mode: this also desaturates raster media,
+   SVGs, and platform-rendered colour emoji without requiring component hooks. */
+:root[data-theme="grayscale"] body {
+  filter: grayscale(1);
+}
+
 body {
   background: var(--surface-canvas);
   color: var(--content-primary);
