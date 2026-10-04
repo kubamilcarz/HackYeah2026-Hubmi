@@ -76,7 +76,7 @@ export default function Home() {
       <section aria-labelledby="landing-title" className="landing-hero landing-shell">
         <div className="landing-hero__content">
           <p className="landing-eyebrow"><span aria-hidden="true">✦</span> Małopolski Hub Innowacji Społecznych</p>
-          <h1 className="type-display" id="landing-title">Łączymy ludzi, pomysły i <span>rozwiązania.</span></h1>
+          <h1 className="type-display" id="landing-title">Łączymy ludzi, pomysły<br />i <span>rozwiązania.</span></h1>
           <p className="landing-hero__description type-body">
             SPLOT to platforma, która łączy potrzeby społeczne z innowacyjnymi rozwiązaniami. Wspólnie budujemy silniejszą, bardziej zaangażowaną Małopolskę.
           </p>
