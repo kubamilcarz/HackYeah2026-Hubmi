@@ -8,7 +8,6 @@ import {
   TextAreaField,
   TextField,
 } from "@/components/ui/FormControls";
-import { Alert } from "@/components/ui/Alert";
 import { Badge } from "@/components/ui/Tag";
 import { AiValidationCard } from "@/components/kreator/AiValidationCard";
 import type { InnovationCategory, County, IdeaSubmissionPayload, AiValidationResult } from "@/lib/api";
@@ -59,10 +58,17 @@ export function IdeaQuickNoteForm({
   const [recipients, setRecipients] = useState("Mieszkańcy Małopolski, w tym osoby zależne i opiekunowie");
   const [stage, setStage] = useState("koncepcja");
   const [supportNeeded, setSupportNeeded] = useState("doradztwo");
-  const [aiTip, setAiTip] = useState<string | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [validationResult, setValidationResult] = useState<AiValidationResult | null>(null);
   const [isValidating, setIsValidating] = useState(false);
+
+  function cleanAiText(raw: string) {
+    return (raw || "")
+      .replace(/^(?:Rekomendacja[^\:]*\:|Wskazówka[^\:]*\:|Podpowiedź[^\:]*\:|Wyróżniki[^\:]*\:|Model replikacji[^\:]*\:)\s*(?:Wpisz[^\.]*\.\s*)?/i, "")
+      .replace(/^Wskazówka ROPS[^\:]*\:\s*/i, "")
+      .replace(/^Zadbaj, aby Twój pomysł rozwijał\s*/i, "Rozwój ")
+      .trim();
+  }
 
   async function handleAiAssist() {
     setIsAiLoading(true);
@@ -73,10 +79,13 @@ export function IdeaQuickNoteForm({
         category: categoryId,
         county: countyId,
       });
-      setAiTip(res.suggestion || null);
+      const clean = cleanAiText(res.suggestion || "");
+      if (clean) {
+        setConcept(clean);
+      }
     } catch {
-      setAiTip(
-        "Wskazówka ROPS: Zadbaj, aby Twój pomysł rozwijał usługi w lokalnym środowisku zamieszkania (np. kluby seniora, opieka wytchnieniowa, wsparcie sąsiedzkie), ograniczając konieczność kierowania osób do placówek całodobowych."
+      setConcept(
+        "model usług świadczonych w środowisku lokalnym jako alternatywę dla opieki całodobowej w DPS. Zapewnij wsparcie sąsiedzkie i mobilne punkty dojazdu."
       );
     } finally {
       setIsAiLoading(false);
@@ -234,7 +243,7 @@ export function IdeaQuickNoteForm({
               disabled={isAiLoading}
               onClick={handleAiAssist}
             >
-              {isAiLoading ? "Przygotowuję..." : "Wskazówka doradcy"}
+              {isAiLoading ? "Wstawianie..." : "Podpowiedz odpowiedź (AI)"}
             </Button>
             <Button
               type="button"
@@ -248,14 +257,6 @@ export function IdeaQuickNoteForm({
             </Button>
           </div>
         </div>
-
-        {aiTip && (
-          <Alert
-            title="Podpowiedź merytoryczna"
-            description={aiTip}
-            variant="info"
-          />
-        )}
 
         <TextAreaField
           label="Na czym polega Twój pomysł? (istota innowacji)"
@@ -275,9 +276,6 @@ export function IdeaQuickNoteForm({
               onDismiss={() => setValidationResult(null)}
               onApplyAiFix={async () => {
                 await handleAiAssist();
-                if (aiTip) {
-                  setConcept((prev) => (prev ? `${prev.trim()}\n\n${aiTip}` : aiTip));
-                }
               }}
               onRevalidate={handleValidateConcept}
               isFixing={isAiLoading}

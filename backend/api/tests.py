@@ -723,7 +723,7 @@ class BackendFullTestSuite(TestCase):
             "title": "Mobilna Opieka Senioralna",
         }, format="json")
         self.assertEqual(res_uniq.status_code, status.HTTP_200_OK)
-        self.assertIn("Wyróżniki innowacyjności", res_uniq.data["suggestion"])
+        self.assertIn("tradycyjnych form wsparcia", res_uniq.data["suggestion"])
 
         # 3. Diagnoza powiatowa (county_diagnosis) z slugiem powiatu i danymi wyzwań
         res_diag = self.client.post("/api/ideas/ai-assist/", {
@@ -733,7 +733,7 @@ class BackendFullTestSuite(TestCase):
         }, format="json")
         self.assertEqual(res_diag.status_code, status.HTTP_200_OK)
         self.assertIn("senior_ratio", res_diag.data)
-        self.assertIn("Obserwatorium Polityki Społecznej ROPS Kraków", res_diag.data["suggestion"])
+        self.assertIn("wskaźnik starości demograficznej", res_diag.data["suggestion"])
         self.assertGreaterEqual(len(res_diag.data["challenges"]), 1)
 
         # 4. Model skalowania (scalability)
@@ -742,7 +742,7 @@ class BackendFullTestSuite(TestCase):
             "title": "Mobilna Opieka Senioralna",
         }, format="json")
         self.assertEqual(res_scale.status_code, status.HTTP_200_OK)
-        self.assertIn("Model replikacji w Małopolsce", res_scale.data["suggestion"])
+        self.assertIn("Centrum Usług Społecznych", res_scale.data["suggestion"])
 
         # 5. Plan budżetowy
         res_budget = self.client.post("/api/ideas/ai-assist/", {

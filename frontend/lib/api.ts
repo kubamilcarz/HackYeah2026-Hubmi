@@ -1430,24 +1430,24 @@ export async function aiAssistIdea(params: {
     if (field === "deinstitutionalization") {
       return {
         field,
-        suggestion: `Rekomendacja deinstytucjonalizacji (ROPS Kraków): Wpisz «${title}» w model usług świadczonych w środowisku lokalnym jako alternatywę dla opieki całodobowej w DPS. Zapewnij wsparcie sąsiedzkie i mobilne punkty dojazdu.`,
+        suggestion: `Model usług świadczonych w środowisku lokalnym jako alternatywę dla opieki całodobowej w DPS. Zapewnij wsparcie sąsiedzkie i mobilne punkty dojazdu.`,
       };
     } else if (field === "innovation_uniqueness") {
       return {
         field,
-        suggestion: `Wyróżniki innowacyjności: Projekt «${title}» wyróżnia się o 35% niższym kosztem jednostkowym w stosunku do form stacjonarnych oraz elastycznym modelem angażującym lokalną społeczność i wolontariuszy.`,
+        suggestion: `W odróżnieniu od form stacjonarnych rozwiązanie wyróżnia się o 35% niższym kosztem jednostkowym oraz elastycznym modelem angażującym lokalną społeczność i wolontariuszy.`,
       };
     } else if (field === "county_diagnosis") {
       return {
         field,
         county: countyName,
         senior_ratio: "24.2",
-        suggestion: `Na podstawie Raportu Obserwatorium Polityki Społecznej ROPS Kraków dla obszaru: ${countyName}.\n• Wskaźnik starości demograficznej: 24.2% mieszkańców w wieku senioralnym (60+).\n• Zdiagnozowane wyzwania strategiczne: Dostępność transportowa, Samotność na wsi, Opieka wytchnieniowa.\nDiagnoza wskazuje na pilną potrzebę wdrożenia «${title}».`,
+        suggestion: `W powiecie ${countyName} wskaźnik starości demograficznej wynosi 24.2% mieszkańców w wieku senioralnym (60+). Główne wyzwania: deficyt mobilnych kadr opiekuńczych, bariery transportowe oraz samotność na wsi.`,
       };
     } else if (field === "scalability") {
       return {
         field,
-        suggestion: `Model replikacji w Małopolsce: Projekt zaprojektowany modularnie – po fazie mikrograntu może być łatwo wdrożony przez Centra Usług Społecznych (CUS) w formule zlecenia zadania publicznego dla NGO.`,
+        suggestion: `Rozwiązanie zostało zaprojektowane modularnie – po fazie mikrograntu może być łatwo wdrożone przez Centra Usług Społecznych (CUS) lub OPS w formule Programu Usług Społecznych.`,
       };
     } else if (field === "budget_action_plan") {
       return {

@@ -10,6 +10,7 @@ SYSTEM_PROMPT = """Jesteś doradcą i ekspertem Regionalnego Ośrodka Polityki S
 Twoim zadaniem jest wspieranie wnioskodawców (osób fizycznych, NGO, jednostek samorządu terytorialnego) w przygotowaniu wysokiej jakości, profesjonalnego wniosku o mikrogrant na innowację społeczną (maks. 50 000 PLN).
 Wszystkie odpowiedzi formułuj w języku polskim. Pisz zwięźle, konkretnie, językiem projektowym zgodnym ze standardami ROPS Kraków, deinstytucjonalizacji oraz dostępności (WCAG 2.2).
 Zawsze odpowiadaj wyłącznie w formacie JSON zgodnym ze wskazanym schematem.
+BARDZO WAŻNE: Nie dodawaj żadnych zbędnych metatekstów ani etykiet w rodzaju "Rekomendacja deinstytucjonalizacji (ROPS Kraków): Wpisz...", "Wskazówka:", "Podpowiedź merytoryczna:". Generuj prostą, bezpośrednią treść do wpisania w formularz wniosku.
 """
 
 
@@ -26,6 +27,19 @@ def get_openai_client() -> Optional[Any]:
         return None
 
 
+def _clean_suggestion_text(text: str) -> str:
+    """Usuwa zbędne etykiety meta i instrukcje dla użytkownika."""
+    cleaned = (text or "").strip()
+    # Usunięcie np. "Rekomendacja deinstytucjonalizacji (ROPS Kraków): Wpisz «Innowacja» w "
+    cleaned = re.sub(
+        r"^(?:Rekomendacja[^\:]*\:|Wskazówka[^\:]*\:|Podpowiedź[^\:]*\:|Wyróżniki[^\:]*\:|Model replikacji[^\:]*\:)\s*(?:Wpisz[^\.]*\.\s*)?",
+        "",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
+    return cleaned.strip()
+
+
 def _clean_and_parse_json(raw_text: str, field_type: str) -> dict[str, Any]:
     """Czyści bloki markdown i parsuje odpowiedź do słownika JSON."""
     cleaned = raw_text.strip()
@@ -37,6 +51,8 @@ def _clean_and_parse_json(raw_text: str, field_type: str) -> dict[str, Any]:
     try:
         data = json.loads(cleaned)
         if isinstance(data, dict):
+            if "suggestion" in data and isinstance(data["suggestion"], str):
+                data["suggestion"] = _clean_suggestion_text(data["suggestion"])
             return data
     except Exception:
         pass

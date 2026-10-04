@@ -234,33 +234,37 @@ export function FersGrantWizard({
         concept: innovationDesc,
       });
 
+      const clean = (res.suggestion || "")
+        .replace(/^(?:Rekomendacja[^\:]*\:|Wskazówka[^\:]*\:|Podpowiedź[^\:]*\:|Wyróżniki[^\:]*\:|Model replikacji[^\:]*\:)\s*(?:Wpisz[^\.]*\.\s*)?/i, "")
+        .trim();
+
       if (field === "deinstitutionalization") {
         setInnovationDesc(
-          (prev) => prev ? `${prev.trim()}\n\n${res.suggestion || ""}` : (res.suggestion || "")
+          (prev) => prev ? `${prev.trim()}\n\n${clean}` : clean
         );
         setAiMessage({
-          title: "Uzupełniono opis o wymiar deinstytucjonalizacji",
-          desc: "Włączono do opisu zasady wsparcia środowiskowego i redukcji opieki stacjonarnej.",
+          title: "Uzupełniono opis innowacji",
+          desc: "Włączono zasady wsparcia środowiskowego i redukcji opieki stacjonarnej.",
           variant: "success",
         });
       } else if (field === "innovation_uniqueness") {
-        setUniquenessRationale(res.suggestion || "");
+        setUniquenessRationale(clean);
         setAiMessage({
           title: "Zaproponowano wyróżniki innowacji",
           desc: "Treść została zaktualizowana w oparciu o analizę podobnych projektów w regionie.",
           variant: "success",
         });
       } else if (field === "county_diagnosis") {
-        setProblemDiagnosis(res.suggestion || "");
+        setProblemDiagnosis(clean);
         setAiMessage({
           title: `Zaciągnięto dane Obserwatorium ROPS dla: ${res.county || currentCounty?.name}`,
-          desc: "Do pola diagnozy wstawiono realne wskaźniki demograficzne i wyzwania strategiczne powiatu.",
+          desc: "Do pola diagnozy wstawiono wskaźniki demograficzne i wyzwania strategiczne powiatu.",
           variant: "success",
         });
       } else if (field === "scalability") {
-        setScalabilityModel(res.suggestion || "");
+        setScalabilityModel(clean);
         setAiMessage({
-          title: "Wygenerowano model replikacji w samorządach",
+          title: "Zaproponowano model replikacji",
           desc: "Uwzględniono adaptację w strukturach Centrum Usług Społecznych (CUS) i OPS.",
           variant: "success",
         });
@@ -889,7 +893,7 @@ export function FersGrantWizard({
                 >
                   {aiLoadingField === "deinstitutionalization"
                     ? "Generowanie..."
-                    : "Wskazówka: Deinstytucjonalizacja"}
+                    : "Podpowiedz opis (AI)"}
                 </Button>
                 <Button
                   type="button"
@@ -944,7 +948,7 @@ export function FersGrantWizard({
                 >
                   {aiLoadingField === "innovation_uniqueness"
                     ? "Generowanie..."
-                    : "Wskazówka: Wyróżniki innowacji"}
+                    : "Podpowiedz wyróżniki (AI)"}
                 </Button>
                 <Button
                   type="button"
@@ -1164,7 +1168,7 @@ export function FersGrantWizard({
                   disabled={aiLoadingField === "scalability"}
                   onClick={() => triggerAiAssist("scalability")}
                 >
-                  Wskazówka: Model CUS
+                  Podpowiedz model (AI)
                 </Button>
                 <Button
                   type="button"

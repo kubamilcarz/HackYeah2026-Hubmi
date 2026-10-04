@@ -148,6 +148,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Django REST Framework
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.BasicAuthentication",
+    ],
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",
@@ -172,10 +175,32 @@ SPECTACULAR_SETTINGS = {
 # CORS Configuration
 _cors_origins = os.environ.get(
     "CORS_ALLOWED_ORIGINS",
-    "http://localhost:3000,http://127.0.0.1:3000"
+    "http://localhost:3000,http://127.0.0.1:3000,http://134.112.25.20:3000,http://134.112.25.20"
 )
 CORS_ALLOWED_ORIGINS = [origin.strip() for origin in _cors_origins.split(",") if origin.strip()]
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
+
+# CSRF Trusted Origins (required by Django 4.0+ for Origin checking on POST/PUT/PATCH/DELETE)
+_csrf_trusted = os.environ.get(
+    "CSRF_TRUSTED_ORIGINS",
+    "http://localhost:3000,http://127.0.0.1:3000,http://134.112.25.20:3000,http://134.112.25.20,https://134.112.25.20:3000,https://134.112.25.20,http://localhost:8000,http://127.0.0.1:8000,http://134.112.25.20:8000,https://134.112.25.20:8000"
+)
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in _csrf_trusted.split(",") if origin.strip()]
+
+# Dynamically ensure all CORS origins and ALLOWED_HOSTS are trusted for CSRF Origin checking
+for origin in CORS_ALLOWED_ORIGINS:
+    if origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(origin)
+
+for host in ALLOWED_HOSTS:
+    if host in ("*", "localhost", "127.0.0.1", "[::1]", "testserver"):
+        continue
+    for scheme in ("http://", "https://"):
+        for port in ("", ":3000", ":8000", ":8080"):
+            entry = f"{scheme}{host}{port}"
+            if entry not in CSRF_TRUSTED_ORIGINS:
+                CSRF_TRUSTED_ORIGINS.append(entry)
 
 # OpenAI Configuration
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "").strip()

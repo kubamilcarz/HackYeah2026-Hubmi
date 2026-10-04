@@ -448,18 +448,16 @@ class IdeaSubmissionViewSet(viewsets.ModelViewSet):
         # 2. Rezerwowy silnik deterministyczny (fallback)
         if field_type == "deinstitutionalization":
             suggestion = (
-                f"Rekomendacja deinstytucjonalizacji (ROPS Kraków): Wpisz innowację w model usług "
-                f"świadczonych w środowisku lokalnym jako alternatywę dla opieki całodobowej w instytucjach (DPS/ZOL). "
-                f"Dla kategorii «{cat_name}» wskaż, jak {title} umożliwia beneficjentom samodzielne funkcjonowanie "
+                f"Model usług świadczonych w środowisku lokalnym w duchu deinstytucjonalizacji jako alternatywa dla opieki "
+                f"całodobowej w instytucjach (DPS/ZOL). Rozwiązanie umożliwia beneficjentom samodzielne funkcjonowanie "
                 f"we własnym mieszkaniu, opierając się na wsparciu sąsiedzkim, mobilnych opiekunach i technologii asystującej."
             )
             return Response({"field": field_type, "suggestion": suggestion})
 
         elif field_type == "innovation_uniqueness":
             suggestion = (
-                f"Wyróżniki innowacyjności (na tle Polski i UE): W odróżnieniu od tradycyjnych form wsparcia, "
-                f"projekt «{title}» eliminuje bariery geograficzne w powiatach Małopolski, obniża koszty "
-                f"jednostkowe wsparcia o min. 35% w porównaniu z placówkami stacjonarnymi oraz włącza lokalną społeczność "
+                f"W odróżnieniu od tradycyjnych form wsparcia, projekt eliminuje bariery geograficzne w powiecie {county_name}, "
+                f"obniża koszty jednostkowe wsparcia o min. 35% w porównaniu z placówkami stacjonarnymi oraz włącza lokalną społeczność "
                 f"w rolę współtwórców rozwiązania (co-design zgodny ze standardami FERS Działanie 5.1)."
             )
             return Response({"field": field_type, "suggestion": suggestion})
@@ -483,12 +481,9 @@ class IdeaSubmissionViewSet(viewsets.ModelViewSet):
                 ", ".join(challenges) if challenges else "dostępność usług społecznych, samotność i starzenie się społeczności"
             )
             diagnosis_text = (
-                f"Na podstawie Raportu Obserwatorium Polityki Społecznej ROPS Kraków dla obszaru: {county_name}.\n"
-                f"• Liczba ludności powiatu: {population_str}.\n"
-                f"• Wskaźnik starości demograficznej: {senior_ratio}% mieszkańców w wieku senioralnym (60+).\n"
-                f"• Zdiagnozowane wyzwania strategiczne: {challenges_str}.\n"
-                f"Diagnoza wskazuje na pilną konieczność wdrożenia innowacji «{title}» z uwagi na deficyt lokalnych "
-                f"kadr opiekuńczych i dysproporcje w dostępie do usług między ośrodkami miejskimi a sołectwami."
+                f"W powiecie {county_name} (ludność: {population_str}) wskaźnik starości demograficznej wynosi {senior_ratio}% "
+                f"mieszkańców w wieku senioralnym (60+). Główne zdiagnozowane wyzwania strategiczne: {challenges_str}. "
+                f"Występuje deficyt lokalnych kadr opiekuńczych oraz dysproporcje w dostępie do usług między ośrodkami miejskimi a sołectwami."
             )
             return Response({
                 "field": field_type,
@@ -500,10 +495,9 @@ class IdeaSubmissionViewSet(viewsets.ModelViewSet):
 
         elif field_type == "scalability":
             suggestion = (
-                f"Model replikacji w Małopolsce: Rozwiązanie zostało zaprojektowane modularnie, dzięki czemu "
-                f"po zakończeniu grantu mikroinnowacji (FERS) może zostać zaadaptowane przez dowolne Centrum Usług Społecznych "
-                f"(CUS) lub Ośrodek Pomocy Społecznej w Małopolsce w formie Programu Usług Społecznych (PUS). "
-                f"Podręcznik wdrożeniowy i standardy procedur zostaną udostępnione w formule Open Source na platformie Splot."
+                f"Rozwiązanie zostało zaprojektowane modularnie – po zakończeniu grantu mikroinnowacji (FERS) może zostać "
+                f"zaadaptowane przez dowolne Centrum Usług Społecznych (CUS) lub Ośrodek Pomocy Społecznej w Małopolsce w formie Programu Usług Społecznych (PUS). "
+                f"Podręcznik wdrożeniowy i standardy procedur są udostępniane w formule Open Source na platformie Splot."
             )
             return Response({"field": field_type, "suggestion": suggestion})
 
