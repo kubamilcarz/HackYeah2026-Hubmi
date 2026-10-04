@@ -43,6 +43,7 @@ from .serializers import (
     AdminTrendsResponseSerializer,
     AdminModerationSerializer,
 )
+from .llm_service import generate_fers_field_assist
 
 
 STOP_WORDS = {
@@ -418,6 +419,33 @@ class IdeaSubmissionViewSet(viewsets.ModelViewSet):
         cat_name = category_obj.name if category_obj else "Włączenie społeczne"
         county_name = county_obj.name if county_obj else "Małopolska"
 
+        # Dane statystyczne powiatu do promptu / diagnozy
+        county_stats = {
+            "senior_ratio": f"{county_obj.senior_ratio:.1f}%" if (county_obj and county_obj.senior_ratio) else "22.8%",
+            "population": f"{county_obj.population:,}".replace(",", " ") if (county_obj and county_obj.population) else "powyżej 100 tys.",
+            "challenges": list(county_obj.main_challenges or []) if county_obj else [],
+        }
+        if county_obj:
+            for rc in RegionalChallenge.objects.filter(county=county_obj):
+                if rc.title not in county_stats["challenges"]:
+                    county_stats["challenges"].append(rc.title)
+
+        # 1. Próba wygenerowania przez OpenAI API (jeśli klucz jest skonfigurowany)
+        llm_response = generate_fers_field_assist(
+            field_type=field_type,
+            title=title,
+            category_name=cat_name,
+            county_name=county_name,
+            county_stats=county_stats,
+            recipients=recipients,
+            concept=concept,
+        )
+        if llm_response is not None:
+            if field_type == "county_diagnosis":
+                llm_response.setdefault("county", county_name)
+            return Response(llm_response)
+
+        # 2. Rezerwowy silnik deterministyczny (fallback)
         if field_type == "deinstitutionalization":
             suggestion = (
                 f"Rekomendacja deinstytucjonalizacji (ROPS Kraków): Wpisz innowację w model usług "

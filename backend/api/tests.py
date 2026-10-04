@@ -1,4 +1,5 @@
 from decimal import Decimal
+from unittest.mock import MagicMock, patch
 from django.core.management import call_command
 from django.test import TestCase
 from django.urls import reverse
@@ -769,6 +770,46 @@ class BackendFullTestSuite(TestCase):
         }, format="json")
         self.assertEqual(res_fallback.status_code, status.HTTP_200_OK)
         self.assertIn("Wskazówka asystenta innowacji", res_fallback.data["suggestion"])
+
+    def test_idea_ai_assist_with_openai_mock_and_fallback(self):
+        """Test działania asystenta AI przy włączonym OpenAI oraz fallbacku przy błędzie API"""
+        # Test 1: Sukces OpenAI API
+        mock_choice = MagicMock()
+        mock_choice.message.content = '{"suggestion": "Dedykowana rekomendacja deinstytucjonalizacji wygenerowana przez OpenAI GPT-4o."}'
+        mock_response = MagicMock()
+        mock_response.choices = [mock_choice]
+
+        with patch("api.llm_service.get_openai_client") as mock_get_client:
+            mock_client = MagicMock()
+            mock_client.chat.completions.create.return_value = mock_response
+            mock_get_client.return_value = mock_client
+
+            res = self.client.post("/api/ideas/ai-assist/", {
+                "field": "deinstitutionalization",
+                "title": "Kawiarenka Naprawcza Senior+",
+                "category": self.cat_seniors.id,
+                "county": self.county.id,
+            }, format="json")
+
+            self.assertEqual(res.status_code, status.HTTP_200_OK)
+            self.assertEqual(res.data["source"], "openai")
+            self.assertIn("OpenAI GPT-4o", res.data["suggestion"])
+
+        # Test 2: Błąd OpenAI API -> automatyczny fallback do szablonu
+        with patch("api.llm_service.get_openai_client") as mock_get_client:
+            mock_client = MagicMock()
+            mock_client.chat.completions.create.side_effect = RuntimeError("OpenAI rate limit or network error")
+            mock_get_client.return_value = mock_client
+
+            res_err = self.client.post("/api/ideas/ai-assist/", {
+                "field": "deinstitutionalization",
+                "title": "Kawiarenka Naprawcza Senior+",
+                "category": self.cat_seniors.id,
+            }, format="json")
+
+            self.assertEqual(res_err.status_code, status.HTTP_200_OK)
+            self.assertNotIn("source", res_err.data)
+            self.assertIn("deinstytucjonalizacji", res_err.data["suggestion"])
 
     def test_pilot_apply_and_evaluation(self):
         """Test zapisu na testy, limitu miejsc, formularza ewaluacji z aliasami oraz filtrowania i wskaźników"""
