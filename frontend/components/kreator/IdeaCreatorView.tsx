@@ -120,30 +120,30 @@ export function IdeaCreatorView() {
   if (submittedData) {
     const isFers = submittedData.type === "grant_fers";
     return (
-      <div className="hub-card p-8 sm:p-12 text-center bg-white border border-slate-200 rounded-3xl shadow-sm space-y-6" role="region" aria-label="Potwierdzenie przyjęcia zgłoszenia">
-        <div className="w-16 h-16 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center mx-auto">
-          <CheckCircle aria-hidden="true" size={44} weight="fill" />
+      <div className="creator-confirmation-card" role="region" aria-label="Potwierdzenie przyjęcia zgłoszenia">
+        <div className="creator-confirmation-icon">
+          <CheckCircle aria-hidden="true" size={40} weight="fill" />
         </div>
 
         <div className="space-y-2">
           <span className="type-caption font-semibold text-emerald-800 uppercase tracking-wider">
-            ROPS Kraków • Status: Zgłoszenie zarejestrowane
+            ROPS Kraków • Zgłoszenie zarejestrowane
           </span>
           <h2 className="type-h2">
-            {isFers ? "Wniosek grantowy FERS został złożony!" : "Fiszka pomysłu została przyjęta!"}
+            {isFers ? "Wniosek grantowy FERS został złożony" : "Fiszka pomysłu została przyjęta"}
           </h2>
           <p className="type-body text-slate-700">
             Numer ewidencyjny Twojego zgłoszenia: <strong>#{submittedData.id}</strong>.
           </p>
         </div>
 
-        <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-left text-sm text-slate-700">
+        <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-left text-sm text-slate-700 w-full">
           {isFers
-            ? "O wyniku oceny poinformujemy e-mailem."
-            : "Odpowiemy w ciągu 3 dni roboczych."}
+            ? "Twój wniosek trafił do zespołu ekspertów Inkubatora Włączenia Społecznego ROPS Kraków. O wyniku oceny formalno-merytorycznej powiadomimy Cię drogą e-mailową."
+            : "Dziękujemy za podzielenie się pomysłem. Zespół ROPS Kraków skontaktuje się z Tobą w ciągu 3 dni roboczych, aby omówić dalsze kroki rozwoju innowacji."}
         </div>
 
-        <div className="flex flex-wrap gap-4 justify-center pt-2">
+        <div className="flex flex-wrap gap-3 justify-center pt-2">
           <Button
             type="button"
             variant="secondary"
@@ -166,7 +166,7 @@ export function IdeaCreatorView() {
   }
 
   return (
-    <div className="kreator-flow space-y-8">
+    <div className="kreator-flow space-y-6">
       {submitError && (
         <Alert
           title="Błąd podczas składania wniosku"
@@ -175,13 +175,16 @@ export function IdeaCreatorView() {
         />
       )}
       {/* Przełącznik trybu dwupoziomowego */}
-      <section aria-labelledby="creator-mode-heading" className="hub-card p-6">
-        <div className="flex items-center justify-between flex-wrap gap-4 mb-4">
+      <section aria-labelledby="creator-mode-heading" className="creator-mode-card">
+        <div className="creator-mode-header">
           <div>
-            <h2 className="type-h2" id="creator-mode-heading">Wybierz tryb zgłoszenia innowacji</h2>
+            <h2 className="type-h2" id="creator-mode-heading">Wybierz tryb zgłoszenia</h2>
+            <p className="type-body text-slate-600 mt-1">
+              W zależności od etapu pomysłu możesz złożyć szybką fiszkę lub pełny wniosek grantowy.
+            </p>
           </div>
           <div className="flex items-center gap-2">
-            <Badge label={`Aktywna persona: ${activePersona.name}`} variant="neutral" />
+            <Badge label={`Profil: ${activePersona.name}`} variant="neutral" />
             <Tag label="FERS Działanie 5.1 • do 50 000 zł" variant="info" />
           </div>
         </div>
@@ -194,12 +197,12 @@ export function IdeaCreatorView() {
             {
               value: "fiszka",
               label: "Fiszka pomysłu (około 3 min)",
-              description: "Krótki opis pomysłu.",
+              description: "Krótki opis idei i potrzebnego wsparcia (doradztwo, partnerzy, testy). Odpowiedź ROPS w 3 dni robocze.",
             },
             {
               value: "grant_fers",
-              label: "Wniosek FERS (12 punktów)",
-              description: "Pełny wniosek z budżetem do 50 000 zł i widokiem do druku.",
+              label: "Wniosek grantowy FERS (12 punktów)",
+              description: "Pełny wniosek z budżetem do 50 000 zł, harmonogramem i podglądem arkusza do druku PDF.",
             },
           ]}
           value={submissionType}

@@ -102,11 +102,14 @@ export function IdeaQuickNoteForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Baner możliwości awansu do wniosku grantowego */}
-      <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="creator-upgrade-banner">
         <div className="flex items-start gap-3">
-          <FileText size={24} className="text-emerald-700 shrink-0 mt-0.5" weight="fill" />
+          <FileText size={22} className="text-emerald-700 shrink-0 mt-0.5" weight="fill" aria-hidden="true" />
           <div>
-            <h4 className="type-body font-semibold text-emerald-950">Potrzebujesz do 50 000 zł?</h4>
+            <h4 className="type-body font-semibold text-slate-900">Potrzebujesz dofinansowania do 50 000 zł?</h4>
+            <p className="type-caption text-slate-600 mt-0.5">
+              Możesz w każdej chwili przenieść wprowadzone dane do 12-punktowego wniosku grantowego FERS.
+            </p>
           </div>
         </div>
         <Button
@@ -124,15 +127,15 @@ export function IdeaQuickNoteForm({
             })
           }
         >
-          Rozwiń do Wniosku FERS (12 pkt)
+          Rozwiń do wniosku FERS
         </Button>
       </div>
 
       {/* Sekcja 1: Tytuł i kategoria */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="type-h3">1. Temat i kategoria innowacji</h3>
-          <Badge label="Zgłoszenie całoroczne" variant="success" />
+      <div className="creator-section">
+        <div className="creator-section__header">
+          <h3 className="type-h3">1. Temat i obszar innowacji</h3>
+          <Badge label="Nabór ciągły" variant="success" />
         </div>
 
         <TextField
@@ -155,7 +158,7 @@ export function IdeaQuickNoteForm({
           />
 
           <SelectField
-            label="Powiat Małopolski"
+            label="Powiat realizacji"
             name="fiszka_county"
             options={counties.map((c) => ({ label: c.name, value: String(c.id) }))}
             value={countyId}
@@ -165,8 +168,10 @@ export function IdeaQuickNoteForm({
       </div>
 
       {/* Sekcja 2: Dane zgłaszającego */}
-      <div className="space-y-4 pt-4 border-t border-slate-100">
-        <h3 className="type-h3">2. Dane kontaktowe pomysłodawcy</h3>
+      <div className="creator-section">
+        <div className="creator-section__header">
+          <h3 className="type-h3">2. Dane kontaktowe pomysłodawcy</h3>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <TextField
             label="Imię i nazwisko"
@@ -193,8 +198,8 @@ export function IdeaQuickNoteForm({
       </div>
 
       {/* Sekcja 3: Istota pomysłu */}
-      <div className="space-y-4 pt-4 border-t border-slate-100">
-        <div className="flex items-center justify-between flex-wrap gap-2">
+      <div className="creator-section">
+        <div className="creator-section__header">
           <h3 className="type-h3">3. Istota innowacji i odbiorcy</h3>
           <Button
             type="button"
@@ -204,13 +209,13 @@ export function IdeaQuickNoteForm({
             disabled={isAiLoading}
             onClick={handleAiAssist}
           >
-            {isAiLoading ? "Przygotowuję..." : "Podpowiedź"}
+            {isAiLoading ? "Przygotowuję..." : "Podpowiedź AI"}
           </Button>
         </div>
 
         {aiTip && (
           <Alert
-            title="Podpowiedź"
+            title="Podpowiedź merytoryczna"
             description={aiTip}
             variant="info"
           />
@@ -223,8 +228,8 @@ export function IdeaQuickNoteForm({
           rows={4}
           value={concept}
           onChange={(e) => setConcept(e.target.value)}
-          placeholder="Problem, rozwiązanie i co je wyróżnia."
-          helperText="2–4 zdania wystarczą."
+          placeholder="Jaki problem rozwiązujesz, jak działa usługa i co wyróżnia to podejście?"
+          helperText="Wystarczą 2–4 zdania opisujące sedno pomysłu."
         />
 
         <TextField
@@ -233,17 +238,17 @@ export function IdeaQuickNoteForm({
           required
           value={recipients}
           onChange={(e) => setRecipients(e.target.value)}
-          placeholder="np. Seniorzy 75+ mieszkający samotnie w sołectwach, osoby po udarach"
+          placeholder="np. Seniorzy 75+ mieszkający samotnie na terenach wiejskich"
         />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
           <SelectField
             label="Aktualny etap pomysłu"
             name="fiszka_stage"
             value={stage}
             onChange={(e) => setStage(e.target.value)}
             options={[
-              { label: "Koncepcja (wstępny pomysł w głowie)", value: "koncepcja" },
+              { label: "Koncepcja (wstępny pomysł)", value: "koncepcja" },
               { label: "Wczesny prototyp / zarys metody", value: "prototyp" },
               { label: "Pilotaż lokalny / testy na małej grupie", value: "testy" },
             ]}
@@ -266,9 +271,9 @@ export function IdeaQuickNoteForm({
       </div>
 
       {/* Akcja złożenia */}
-      <div className="pt-6 border-t border-slate-100 flex items-center justify-between flex-wrap gap-4">
+      <div className="pt-6 border-t border-slate-200 flex items-center justify-between flex-wrap gap-4">
         <span className="type-caption text-slate-500">
-          Odpowiemy w ciągu 3 dni roboczych.
+          Zespół ROPS Kraków odpowie w ciągu 3 dni roboczych.
         </span>
         <Button
           type="submit"
@@ -276,7 +281,7 @@ export function IdeaQuickNoteForm({
           disabled={isSubmitting}
           trailingIcon={ArrowRight}
         >
-          {isSubmitting ? "Wysyłanie..." : "Złóż Fiszkę Pomysłu"}
+          {isSubmitting ? "Wysyłanie..." : "Złóż fiszkę pomysłu"}
         </Button>
       </div>
     </form>

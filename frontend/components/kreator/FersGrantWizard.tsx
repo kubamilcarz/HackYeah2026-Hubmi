@@ -173,6 +173,36 @@ export function FersGrantWizard({
     stepContainerRef.current?.focus({ preventScroll: true });
   }, [currentStep]);
 
+  // Załaduj przykładowe dane wzorcowe
+  function handleLoadSampleData() {
+    setTitle("Sąsiedzki wolontariat wytchnieniowy dla rodzin osób niesamodzielnych");
+    setInnovationDesc(
+      "Innowacja polega na uruchomieniu lokalnego zespołu wsparcia środowiskowego dla opiekunów osób niesamodzielnych. Rozwiązanie przenosi ciężar opieki z placówek całodobowych na usługi świadczone w miejscu zamieszkania beneficjenta."
+    );
+    setUniquenessRationale(
+      "Model wsparcia sąsiedzkiego oparty na mikrostypendiach samopomocowych oraz mobilnym koordynatorze. Zapewnia czas reakcji do 4 godzin oraz o 35% niższy koszt jednostkowy w porównaniu z opieką instytucjonalną."
+    );
+    setProblemDiagnosis(
+      "Diagnoza oparta na Raporcie Obserwatorium Polityki Społecznej ROPS Kraków. W analizowanym powiecie wskaźnik starości demograficznej przekracza 24%, a ponad 60% osób niesamodzielnych ma utrudniony dostęp do placówek wsparcia dziennego."
+    );
+    setTargetRecipients("30 osób starszych o ograniczonej sprawności i 20 opiekunów rodzinnych");
+    setExpectedChange(
+      "Poprawa jakości życia i poczucia bezpieczeństwa podopiecznych, ograniczenie izolacji oraz zmniejszenie obciążenia psychofizycznego opiekunów rodzinnych o min. 40%."
+    );
+    setScalabilityModel(
+      "Rozwiązanie posiada gotowy standard procedur i może być replikowane w małopolskich CUS lub OPS w formie Programu Usług Społecznych."
+    );
+    setTeamExperience(
+      "Zespół posiada 8 lat doświadczenia w realizacji projektów społecznych na terenie Małopolski, w tym programów FERS i grantów ROPS Kraków."
+    );
+    setFormalAccepted(true);
+    setAiMessage({
+      title: "Wczytano wzorcowy wniosek FERS",
+      desc: "Wszystkie punkty wniosku zostały uzupełnione danymi demonstracyjnymi. Możesz przejść przez kolejne etapy.",
+      variant: "success",
+    });
+  }
+
   // Asystent AI
   async function triggerAiAssist(field: "deinstitutionalization" | "innovation_uniqueness" | "county_diagnosis" | "scalability" | "budget_action_plan" | "concept_diagram") {
     setAiLoadingField(field);
@@ -189,17 +219,17 @@ export function FersGrantWizard({
 
       if (field === "deinstitutionalization") {
         setInnovationDesc(
-          (prev) => `${prev.trim()}\n\n[Wskazówka ROPS dot. deinstytucjonalizacji]: ${res.suggestion || ""}`
+          (prev) => prev ? `${prev.trim()}\n\n${res.suggestion || ""}` : (res.suggestion || "")
         );
         setAiMessage({
           title: "Uzupełniono opis o wymiar deinstytucjonalizacji",
-          desc: "Asystent włączył do opisu zasady wsparcia środowiskowego i redukcji opieki stacjonarnej.",
+          desc: "Włączono do opisu zasady wsparcia środowiskowego i redukcji opieki stacjonarnej.",
           variant: "success",
         });
       } else if (field === "innovation_uniqueness") {
         setUniquenessRationale(res.suggestion || "");
         setAiMessage({
-          title: "Zaproponowano unikalne wyróżniki innowacji",
+          title: "Zaproponowano wyróżniki innowacji",
           desc: "Treść została zaktualizowana w oparciu o analizę podobnych projektów w regionie.",
           variant: "success",
         });
@@ -221,8 +251,8 @@ export function FersGrantWizard({
         setActionPlanPrep(res.action_plan_prep);
         setActionPlanTesting(res.action_plan_testing);
         setAiMessage({
-          title: "Wygenerowano zbalansowany budżet i harmonogram FERS",
-          desc: res.suggestion || "Harmonogram i budżet do 50 000 zł.",
+          title: "Wygenerowano budżet i harmonogram FERS",
+          desc: res.suggestion || "Harmonogram i budżet zbalansowany do 50 000 zł.",
           variant: "success",
         });
       } else if (field === "concept_diagram") {
@@ -353,14 +383,25 @@ export function FersGrantWizard({
   }
 
   return (
-    <div ref={stepContainerRef} className="space-y-8" tabIndex={-1}>
+    <div ref={stepContainerRef} className="space-y-6" tabIndex={-1}>
       {/* Pasek postępu 5 etapów */}
       <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-6 space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div>
-            <h2 className="type-h2">Generator Wniosków Grantowych (12 punktów)</h2>
+            <h2 className="type-h2">Generator wniosku grantowego FERS (12 punktów)</h2>
           </div>
-          <Tag label="Maks. mikrogrant: 50 000 PLN" variant="info" />
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="tertiary"
+              size="sm"
+              leadingIcon={Sparkle}
+              onClick={handleLoadSampleData}
+            >
+              Wczytaj wzorzec
+            </Button>
+            <Tag label="Maks. mikrogrant: 50 000 PLN" variant="info" />
+          </div>
         </div>
 
         <StepProgress
@@ -416,41 +457,41 @@ export function FersGrantWizard({
             </div>
           </div>
 
-          <div className="space-y-4 pt-4 border-t border-slate-100">
-            <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="creator-section">
+            <div className="creator-section__header">
               <h4 className="type-h3">Pkt 2: Forma prawna i dane wnioskodawcy</h4>
-              <Badge label={`Autofill: ${activePersona.name}`} variant="neutral" />
+              <Badge label={`Autouzupełnienie: ${activePersona.name}`} variant="neutral" />
             </div>
 
-            <div className="flex flex-wrap gap-4 p-3 bg-slate-50 border border-slate-200 rounded-xl">
-              <label className="flex items-center gap-2 cursor-pointer">
+            <div className="creator-applicant-type-group">
+              <label className="creator-applicant-radio-label">
                 <input
                   type="radio"
                   name="applicant_type"
                   checked={applicantType === "osoba_fizyczna"}
                   onChange={() => setApplicantType("osoba_fizyczna")}
                 />
-                <span className="type-body text-sm font-medium">Osoba fizyczna (mieszkaniec)</span>
+                <span>Osoba fizyczna (mieszkaniec)</span>
               </label>
 
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="creator-applicant-radio-label">
                 <input
                   type="radio"
                   name="applicant_type"
                   checked={applicantType === "podmiot_ngo"}
                   onChange={() => setApplicantType("podmiot_ngo")}
                 />
-                <span className="type-body text-sm font-medium">Podmiot / NGO / Fundacja / JST</span>
+                <span>Podmiot / NGO / Fundacja / JST</span>
               </label>
 
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="creator-applicant-radio-label">
                 <input
                   type="radio"
                   name="applicant_type"
                   checked={applicantType === "grupa_nieformalna"}
                   onChange={() => setApplicantType("grupa_nieformalna")}
                 />
-                <span className="type-body text-sm font-medium">Grupa nieformalna (min. 2 osoby)</span>
+                <span>Grupa nieformalna (min. 2 osoby)</span>
               </label>
             </div>
 
@@ -504,7 +545,7 @@ export function FersGrantWizard({
 
             {/* Pola dla NGO */}
             {applicantType === "podmiot_ngo" && (
-              <div className="p-4 bg-amber-50/50 border border-amber-200 rounded-xl space-y-4">
+              <div className="creator-subpanel">
                 <h5 className="type-body font-semibold text-slate-900">Dane rejestrowe podmiotu</h5>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <TextField
@@ -538,7 +579,7 @@ export function FersGrantWizard({
 
             {/* Pola dla Grupy Nieformalnej */}
             {applicantType === "grupa_nieformalna" && (
-              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-4">
+              <div className="creator-subpanel">
                 <div className="flex items-center justify-between">
                   <h5 className="type-body font-semibold text-slate-900">Członkowie grupy nieformalnej</h5>
                   <Button
@@ -614,8 +655,8 @@ export function FersGrantWizard({
             <h3 className="type-h2">2. Koncepcja rozwiązania i innowacyjność</h3>
           </div>
 
-          <div className="space-y-4">
-            <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="creator-section">
+            <div className="creator-section__header">
               <h4 className="type-h3">Pkt 3: Opis innowacji & deinstytucjonalizacja</h4>
               <Button
                 type="button"
@@ -626,8 +667,8 @@ export function FersGrantWizard({
                 onClick={() => triggerAiAssist("deinstitutionalization")}
               >
                 {aiLoadingField === "deinstitutionalization"
-                  ? "Generowanie argumentacji..."
-                  : "Wzmocnij deinstytucjonalizację (AI)"}
+                  ? "Generowanie..."
+                  : "Podpowiedź AI: Deinstytucjonalizacja"}
               </Button>
             </div>
 
@@ -635,15 +676,15 @@ export function FersGrantWizard({
               label="Charakter innowacji i wpisanie się w deinstytucjonalizację"
               name="innovation_desc"
               required
-              rows={5}
+              rows={4}
               value={innovationDesc}
               onChange={(e) => setInnovationDesc(e.target.value)}
-              helperText="Pokaż, jak wsparcie działa w lokalnym środowisku."
+              helperText="Pokaż, w jaki sposób usługa wspiera podopiecznego w jego naturalnym środowisku lokalnym."
             />
           </div>
 
-          <div className="space-y-4 pt-4 border-t border-slate-100">
-            <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="creator-section">
+            <div className="creator-section__header">
               <h4 className="type-h3">Pkt 4: Innowacyjność i unikalne wyróżniki</h4>
               <Button
                 type="button"
@@ -654,19 +695,19 @@ export function FersGrantWizard({
                 onClick={() => triggerAiAssist("innovation_uniqueness")}
               >
                 {aiLoadingField === "innovation_uniqueness"
-                  ? "Generowanie wyróżników..."
-                  : "Zaproponuj wyróżniki innowacji (AI)"}
+                  ? "Generowanie..."
+                  : "Podpowiedź AI: Wyróżniki"}
               </Button>
             </div>
 
             <TextAreaField
-              label="Czym innowacja różni się od rozwiązań stosowanych dotychczas w Polsce i na świecie?"
+              label="Czym innowacja różni się od rozwiązań stosowanych dotychczas?"
               name="uniqueness_rationale"
               required
               rows={4}
               value={uniquenessRationale}
               onChange={(e) => setUniquenessRationale(e.target.value)}
-              helperText="Wskaż konkretną nową wartość (np. niższy koszt jednostkowy, lepsza dostępność, co-design, technologia asystująca)."
+              helperText="Wskaż konkretną nową wartość (np. niższy koszt jednostkowy, lepsza dostępność, technologia asystująca)."
             />
           </div>
         </div>
@@ -679,8 +720,8 @@ export function FersGrantWizard({
             <h3 className="type-h2">3. Diagnoza problemu i grupa docelowa</h3>
           </div>
 
-          <div className="space-y-4">
-            <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="creator-section">
+            <div className="creator-section__header">
               <h4 className="type-h3">Pkt 5: Diagnoza problemu & raporty ROPS Kraków</h4>
               <Button
                 type="button"
@@ -691,8 +732,8 @@ export function FersGrantWizard({
                 onClick={() => triggerAiAssist("county_diagnosis")}
               >
                 {aiLoadingField === "county_diagnosis"
-                  ? "Pobieranie statystyk..."
-                  : `Zaciągnij dane i wyzwania ROPS dla: ${currentCounty?.name || "powiatu"}`}
+                  ? "Pobieranie..."
+                  : `Dane ROPS: ${currentCounty?.name || "powiat"}`}
               </Button>
             </div>
 
@@ -703,11 +744,11 @@ export function FersGrantWizard({
               rows={4}
               value={problemDiagnosis}
               onChange={(e) => setProblemDiagnosis(e.target.value)}
-              helperText="Podaj dane statystyczne wybranego powiatu lub powołaj się na Mapę Wyzwań Społecznych Małopolski."
+              helperText="Podaj dane statystyczne wybranego powiatu lub powołaj się na regionalną diagnozę ROPS Kraków."
             />
           </div>
 
-          <div className="space-y-4 pt-4 border-t border-slate-100">
+          <div className="creator-section">
             <h4 className="type-h3">Pkt 6: Opis odbiorców i przyczyny wykluczenia</h4>
             <TextAreaField
               label="Grupa docelowa innowacji i bariery, z którymi się mierzy"
@@ -720,7 +761,7 @@ export function FersGrantWizard({
             />
           </div>
 
-          <div className="space-y-4 pt-4 border-t border-slate-100">
+          <div className="creator-section">
             <h4 className="type-h3">Pkt 7: Zmiana wprowadzana przez innowację</h4>
             <TextAreaField
               label="Oczekiwane rezultaty społeczne i trwała zmiana w życiu beneficjentów"
@@ -738,7 +779,7 @@ export function FersGrantWizard({
       {/* KROK 4: Skalowalność & Budżet */}
       {currentStep === 4 && (
         <div className="space-y-6">
-          <div className="border-b border-slate-100 pb-3 flex items-center justify-between flex-wrap gap-2">
+          <div className="creator-section__header border-b border-slate-100 pb-3">
             <div>
               <h3 className="type-h2">4. Skalowalność, harmonogram i budżet mikrograntu</h3>
               <p className="type-body text-slate-600 mt-1">
@@ -754,14 +795,14 @@ export function FersGrantWizard({
               onClick={() => triggerAiAssist("budget_action_plan")}
             >
               {aiLoadingField === "budget_action_plan"
-                ? "Kalkulowanie budżetu..."
-                : "Wygeneruj szablon budżetu do 50k (AI)"}
+                ? "Kalkulowanie..."
+                : "Szablon budżetu (do 50 000 zł)"}
             </Button>
           </div>
 
           {/* Pkt 8: Skalowalność */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="creator-section">
+            <div className="creator-section__header">
               <h4 className="type-h3">Pkt 8: Wizja przyszłości i replikowalność w JST</h4>
               <Button
                 type="button"
@@ -771,7 +812,7 @@ export function FersGrantWizard({
                 disabled={aiLoadingField === "scalability"}
                 onClick={() => triggerAiAssist("scalability")}
               >
-                Model replikacji w CUS (AI)
+                Podpowiedź AI: Model CUS
               </Button>
             </div>
             <TextAreaField
@@ -786,18 +827,18 @@ export function FersGrantWizard({
           </div>
 
           {/* Pkt 9: Harmonogram i budżet */}
-          <div className="space-y-6 pt-4 border-t border-slate-100">
+          <div className="creator-section">
             <h4 className="type-h3">Pkt 9: Plan działania i koszty (harmonogram)</h4>
 
             {/* Część I: Przygotowanie */}
-            <div className="space-y-3 bg-slate-50 p-4 border border-slate-200 rounded-xl">
-              <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="creator-budget-card">
+              <div className="creator-budget-card__header">
                 <div>
                   <h5 className="type-body font-semibold text-slate-900">
                     Część I: Okres przygotowawczy (maks. 3 miesiące)
                   </h5>
                   <p className="type-caption text-slate-600">
-                    Opracowanie metody, standardu, regulaminów i szkolenia kadry.
+                    Opracowanie metody, standardu usługi, regulaminów i szkolenia kadry.
                   </p>
                 </div>
                 <Button
@@ -813,7 +854,7 @@ export function FersGrantWizard({
 
               <div className="space-y-2">
                 {actionPlanPrep.map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-3 bg-white p-3 border border-slate-200 rounded-xl">
+                  <div key={idx} className="creator-budget-item">
                     <div className="grid grid-cols-1 sm:grid-cols-6 gap-3 flex-1">
                       <div className="sm:col-span-3">
                         <TextField
@@ -873,8 +914,8 @@ export function FersGrantWizard({
             </div>
 
             {/* Część II: Testowanie */}
-            <div className="space-y-3 bg-slate-50 p-4 border border-slate-200 rounded-xl">
-              <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="creator-budget-card">
+              <div className="creator-budget-card__header">
                 <div>
                   <h5 className="type-body font-semibold text-slate-900">
                     Część II: Okres testowania (maks. 9 miesięcy)
@@ -896,7 +937,7 @@ export function FersGrantWizard({
 
               <div className="space-y-2">
                 {actionPlanTesting.map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-3 bg-white p-3 border border-slate-200 rounded-xl">
+                  <div key={idx} className="creator-budget-item">
                     <div className="grid grid-cols-1 sm:grid-cols-7 gap-3 flex-1">
                       <div className="sm:col-span-3">
                         <TextField
@@ -969,19 +1010,13 @@ export function FersGrantWizard({
             </div>
 
             {/* Pkt 10: Podsumowanie kwoty */}
-            <div
-              className={`p-5 rounded-2xl border ${
-                isBudgetOverLimit
-                  ? "bg-red-50 border-red-300 text-red-900"
-                  : "bg-emerald-50 border-emerald-300 text-emerald-950"
-              }`}
-            >
+            <div className={`creator-budget-summary ${isBudgetOverLimit ? "creator-budget-summary--overlimit" : ""}`}>
               <div className="flex items-center justify-between flex-wrap gap-4">
                 <div>
-                  <span className="type-caption font-semibold uppercase tracking-wider block">
+                  <span className="type-caption font-semibold uppercase tracking-wider block text-slate-700">
                     Pkt 10: Wnioskowana kwota mikrograntu FERS (suma całkowita)
                   </span>
-                  <div className="text-3xl font-bold mt-1">
+                  <div className="text-3xl font-bold mt-1 text-slate-900">
                     {requestedAmount.toLocaleString("pl-PL")} PLN
                   </div>
                 </div>
@@ -990,7 +1025,7 @@ export function FersGrantWizard({
                     label={isBudgetOverLimit ? "Przekroczono limit 50 000 zł!" : "W ramach limitu 50 000 zł"}
                     variant={isBudgetOverLimit ? "danger" : "success"}
                   />
-                  <p className="type-caption mt-1">
+                  <p className="type-caption text-slate-600 mt-1">
                     Okres przygotowawczy: {prepTotal.toLocaleString("pl-PL")} zł • Testy: {testingTotal.toLocaleString("pl-PL")} zł
                   </p>
                 </div>
@@ -1016,7 +1051,7 @@ export function FersGrantWizard({
             <h3 className="type-h2">5. Zespół projektowy, wizualizacja i oświadczenia</h3>
           </div>
 
-          <div className="space-y-4">
+          <div className="creator-section">
             <h4 className="type-h3">Pkt 11: Zespół projektowy i doświadczenie</h4>
             <TextAreaField
               label="Kluczowe osoby zaangażowane w innowację i ich kompetencje"
@@ -1030,8 +1065,8 @@ export function FersGrantWizard({
           </div>
 
           {/* Wizualizacja koncepcji */}
-          <div className="space-y-4 pt-4 border-t border-slate-100">
-            <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="creator-section">
+            <div className="creator-section__header">
               <h4 className="type-h3">Wizualizacja logiki innowacji</h4>
               <Button
                 type="button"
@@ -1041,7 +1076,7 @@ export function FersGrantWizard({
                 disabled={aiLoadingField === "concept_diagram"}
                 onClick={() => triggerAiAssist("concept_diagram")}
               >
-                Przelicz schemat (AI)
+                Odśwież schemat (AI)
               </Button>
             </div>
 
@@ -1056,9 +1091,9 @@ export function FersGrantWizard({
           </div>
 
           {/* Pkt 12: Oświadczenia */}
-          <div className="space-y-4 pt-4 border-t border-slate-100">
+          <div className="creator-section">
             <h4 className="type-h3">Pkt 12: Oświadczenia formalne</h4>
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+            <div className="creator-subpanel">
               <label className="flex items-start gap-3 cursor-pointer">
                 <input
                   type="checkbox"
@@ -1077,12 +1112,15 @@ export function FersGrantWizard({
           </div>
 
           {/* Podgląd oficjalnego arkusza i Druk */}
-          <div className="p-5 bg-slate-900 text-white rounded-2xl flex items-center justify-between flex-wrap gap-4 shadow-sm">
-            <div>
-              <h5 className="type-h3 text-white font-semibold flex items-center gap-2">
-                <FileText size={22} className="text-emerald-400" />
-                Oficjalna karta wniosku do druku
-              </h5>
+          <div className="creator-print-callout">
+            <div className="flex items-center gap-3">
+              <FileText size={24} className="text-emerald-700 shrink-0" weight="fill" aria-hidden="true" />
+              <div>
+                <h5 className="type-h3 text-slate-900">Oficjalny arkusz wniosku do druku</h5>
+                <p className="type-caption text-slate-600 mt-0.5">
+                  Możesz przejrzeć gotowy do podpisu dokument lub pobrać go w formacie PDF.
+                </p>
+              </div>
             </div>
             <Button
               type="button"
@@ -1090,7 +1128,7 @@ export function FersGrantWizard({
               leadingIcon={Printer}
               onClick={() => setShowPrintPreview(true)}
             >
-              Podgląd oficjalnego arkusza / Druk PDF
+              Podgląd arkusza / Druk PDF
             </Button>
           </div>
         </div>
@@ -1131,7 +1169,7 @@ export function FersGrantWizard({
               leadingIcon={CheckCircle}
               onClick={handleFinalSubmit}
             >
-              {isSubmitting ? "Wysyłanie wniosku..." : "Złóż Wniosek FERS do ROPS"}
+              {isSubmitting ? "Wysyłanie wniosku..." : "Złóż wniosek FERS do ROPS"}
             </Button>
           )}
         </div>

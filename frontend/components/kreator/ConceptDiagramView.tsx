@@ -61,10 +61,10 @@ export function ConceptDiagramView({
   D --> E["5. Rezultat: Deinstytucjonalizacja<br/>Trwałe włączenie & replikacja w CUS"]`;
 
   return (
-    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4" role="region" aria-label="Wizualizacja koncepcji innowacji">
+    <div className="creator-diagram-container" role="region" aria-label="Wizualizacja koncepcji innowacji">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
-          <Sparkle className="text-emerald-700" size={20} weight="fill" />
+          <Sparkle className="text-emerald-700" size={20} weight="fill" aria-hidden="true" />
           <h4 className="type-h3 text-slate-900">Schemat koncepcji i logiki innowacji</h4>
         </div>
         <div className="flex items-center gap-2">
@@ -76,33 +76,28 @@ export function ConceptDiagramView({
             leadingIcon={showCode ? Eye : Code}
             onClick={() => setShowCode(!showCode)}
           >
-            {showCode ? "Pokaż widok blokowy" : "Pokaż kod Mermaid"}
+            {showCode ? "Pokaż widok blokowy" : "Pokaż strukturę tekstową"}
           </Button>
         </div>
       </div>
 
       {showCode ? (
-        <div className="relative">
-          <pre className="p-4 bg-slate-900 text-emerald-400 font-mono text-xs rounded-xl overflow-x-auto whitespace-pre">
-            {defaultMermaid}
-          </pre>
-        </div>
+        <pre className="creator-diagram-code">
+          {defaultMermaid}
+        </pre>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 pt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 pt-1">
           {defaultSteps.map((s, idx) => (
-            <div
-              key={idx}
-              className="bg-white border border-slate-200 rounded-xl p-3 flex flex-col justify-between shadow-xs relative"
-            >
+            <div key={idx} className="creator-diagram-step">
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="type-caption font-semibold text-emerald-800">
-                    Krok {idx + 1}
+                    Etap {idx + 1}
                   </span>
                   {idx === defaultSteps.length - 1 ? (
-                    <CheckCircle className="text-emerald-600" size={16} weight="fill" />
+                    <CheckCircle className="text-emerald-600" size={16} weight="fill" aria-hidden="true" />
                   ) : (
-                    <ArrowRight className="text-slate-400 hidden sm:block -mr-1" size={14} />
+                    <ArrowRight className="text-slate-400 hidden sm:block -mr-1" size={14} aria-hidden="true" />
                   )}
                 </div>
                 <h5 className="type-body font-semibold text-slate-900 text-sm mb-1">{s.title}</h5>

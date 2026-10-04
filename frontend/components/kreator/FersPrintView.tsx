@@ -50,9 +50,9 @@ export function FersPrintView({ data, onBack }: FersPrintViewProps) {
   return (
     <div className="fers-print-container space-y-6">
       {/* Pasek narzędzi na ekranie (ukryty przy druku) */}
-      <div className="no-print bg-slate-900 text-white p-4 rounded-2xl flex items-center justify-between flex-wrap gap-4 shadow-md">
+      <div className="no-print creator-print-toolbar">
         <div>
-          <h3 className="type-h3 text-white font-semibold">Oficjalny Formularz Wniosku Grantowego FERS</h3>
+          <h3 className="type-h3 text-white font-semibold">Oficjalny formularz wniosku grantowego FERS</h3>
           <p className="type-caption text-slate-300">
             Wydrukuj dokument do podpisu lub zapisz jako plik PDF (Ctrl+P / Command+P).
           </p>

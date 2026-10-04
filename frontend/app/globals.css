@@ -6285,6 +6285,223 @@ a.app-navigation__link {
 }
 
 /* ==========================================================================
+   Moduł III — Kreator Pomysłów i Generator Wniosków FERS
+   ========================================================================== */
+
+.creator-mode-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  padding: var(--space-5);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 3%);
+}
+
+.creator-mode-header {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.creator-upgrade-banner {
+  align-items: flex-start;
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-primary-subtle);
+  border-radius: var(--radius-control);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+@media (min-width: 40rem) {
+  .creator-upgrade-banner {
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
+
+.creator-section {
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-top: var(--space-5);
+}
+
+.creator-section:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.creator-section__header {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: space-between;
+}
+
+.creator-applicant-type-group {
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  padding: var(--space-3);
+}
+
+.creator-applicant-radio-label {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  font-size: var(--font-size-body-sm);
+  font-weight: var(--font-weight-medium);
+  gap: var(--space-2);
+  color: var(--content-primary);
+}
+
+.creator-subpanel {
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+}
+
+.creator-budget-card {
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.creator-budget-card__header {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: space-between;
+}
+
+.creator-budget-item {
+  align-items: center;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-3);
+}
+
+.creator-budget-summary {
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-primary-subtle);
+  border-radius: var(--radius-control);
+  padding: var(--space-5);
+  transition: border-color var(--transition-fast, 0.15s ease);
+}
+
+.creator-budget-summary--overlimit {
+  background: #fef2f2;
+  border-color: #f87171;
+}
+
+.creator-diagram-container {
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+}
+
+.creator-diagram-step {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: var(--space-3);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 2%);
+}
+
+.creator-diagram-code {
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  color: var(--content-primary);
+  font-family: var(--font-mono, monospace);
+  font-size: var(--font-size-caption);
+  overflow-x: auto;
+  padding: var(--space-4);
+  white-space: pre;
+}
+
+.creator-print-callout {
+  align-items: center;
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-primary-subtle);
+  border-radius: var(--radius-control);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: space-between;
+  padding: var(--space-4);
+}
+
+.creator-print-toolbar {
+  align-items: center;
+  background: var(--content-primary);
+  border-radius: var(--radius-control);
+  color: #ffffff;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: space-between;
+  padding: var(--space-4);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 10%);
+}
+
+.creator-confirmation-card {
+  align-items: center;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  margin: 0 auto;
+  max-width: 44rem;
+  padding: var(--space-8) var(--space-6);
+  text-align: center;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 4%);
+}
+
+.creator-confirmation-icon {
+  align-items: center;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 9999px;
+  color: var(--action-primary);
+  display: flex;
+  height: 4rem;
+  justify-content: center;
+  width: 4rem;
+}
+
+/* ==========================================================================
    Druk i eksport PDF (Moduł III & dokumenty urzędowe ROPS)
    ========================================================================== */
 @media print {
