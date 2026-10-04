@@ -6023,6 +6023,268 @@ a.app-navigation__link {
 }
 
 /* ==========================================================================
+   Asystent Wdrożeniowy dla Samorządów / Middleman JST (Moduł VII)
+   ========================================================================== */
+
+.middleman-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin-inline: auto;
+  max-width: 56rem;
+}
+
+.middleman-quick-profiles {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding-bottom: var(--space-2);
+}
+
+.middleman-quick-profiles__label {
+  color: var(--content-muted);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+}
+
+.middleman-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-6);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 3%);
+}
+
+.middleman-card__header {
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-bottom: var(--space-4);
+}
+
+@media (min-width: 48rem) {
+  .middleman-card__header--split {
+    align-items: flex-start;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
+
+.middleman-card__title {
+  color: var(--content-primary);
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-h2);
+  margin: 0;
+}
+
+.middleman-card__meta {
+  color: var(--content-secondary);
+  font-size: var(--font-size-caption);
+  margin: 0;
+}
+
+/* Compact Montage Summary */
+.middleman-montage-summary {
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: var(--space-4);
+}
+
+@media (min-width: 48rem) {
+  .middleman-montage-summary {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.middleman-montage-summary__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.middleman-montage-summary__label {
+  color: var(--content-muted);
+  font-size: 0.75rem;
+}
+
+.middleman-montage-summary__value {
+  color: var(--content-primary);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-bold);
+}
+
+.middleman-montage-summary__value--highlight {
+  color: var(--action-primary);
+}
+
+/* Document Paper Preview */
+.middleman-paper-document {
+  background: var(--surface-canvas);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  color: var(--content-primary);
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-body);
+  max-height: 16rem;
+  overflow-y: auto;
+  padding: var(--space-4);
+  white-space: pre-line;
+}
+
+/* Section detail text */
+.middleman-detail-text {
+  color: var(--content-secondary);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  margin: 0;
+}
+
+/* Compact team list */
+.middleman-team-list {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 48rem) {
+  .middleman-team-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.middleman-team-item {
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+}
+
+.middleman-team-item__header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.middleman-team-item__role {
+  color: var(--content-primary);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-bold);
+}
+
+.middleman-team-item__qual {
+  color: var(--content-secondary);
+  font-size: 0.75rem;
+  margin: 0;
+}
+
+/* Timeline */
+.middleman-timeline-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.middleman-timeline-row {
+  align-items: flex-start;
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-3);
+}
+
+.middleman-timeline-row__text {
+  color: var(--content-primary);
+  flex: 1;
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-body);
+  margin: 0;
+}
+
+/* Footer Actions */
+.middleman-footer-actions {
+  align-items: center;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: space-between;
+  padding-top: var(--space-4);
+}
+
+/* Catalog Grid */
+.middleman-catalog-grid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 48rem) {
+  .middleman-catalog-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.middleman-catalog-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: var(--space-5);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 3%);
+  transition: border-color var(--transition-fast, 0.15s ease);
+}
+
+.middleman-catalog-card:hover {
+  border-color: var(--action-primary);
+}
+
+.middleman-catalog-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.middleman-catalog-card__title {
+  color: var(--content-primary);
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-bold);
+  margin: 0;
+}
+
+.middleman-catalog-card__summary {
+  color: var(--content-secondary);
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-body);
+  margin: 0;
+}
+
+.middleman-catalog-card__footer {
+  align-items: center;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+}
+
+/* ==========================================================================
    Druk i eksport PDF (Moduł III & dokumenty urzędowe ROPS)
    ========================================================================== */
 @media print {
