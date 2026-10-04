@@ -13,7 +13,6 @@ import {
   HandHeart,
   Heart,
   UsersThree,
-  VideoCamera,
   Wrench,
 } from "@phosphor-icons/react";
 import type { SocialInnovation } from "@/lib/api";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChartLineUp, DownloadSimple, HandHeart, MapPin, UsersThree } from "@phosphor-icons/react";
+import { ChartLineUp, HandHeart, MapPin, UsersThree } from "@phosphor-icons/react";
 import type { Solution } from "@/lib/solutions";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
