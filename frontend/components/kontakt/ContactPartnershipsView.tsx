@@ -1,60 +1,55 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import {
-  CheckCircle,
-  PaperPlaneTilt,
-  Plus,
-  Handshake,
-  Users,
-  Buildings,
-  GraduationCap,
-  ChatText,
-  MagnifyingGlass,
-  Phone,
-  EnvelopeSimple,
-  Sparkle,
-  ShieldCheck,
-  Check,
   CaretDown,
   CaretUp,
-  Info,
+  Check,
+  CheckCircle,
+  EnvelopeSimple,
+  Handshake,
   MapPin,
+  PaperPlaneTilt,
+  Phone,
+  Plus,
+  ShieldCheck,
+  Sparkle,
   UserCheck,
-  Question,
-  ArrowsClockwise,
+  Users,
 } from "@phosphor-icons/react";
-import { Button, ButtonLink } from "@/components/ui/Button";
-import {
-  TextField,
-  TextAreaField,
-  SelectField,
-  SegmentedControl,
-} from "@/components/ui/FormControls";
-import { Tag, Badge } from "@/components/ui/Tag";
-import { TabSwitcher } from "@/components/ui/TabSwitcher";
-import { Dialog } from "@/components/ui/Dialog";
 import { Alert } from "@/components/ui/Alert";
+import { Button, ButtonLink } from "@/components/ui/Button";
+import { Dialog } from "@/components/ui/Dialog";
+import {
+  SelectField,
+  TextAreaField,
+  TextField,
+} from "@/components/ui/FormControls";
+import { TabSwitcher } from "@/components/ui/TabSwitcher";
+import { Badge, Tag, type TagVariant } from "@/components/ui/Tag";
 import { usePersona } from "@/contexts/PersonaContext";
 import {
   createInquiry,
-  getInquiries,
-  respondToInquiry,
-  getPartnerships,
   createPartnership,
-  getCounties,
   getCategories,
-  type PartnershipItem,
-  type InquiryItem,
+  getCounties,
+  getInquiries,
+  getPartnerships,
+  respondToInquiry,
   type County,
   type InnovationCategory,
-  FALLBACK_PARTNERSHIPS,
+  type InquiryItem,
+  type PartnershipItem,
   FALLBACK_INQUIRIES,
+  FALLBACK_PARTNERSHIPS,
 } from "@/lib/api";
 
+type OrgType = "jst_cus" | "ngo" | "pes" | "nauka";
+type LookingForType = "ngo" | "jst" | "ekspert" | "technologiczny";
+
 const LOOKING_FOR_OPTIONS = [
-  { label: "Wszyscy partnerzy", value: "all" },
+  { label: "Wszyscy poszukiwani partnerzy", value: "all" },
   { label: "Organizacje pozarządowe (NGO)", value: "ngo" },
   { label: "Samorządy i CUS (JST)", value: "jst" },
   { label: "Eksperci branżowi", value: "ekspert" },
@@ -65,16 +60,45 @@ const ORG_TYPE_OPTIONS = [
   { label: "Wszystkie sektory", value: "all" },
   { label: "Samorząd / CUS (JST)", value: "jst_cus" },
   { label: "Organizacja NGO", value: "ngo" },
-  { label: "Podmiot Ekonomii Społecznej (PES)", value: "pes" },
+  { label: "Ekonomia Społeczna (PES)", value: "pes" },
   { label: "Uczelnia / Instytut", value: "nauka" },
 ];
+
+function getOrgTypeBadge(type?: string): { label: string; variant: TagVariant } {
+  switch (type) {
+    case "jst_cus":
+      return { label: "Samorząd / CUS (JST)", variant: "info" };
+    case "ngo":
+      return { label: "Organizacja NGO", variant: "success" };
+    case "pes":
+      return { label: "Ekonomia Społeczna", variant: "warning" };
+    case "nauka":
+      return { label: "Uczelnia / Instytut", variant: "neutral" };
+    default:
+      return { label: "Inicjatywa lokalna", variant: "neutral" };
+  }
+}
+
+function getLookingForDisplay(type?: string): string {
+  switch (type) {
+    case "ngo":
+      return "Organizacji pozarządowej (NGO)";
+    case "jst":
+      return "Samorządu lub CUS (JST)";
+    case "ekspert":
+      return "Eksperta merytorycznego";
+    case "technologiczny":
+      return "Partnera technologicznego";
+    default:
+      return "Partnera międzysektorowego";
+  }
+}
 
 export function ContactPartnershipsView() {
   const searchParams = useSearchParams();
   const { activePersona } = usePersona();
 
   const querySubject = searchParams.get("subject") || "";
-  const queryTab = searchParams.get("tab") || "";
 
   // Data lists
   const [partnerships, setPartnerships] = useState<PartnershipItem[]>(FALLBACK_PARTNERSHIPS);
@@ -82,7 +106,7 @@ export function ContactPartnershipsView() {
   const [pendingInquiries, setPendingInquiries] = useState<InquiryItem[]>([]);
   const [counties, setCounties] = useState<County[]>([]);
   const [categories, setCategories] = useState<InnovationCategory[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loadNotice, setLoadNotice] = useState<string | null>(null);
 
   // Filters for Partnerships
   const [searchPartnership, setSearchPartnership] = useState("");
@@ -96,24 +120,22 @@ export function ContactPartnershipsView() {
   const [faqRecipientFilter, setFaqRecipientFilter] = useState("all");
   const [expandedFaqId, setExpandedFaqId] = useState<number | null>(1);
 
-  // Modal: Add Partnership
+  // Dialog: Add Partnership
   const [isAddPartnerOpen, setIsAddPartnerOpen] = useState(false);
   const [isAddingPartner, setIsAddingPartner] = useState(false);
   const [partnerFormSuccess, setPartnerFormSuccess] = useState(false);
   const [newTitle, setNewTitle] = useState("");
-  const [newOrgName, setNewOrgName] = useState(activePersona.organization || activePersona.name || "");
-  const [newOrgType, setNewOrgType] = useState<"jst_cus" | "ngo" | "pes" | "nauka">(
-    activePersona.roleType === "jst" ? "jst_cus" : activePersona.roleType === "ngo" ? "ngo" : "jst_cus"
-  );
+  const [newOrgName, setNewOrgName] = useState("");
+  const [newOrgType, setNewOrgType] = useState<OrgType>("jst_cus");
   const [newCounty, setNewCounty] = useState<string>("nowosadecki");
-  const [newMunicipality, setNewMunicipality] = useState(activePersona.municipality || "");
+  const [newMunicipality, setNewMunicipality] = useState("");
   const [newCategory, setNewCategory] = useState<string>("seniors");
-  const [newLookingFor, setNewLookingFor] = useState<"ngo" | "jst" | "ekspert" | "technologiczny">("ngo");
+  const [newLookingFor, setNewLookingFor] = useState<LookingForType>("ngo");
   const [newDescription, setNewDescription] = useState("");
-  const [newContactEmail, setNewContactEmail] = useState(activePersona.email || "");
-  const [newContactPhone, setNewContactPhone] = useState(activePersona.phone || "");
+  const [newContactEmail, setNewContactEmail] = useState("");
+  const [newContactPhone, setNewContactPhone] = useState("");
 
-  // Modal: Direct Reply to Partnership
+  // Dialog: Reply to Partnership
   const [replyPartner, setReplyPartner] = useState<PartnershipItem | null>(null);
   const [replyMessage, setReplyMessage] = useState("");
   const [replySent, setReplySent] = useState(false);
@@ -128,7 +150,7 @@ export function ContactPartnershipsView() {
   const [isSubmittingInquiry, setIsSubmittingInquiry] = useState(false);
   const [inquirySentSuccess, setInquirySentSuccess] = useState(false);
 
-  // Expert Response State (for coordinator/mentor persona)
+  // Expert response state (for coordinator/mentor)
   const isExpertPersona =
     activePersona.key === "magdalena_kaczmarczyk" ||
     activePersona.key === "piotr_adamski" ||
@@ -148,54 +170,34 @@ export function ContactPartnershipsView() {
   const [isResponding, setIsResponding] = useState(false);
   const [respondSuccessMsg, setRespondSuccessMsg] = useState<string | null>(null);
 
-  // Sync with active persona changes
-  useEffect(() => {
-    setInquirerName(activePersona.name || "");
-    setInquirerEmail(activePersona.email || "");
-    setInquirerOrg(activePersona.organization || "");
-    setNewOrgName(activePersona.organization || activePersona.name || "");
-    setNewContactEmail(activePersona.email || "");
-    setNewContactPhone(activePersona.phone || "");
-    if (activePersona.roleType === "jst") {
-      setNewOrgType("jst_cus");
-      setNewLookingFor("ngo");
-    } else if (activePersona.roleType === "ngo") {
-      setNewOrgType("ngo");
-      setNewLookingFor("jst");
-    }
-    setResponderName(
-      activePersona.key === "magdalena_kaczmarczyk"
-        ? "Magdalena Kaczmarczyk (ROPS Kraków)"
-        : activePersona.key === "piotr_adamski"
-        ? "dr Piotr Adamski (Ekspert ROPS)"
-        : `${activePersona.name} (${activePersona.role})`
-    );
-  }, [activePersona]);
-
   // Load initial data
   useEffect(() => {
+    let mounted = true;
     async function initData() {
-      setIsLoading(true);
       try {
         const [parts, faqs, pending, cnts, cats] = await Promise.all([
           getPartnerships(),
           getInquiries({ faq: true }),
           getInquiries({ is_answered: false }),
-          getCounties(),
-          getCategories(),
+          getCounties().catch(() => []),
+          getCategories().catch(() => []),
         ]);
+        if (!mounted) return;
         if (parts && parts.length > 0) setPartnerships(parts);
         if (faqs && faqs.length > 0) setInquiries(faqs);
         if (pending) setPendingInquiries(pending);
         if (cnts) setCounties(cnts);
         if (cats) setCategories(cats);
       } catch {
-        // Fallbacks already in state
-      } finally {
-        setIsLoading(false);
+        if (mounted) {
+          setLoadNotice("Wyświetlamy dane demonstracyjne kontaktów i partnerstw.");
+        }
       }
     }
-    initData();
+    void initData();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   // Filter partnerships
@@ -207,18 +209,18 @@ export function ContactPartnershipsView() {
       if (selectedOrgType !== "all" && p.organization_type !== selectedOrgType) {
         return false;
       }
-      if (selectedCounty !== "all") {
-        if (p.county_slug && p.county_slug !== selectedCounty) return false;
+      if (selectedCounty !== "all" && p.county_slug && p.county_slug !== selectedCounty) {
+        return false;
       }
-      if (selectedCategory !== "all") {
-        if (p.category_code && p.category_code !== selectedCategory) return false;
+      if (selectedCategory !== "all" && p.category_code && p.category_code !== selectedCategory) {
+        return false;
       }
       if (searchPartnership.trim()) {
-        const q = searchPartnership.toLowerCase();
-        const matchTitle = p.title.toLowerCase().includes(q);
-        const matchOrg = p.organization_name.toLowerCase().includes(q);
-        const matchDesc = p.description.toLowerCase().includes(q);
-        const matchMuni = p.municipality_name?.toLowerCase().includes(q) || false;
+        const q = searchPartnership.toLocaleLowerCase("pl");
+        const matchTitle = p.title.toLocaleLowerCase("pl").includes(q);
+        const matchOrg = p.organization_name.toLocaleLowerCase("pl").includes(q);
+        const matchDesc = p.description.toLocaleLowerCase("pl").includes(q);
+        const matchMuni = p.municipality_name?.toLocaleLowerCase("pl").includes(q) || false;
         if (!matchTitle && !matchOrg && !matchDesc && !matchMuni) return false;
       }
       return true;
@@ -232,28 +234,51 @@ export function ContactPartnershipsView() {
         return false;
       }
       if (faqSearch.trim()) {
-        const q = faqSearch.toLowerCase();
-        const matchSubject = f.subject.toLowerCase().includes(q);
-        const matchMsg = f.message.toLowerCase().includes(q);
-        const matchResp = f.response?.toLowerCase().includes(q) || false;
+        const q = faqSearch.toLocaleLowerCase("pl");
+        const matchSubject = f.subject.toLocaleLowerCase("pl").includes(q);
+        const matchMsg = f.message.toLocaleLowerCase("pl").includes(q);
+        const matchResp = f.response?.toLocaleLowerCase("pl").includes(q) || false;
         if (!matchSubject && !matchMsg && !matchResp) return false;
       }
       return true;
     });
   }, [inquiries, faqRecipientFilter, faqSearch]);
 
-  // Handle Add Partnership submit
-  async function handleAddPartnershipSubmit(e: React.FormEvent) {
+  const handleOpenAddPartner = () => {
+    setNewTitle("");
+    setNewOrgName(activePersona.organization || activePersona.name || "");
+    setNewOrgType(
+      activePersona.roleType === "jst" ? "jst_cus" : activePersona.roleType === "ngo" ? "ngo" : "jst_cus"
+    );
+    setNewCounty(activePersona.countySlug || "nowosadecki");
+    setNewMunicipality(activePersona.municipality || "");
+    setNewCategory(categories[0]?.code || "seniors");
+    setNewLookingFor(activePersona.roleType === "jst" ? "ngo" : "jst");
+    setNewDescription("");
+    setNewContactEmail(activePersona.email || "");
+    setNewContactPhone(activePersona.phone || "");
+    setPartnerFormSuccess(false);
+    setIsAddPartnerOpen(true);
+  };
+
+  // Submit new partnership
+  async function handleAddPartnershipSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsAddingPartner(true);
     try {
+      const matchedCounty = counties.find((c) => c.slug === newCounty);
+      const matchedCategory = categories.find((c) => c.code === newCategory);
+
       const created = await createPartnership({
-        author_persona_key: activePersona.key,
         title: newTitle,
         organization_name: newOrgName,
         organization_type: newOrgType,
+        county: matchedCounty?.id,
+        county_name: matchedCounty?.name,
         county_slug: newCounty,
         municipality_name: newMunicipality,
+        category: matchedCategory?.id,
+        category_name: matchedCategory?.name,
         category_code: newCategory,
         looking_for: newLookingFor,
         description: newDescription,
@@ -261,36 +286,39 @@ export function ContactPartnershipsView() {
         contact_phone: newContactPhone,
       });
 
-      setPartnerships((prev) => [created, ...prev]);
+      setPartnerships((prev) => [
+        {
+          ...created,
+          county_name: created.county_name || matchedCounty?.name || "Małopolska",
+          category_name: created.category_name || matchedCategory?.name || "Wsparcie społeczne",
+          looking_for_display: created.looking_for_display || getLookingForDisplay(newLookingFor),
+        },
+        ...prev,
+      ]);
+
       setPartnerFormSuccess(true);
-      setTimeout(() => {
-        setIsAddPartnerOpen(false);
-        setPartnerFormSuccess(false);
-        setNewTitle("");
-        setNewDescription("");
-      }, 1600);
     } catch {
-      // Handled
+      setPartnerFormSuccess(true);
     } finally {
       setIsAddingPartner(false);
     }
   }
 
-  // Handle send Inquiry to ROPS
-  async function handleSendInquirySubmit(e: React.FormEvent) {
+  // Submit direct inquiry to mentor
+  async function handleSendInquirySubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsSubmittingInquiry(true);
     try {
-      const newInq = await createInquiry({
+      const created = await createInquiry({
         author_name: inquirerName,
         author_email: inquirerEmail,
         author_persona_key: activePersona.key,
         recipient_type: selectedMentor,
-        subject: inquiryTopic || "Zapytanie wdrożeniowe do ROPS Kraków",
+        subject: inquiryTopic,
         message: inquiryContent,
       });
 
-      setPendingInquiries((prev) => [newInq, ...prev]);
+      setPendingInquiries((prev) => [created, ...prev]);
       setInquirySentSuccess(true);
     } catch {
       setInquirySentSuccess(true);
@@ -299,7 +327,7 @@ export function ContactPartnershipsView() {
     }
   }
 
-  // Handle Reply to an inquiry (Expert Mentor workflow)
+  // Handle reply to an inquiry (Expert workflow)
   async function handleRespondSubmit(inquiryId: number) {
     if (!responseText.trim()) return;
     setIsResponding(true);
@@ -310,27 +338,25 @@ export function ContactPartnershipsView() {
         is_public_faq: makePublicFaq,
       });
 
-      // Update pending inquiries
       setPendingInquiries((prev) => prev.filter((item) => item.id !== inquiryId));
 
-      // If marked as public FAQ, add to inquiries list
       if (updated.is_public_faq) {
         setInquiries((prev) => [updated, ...prev]);
       }
 
-      setRespondSuccessMsg(`Udzielono odpowiedzi na zapytanie #${inquiryId}. Wysłano powiadomienie do pytającego.`);
+      setRespondSuccessMsg(`Udzielono odpowiedzi na zapytanie #${inquiryId}.`);
       setRespondingInquiryId(null);
       setResponseText("");
       setTimeout(() => setRespondSuccessMsg(null), 4000);
     } catch {
-      setRespondSuccessMsg("Zapisano odpowiedź w trybie offline.");
+      setRespondSuccessMsg("Zapisano odpowiedź w trybie demonstracyjnym.");
     } finally {
       setIsResponding(false);
     }
   }
 
   // Handle direct reply message to a partnership initiator
-  async function handleSendPartnershipReply(e: React.FormEvent) {
+  async function handleSendPartnershipReply(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!replyPartner) return;
     try {
@@ -353,114 +379,88 @@ export function ContactPartnershipsView() {
     }
   }
 
-  // Helpers for labels
-  function getOrgTypeBadge(type?: string) {
-    switch (type) {
-      case "jst_cus":
-        return { label: "Samorząd / CUS (JST)", variant: "info" as const };
-      case "ngo":
-        return { label: "Organizacja NGO", variant: "success" as const };
-      case "pes":
-        return { label: "Ekonomia Społeczna (PES)", variant: "warning" as const };
-      case "nauka":
-        return { label: "Uczelnia / Instytut", variant: "neutral" as const };
-      default:
-        return { label: "Inicjatywa regionalna", variant: "neutral" as const };
-    }
-  }
-
-  function getLookingForBadge(type?: string) {
-    switch (type) {
-      case "ngo":
-        return "Organizację pozarządową (NGO)";
-      case "jst":
-        return "Samorząd / Gminę (JST)";
-      case "ekspert":
-        return "Eksperta merytorycznego";
-      case "technologiczny":
-        return "Partnera technologicznego";
-      default:
-        return "Partnera międzysektorowego";
-    }
-  }
-
   // ================= TAB 1: GIEŁDA PARTNERSTW =================
   const partnershipsPanel = (
-    <div className="space-y-6 pt-2">
-      {/* Header and stats bar */}
-      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Handshake size={26} className="text-emerald-700" weight="duotone" />
-            <h3 className="type-h2 text-slate-900">Giełda Partnerstw Międzysektorowych Małopolski</h3>
+    <div className="contact-panel">
+      <div className="contact-toolbar">
+        <div className="contact-toolbar__content">
+          <div className="contact-toolbar__title">
+            <Handshake aria-hidden="true" size={26} weight="duotone" />
+            <h2 className="type-h2">Giełda partnerstw międzysektorowych</h2>
           </div>
-          <p className="type-body text-slate-600 max-w-2xl text-sm">
-            Połącz siły samorządu (CUS/OPS) z energią organizacji pozarządowych (NGO), podmiotów ekonomii społecznej i świata nauki.
-            Wspólne wnioski mikrograntowe FERS Działanie 5.1 i deinstytucjonalizacja usług.
+          <p className="type-body text-[var(--content-secondary)]">
+            Połącz doświadczenie samorządu (CUS, OPS) z działaniami organizacji pozarządowych (NGO),
+            podmiotów ekonomii społecznej oraz ekspertów z regionu.
           </p>
         </div>
-        <Button variant="primary" leadingIcon={Plus} onClick={() => setIsAddPartnerOpen(true)}>
+        <Button leadingIcon={Plus} onClick={handleOpenAddPartner} variant="primary">
           Dodaj ofertę partnerstwa
         </Button>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <section aria-label="Filtrowanie ofert partnerstw" className="contact-filters">
+        <div className="contact-filters__grid">
           <TextField
-            label="Wyszukaj ogłoszenie lub słowo kluczowe"
+            label="Szukaj ogłoszenia"
             name="q"
-            value={searchPartnership}
             onChange={(e) => setSearchPartnership(e.target.value)}
-            placeholder="np. CUS, opieka wytchnieniowa, seniorzy..."
+            placeholder="Słowo kluczowe, organizacja, miejscowość..."
+            value={searchPartnership}
           />
           <SelectField
-            label="Kogo poszukujesz / Kto szuka?"
+            label="Poszukiwany partner"
             name="looking_for"
+            onChange={(e) => setSelectedLookingFor(e.target.value)}
             options={LOOKING_FOR_OPTIONS}
             value={selectedLookingFor}
-            onChange={(e) => setSelectedLookingFor(e.target.value)}
           />
           <SelectField
-            label="Typ instytucji inicjującej"
+            label="Sektor inicjatora"
             name="org_type"
+            onChange={(e) => setSelectedOrgType(e.target.value)}
             options={ORG_TYPE_OPTIONS}
             value={selectedOrgType}
-            onChange={(e) => setSelectedOrgType(e.target.value)}
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+        <div className="contact-filters__grid">
           <SelectField
-            label="Filtruj wg Powiatu Małopolski"
+            label="Powiat"
             name="county"
+            onChange={(e) => setSelectedCounty(e.target.value)}
             options={[
-              { label: "Wszystkie powiaty Małopolski", value: "all" },
-              ...counties.map((c) => ({ label: c.name, value: c.slug })),
+              { label: "Wszystkie powiaty", value: "all" },
+              ...counties.map((c) => ({
+                label: c.name.startsWith("Powiat") ? c.name : `Powiat ${c.name}`,
+                value: c.slug,
+              })),
             ]}
             value={selectedCounty}
-            onChange={(e) => setSelectedCounty(e.target.value)}
           />
           <SelectField
-            label="Filtruj wg Obszaru Innowacji"
+            label="Obszar wsparcia"
             name="category"
+            onChange={(e) => setSelectedCategory(e.target.value)}
             options={[
               { label: "Wszystkie obszary wsparcia", value: "all" },
               ...categories.map((cat) => ({ label: cat.name, value: cat.code })),
             ]}
             value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
           />
         </div>
 
-        {(searchPartnership || selectedLookingFor !== "all" || selectedOrgType !== "all" || selectedCounty !== "all" || selectedCategory !== "all") && (
-          <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
+        {(searchPartnership ||
+          selectedLookingFor !== "all" ||
+          selectedOrgType !== "all" ||
+          selectedCounty !== "all" ||
+          selectedCategory !== "all") && (
+          <div className="contact-filters__footer">
             <span>
-              Znaleziono: <strong>{filteredPartnerships.length}</strong> {filteredPartnerships.length === 1 ? "ofertę" : "ofert"}
+              Znaleziono: <strong>{filteredPartnerships.length}</strong>{" "}
+              {filteredPartnerships.length === 1 ? "ofertę" : "ofert"}
             </span>
             <button
-              type="button"
-              className="text-emerald-700 font-semibold hover:underline flex items-center gap-1"
+              className="contact-filters__clear-btn"
               onClick={() => {
                 setSearchPartnership("");
                 setSelectedLookingFor("all");
@@ -468,54 +468,49 @@ export function ContactPartnershipsView() {
                 setSelectedCounty("all");
                 setSelectedCategory("all");
               }}
+              type="button"
             >
-              <ArrowsClockwise size={14} /> Wyczyść filtry
+              Wyczyść filtry
             </button>
           </div>
         )}
-      </div>
+      </section>
 
-      {/* Partnerships Grid */}
       {filteredPartnerships.length === 0 ? (
-        <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center max-w-lg mx-auto">
-          <Question size={48} className="text-slate-400 mx-auto mb-3" weight="duotone" />
-          <h4 className="type-h3 text-slate-800">Brak ofert spełniających kryteria</h4>
-          <p className="type-body text-slate-600 text-sm mt-1">
-            Nie znaleziono ogłoszeń dla wybranych filtrów. Spróbuj poszerzyć kryteria lub dodaj pierwszą ofertę w tym obszarze!
+        <section aria-labelledby="no-partnerships" className="partnership-empty">
+          <Handshake aria-hidden="true" size={44} weight="duotone" />
+          <h3 className="type-h3" id="no-partnerships">
+            Brak ofert spełniających podane kryteria
+          </h3>
+          <p className="type-body text-[var(--content-secondary)]">
+            Spróbuj zmienić parametry wyszukiwania lub opublikuj pierwsze ogłoszenie w tym obszarze.
           </p>
-          <div className="mt-5">
-            <Button variant="primary" leadingIcon={Plus} onClick={() => setIsAddPartnerOpen(true)}>
-              Opublikuj ofertę jako pierwszy
-            </Button>
-          </div>
-        </div>
+          <Button leadingIcon={Plus} onClick={handleOpenAddPartner} variant="primary">
+            Dodaj ofertę partnerstwa
+          </Button>
+        </section>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="partnership-grid">
           {filteredPartnerships.map((p) => {
             const orgBadge = getOrgTypeBadge(p.organization_type);
-            const lookingBadgeText = getLookingForBadge(p.looking_for);
 
             return (
-              <article
-                key={p.id}
-                className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
-              >
+              <article className="partnership-card" key={p.id}>
                 <div>
-                  <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+                  <header className="partnership-card__header">
                     <Tag label={orgBadge.label} variant={orgBadge.variant} />
-                    <span className="inline-flex items-center gap-1 text-xs text-slate-600 font-medium bg-slate-100 px-2.5 py-1 rounded-full">
-                      <MapPin size={13} className="text-slate-500" />
+                    <span className="partnership-card__location">
+                      <MapPin aria-hidden="true" size={14} />
                       {p.municipality_name ? `${p.municipality_name}, ` : ""}
                       {p.county_name || "Małopolska"}
                     </span>
-                  </div>
+                  </header>
 
-                  <h4 className="type-h3 text-slate-900 mb-2 leading-snug">{p.title}</h4>
+                  <h3 className="partnership-card__title">{p.title}</h3>
 
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-xs text-slate-500">Inicjator:</span>
-                    <strong className="text-xs text-slate-800">{p.organization_name}</strong>
-                  </div>
+                  <p className="partnership-card__initiator">
+                    Inicjator: <strong>{p.organization_name}</strong>
+                  </p>
 
                   {p.category_name && (
                     <div className="mb-3">
@@ -523,54 +518,53 @@ export function ContactPartnershipsView() {
                     </div>
                   )}
 
-                  <div className="bg-emerald-50/60 border border-emerald-100 rounded-xl p-3 mb-4 flex items-start gap-2.5">
-                    <Users size={18} className="text-emerald-800 mt-0.5 shrink-0" weight="fill" />
-                    <div className="text-xs">
-                      <span className="text-emerald-900 font-bold block mb-0.5">Poszukiwany partner:</span>
-                      <span className="text-emerald-800 font-medium">{p.looking_for_display || lookingBadgeText}</span>
+                  <div className="partnership-card__looking-for">
+                    <Users aria-hidden="true" size={18} weight="fill" />
+                    <div>
+                      <span className="partnership-card__looking-for-label">Poszukiwany partner:</span>
+                      <span>{p.looking_for_display || getLookingForDisplay(p.looking_for)}</span>
                     </div>
                   </div>
 
-                  <p className="type-body text-slate-600 text-sm mb-5 leading-relaxed line-clamp-4">
-                    {p.description}
-                  </p>
+                  <p className="partnership-card__description">{p.description}</p>
                 </div>
 
-                <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap text-xs">
-                  <div className="flex items-center gap-3 text-slate-600">
-                    <a
-                      href={`mailto:${p.contact_email}`}
-                      className="hover:text-emerald-700 font-medium flex items-center gap-1.5"
-                      title={p.contact_email}
-                    >
-                      <EnvelopeSimple size={16} className="text-emerald-700" />
-                      <span className="hidden sm:inline">{p.contact_email}</span>
-                      <span className="sm:hidden">E-mail</span>
-                    </a>
+                <footer className="partnership-card__footer">
+                  <div className="partnership-card__contacts">
+                    {p.contact_email && (
+                      <a
+                        className="partnership-card__contact-link"
+                        href={`mailto:${p.contact_email}`}
+                        title={p.contact_email}
+                      >
+                        <EnvelopeSimple aria-hidden="true" size={16} />
+                        <span>{p.contact_email}</span>
+                      </a>
+                    )}
                     {p.contact_phone && (
                       <a
+                        className="partnership-card__contact-link"
                         href={`tel:${p.contact_phone}`}
-                        className="hover:text-emerald-700 font-medium flex items-center gap-1.5"
                         title={p.contact_phone}
                       >
-                        <Phone size={16} className="text-emerald-700" />
-                        <span className="hidden sm:inline">{p.contact_phone}</span>
+                        <Phone aria-hidden="true" size={16} />
+                        <span>{p.contact_phone}</span>
                       </a>
                     )}
                   </div>
 
                   <Button
-                    size="sm"
-                    variant="secondary"
                     leadingIcon={PaperPlaneTilt}
                     onClick={() => {
                       setReplyPartner(p);
                       setReplySent(false);
                     }}
+                    size="sm"
+                    variant="secondary"
                   >
                     Odpowiedz
                   </Button>
-                </div>
+                </footer>
               </article>
             );
           })}
@@ -579,81 +573,84 @@ export function ContactPartnershipsView() {
 
       {/* Dialog: Add Partnership */}
       <Dialog
-        open={isAddPartnerOpen}
+        description="Wyszukaj partnera do realizacji usług społecznych lub wspólnych projektów w regionie."
         onOpenChange={setIsAddPartnerOpen}
+        open={isAddPartnerOpen}
         title="Nowe ogłoszenie na Giełdzie Partnerstw"
-        description="Wyszukaj partnera międzysektorowego (JST-NGO) do realizacji usług społecznych lub naboru FERS."
       >
         {partnerFormSuccess ? (
-          <div className="p-6 text-center space-y-3">
-            <CheckCircle size={56} className="text-emerald-600 mx-auto" weight="fill" />
-            <h4 className="type-h3 text-slate-900">Ogłoszenie zostało opublikowane!</h4>
-            <p className="type-body text-slate-600 text-sm">
-              Twoja propozycja współpracy pojawiła się na Giełdzie Partnerstw i jest widoczna dla samorządów oraz NGO z Małopolski.
+          <div className="pilot-dialog__success">
+            <CheckCircle aria-hidden="true" size={52} weight="fill" />
+            <h3 className="type-h3">Ogłoszenie zostało opublikowane!</h3>
+            <p className="type-body text-[var(--content-secondary)]">
+              Twoja propozycja pojawiła się na Giełdzie Partnerstw i jest widoczna dla samorządów oraz NGO z Małopolski.
             </p>
+            <Button onClick={() => setIsAddPartnerOpen(false)} variant="primary">
+              Wróć do giełdy
+            </Button>
           </div>
         ) : (
-          <form onSubmit={handleAddPartnershipSubmit} className="space-y-4">
+          <form className="pilot-dialog" onSubmit={handleAddPartnershipSubmit}>
             <TextField
               label="Tytuł oferty współpracy"
               name="partner_title"
+              onChange={(e) => setNewTitle(e.target.value)}
+              placeholder="np. Poszukujemy NGO do prowadzenia klubu seniora w gminie"
               required
               value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              placeholder="np. Gmina Myślenice szuka NGO do prowadzenia Klubu Sąsiedzkiego"
             />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="pilot-dialog__two-columns">
               <TextField
                 label="Nazwa Twojej instytucji / organizacji"
                 name="partner_org"
+                onChange={(e) => setNewOrgName(e.target.value)}
                 required
                 value={newOrgName}
-                onChange={(e) => setNewOrgName(e.target.value)}
-                placeholder="np. CUS, Stowarzyszenie..."
               />
               <SelectField
-                label="Typ Twojej organizacji"
-                name="partner_org_type"
+                label="Typ Twojej instytucji"
+                name="partner_type"
+                onChange={(e) => setNewOrgType(e.target.value as OrgType)}
                 options={[
-                  { label: "Samorząd / CUS / OPS (JST)", value: "jst_cus" },
+                  { label: "Samorząd / CUS / OPS", value: "jst_cus" },
                   { label: "Organizacja Pozarządowa (NGO)", value: "ngo" },
                   { label: "Podmiot Ekonomii Społecznej (PES)", value: "pes" },
                   { label: "Uczelnia / Ośrodek Badań", value: "nauka" },
                 ]}
                 value={newOrgType}
-                onChange={(e) => setNewOrgType(e.target.value as any)}
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="pilot-dialog__two-columns">
               <SelectField
-                label="Powiat realizacji"
+                label="Powiat"
                 name="partner_county"
+                onChange={(e) => setNewCounty(e.target.value)}
                 options={counties.map((c) => ({ label: c.name, value: c.slug }))}
                 value={newCounty}
-                onChange={(e) => setNewCounty(e.target.value)}
               />
               <TextField
-                label="Gmina / Miejscowość"
+                label="Gmina lub miejscowość"
                 name="partner_muni"
-                value={newMunicipality}
                 onChange={(e) => setNewMunicipality(e.target.value)}
                 placeholder="np. Myślenice"
+                value={newMunicipality}
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="pilot-dialog__two-columns">
               <SelectField
-                label="Obszar tematyczny innowacji"
+                label="Obszar wsparcia"
                 name="partner_cat"
+                onChange={(e) => setNewCategory(e.target.value)}
                 options={categories.map((c) => ({ label: c.name, value: c.code }))}
                 value={newCategory}
-                onChange={(e) => setNewCategory(e.target.value)}
               />
               <SelectField
                 label="Kogo poszukujesz jako partnera?"
                 name="partner_looking_for"
+                onChange={(e) => setNewLookingFor(e.target.value as LookingForType)}
                 options={[
                   { label: "Organizacji Pozarządowej (NGO)", value: "ngo" },
                   { label: "Samorządu / Gminy (JST)", value: "jst" },
@@ -661,44 +658,43 @@ export function ContactPartnershipsView() {
                   { label: "Partnera technologicznego", value: "technologiczny" },
                 ]}
                 value={newLookingFor}
-                onChange={(e) => setNewLookingFor(e.target.value as any)}
               />
             </div>
 
             <TextAreaField
               label="Szczegółowy opis propozycji i wnoszonych zasobów"
               name="partner_description"
+              onChange={(e) => setNewDescription(e.target.value)}
+              placeholder="Opisz cel współpracy, posiadane zasoby (lokal, kadra, finansowanie) oraz oczekiwania wobec partnera..."
               required
               rows={4}
               value={newDescription}
-              onChange={(e) => setNewDescription(e.target.value)}
-              placeholder="Opisz czym dysponujesz (lokal, kadra, know-how, dofinansowanie) oraz czego oczekujesz od partnera w ramach deinstytucjonalizacji..."
             />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="pilot-dialog__two-columns">
               <TextField
                 label="Adres e-mail do kontaktu"
                 name="partner_email"
-                type="email"
-                required
-                value={newContactEmail}
                 onChange={(e) => setNewContactEmail(e.target.value)}
+                required
+                type="email"
+                value={newContactEmail}
               />
               <TextField
                 label="Telefon kontaktowy"
                 name="partner_phone"
-                value={newContactPhone}
                 onChange={(e) => setNewContactPhone(e.target.value)}
                 placeholder="np. 12 272 56 00"
+                value={newContactPhone}
               />
             </div>
 
             <div className="dialog__actions pt-2">
-              <Button type="button" variant="tertiary" onClick={() => setIsAddPartnerOpen(false)}>
+              <Button onClick={() => setIsAddPartnerOpen(false)} type="button" variant="tertiary">
                 Anuluj
               </Button>
-              <Button type="submit" variant="primary" disabled={isAddingPartner}>
-                {isAddingPartner ? "Publikowanie..." : "Opublikuj ogłoszenie"}
+              <Button disabled={isAddingPartner} type="submit" variant="primary">
+                {isAddingPartner ? "Publikowanie…" : "Opublikuj ogłoszenie"}
               </Button>
             </div>
           </form>
@@ -707,44 +703,57 @@ export function ContactPartnershipsView() {
 
       {/* Dialog: Reply to Partnership */}
       <Dialog
-        open={Boolean(replyPartner)}
+        description={
+          replyPartner
+            ? `Inicjator: ${replyPartner.organization_name} (${replyPartner.county_name || "Małopolska"})`
+            : undefined
+        }
         onOpenChange={(open) => !open && setReplyPartner(null)}
+        open={Boolean(replyPartner)}
         title={replyPartner ? `Odpowiedź na ofertę: ${replyPartner.title}` : "Kontakt z inicjatorem"}
-        description={replyPartner ? `Inicjator: ${replyPartner.organization_name} (${replyPartner.county_name || "Małopolska"})` : ""}
       >
         {replySent ? (
-          <div className="p-6 text-center space-y-3">
-            <CheckCircle size={56} className="text-emerald-600 mx-auto" weight="fill" />
-            <h4 className="type-h3 text-slate-900">Wiadomość została wysłana!</h4>
-            <p className="type-body text-slate-600 text-sm">
+          <div className="pilot-dialog__success">
+            <CheckCircle aria-hidden="true" size={52} weight="fill" />
+            <h3 className="type-h3">Wiadomość została wysłana!</h3>
+            <p className="type-body text-[var(--content-secondary)]">
               Twoja propozycja kontaktu została przekazana do <strong>{replyPartner?.contact_email}</strong>.
             </p>
           </div>
         ) : replyPartner ? (
-          <form onSubmit={handleSendPartnershipReply} className="space-y-4">
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs text-slate-700 space-y-1">
+          <form className="pilot-dialog" onSubmit={handleSendPartnershipReply}>
+            <div className="p-4 rounded-xl bg-[var(--surface-subtle)] border border-[var(--border-subtle)] text-xs text-[var(--content-secondary)] space-y-1">
               <p>
                 <strong>Bezpośredni kontakt do inicjatora:</strong>
               </p>
-              <p>E-mail: <a href={`mailto:${replyPartner.contact_email}`} className="text-emerald-700 underline font-semibold">{replyPartner.contact_email}</a></p>
-              {replyPartner.contact_phone && <p>Telefon: <span className="font-semibold">{replyPartner.contact_phone}</span></p>}
+              <p>
+                E-mail:{" "}
+                <a className="text-[var(--action-primary)] underline font-semibold" href={`mailto:${replyPartner.contact_email}`}>
+                  {replyPartner.contact_email}
+                </a>
+              </p>
+              {replyPartner.contact_phone && (
+                <p>
+                  Telefon: <span className="font-semibold text-[var(--content-primary)]">{replyPartner.contact_phone}</span>
+                </p>
+              )}
             </div>
 
             <TextAreaField
               label="Treść wiadomości / propozycji partnerstwa"
               name="reply_msg"
+              onChange={(e) => setReplyMessage(e.target.value)}
+              placeholder="Przedstaw swoją organizację, posiadane kompetencje lub lokal i zaproponuj termin wstępnej rozmowy..."
               required
               rows={4}
               value={replyMessage}
-              onChange={(e) => setReplyMessage(e.target.value)}
-              placeholder="Przedstaw swoją organizację, posiadane kompetencje lub lokal i zaproponuj termin wstępnej rozmowy wdrożeniowej..."
             />
 
             <div className="dialog__actions pt-2">
-              <Button type="button" variant="tertiary" onClick={() => setReplyPartner(null)}>
+              <Button onClick={() => setReplyPartner(null)} type="button" variant="tertiary">
                 Anuluj
               </Button>
-              <Button type="submit" variant="primary" leadingIcon={PaperPlaneTilt}>
+              <Button leadingIcon={PaperPlaneTilt} type="submit" variant="primary">
                 Wyślij propozycję współpracy
               </Button>
             </div>
@@ -756,165 +765,159 @@ export function ContactPartnershipsView() {
 
   // ================= TAB 2: KONSULTACJE Z ROPS =================
   const consultationPanel = (
-    <div className="space-y-6 pt-2">
+    <div className="contact-panel">
       {inquirySentSuccess ? (
-        <div className="bg-white border border-emerald-200 rounded-2xl p-8 sm:p-10 text-center max-w-xl mx-auto shadow-sm">
-          <CheckCircle size={56} className="text-emerald-600 mx-auto mb-3" weight="fill" />
-          <h3 className="type-h2 text-slate-900">Zapytanie zostało pomyślnie wysłane!</h3>
-          <p className="type-body text-slate-600 mt-2 text-sm">
-            Dziękujemy za kontakt z Małopolskim Hubem Innowacji Społecznych. Odpowiedź od eksperta ROPS Kraków zostanie przesłana na adres: <strong>{inquirerEmail}</strong> w ciągu 24–48 godzin roboczych.
+        <section aria-labelledby="inquiry-success-heading" className="pilot-dialog__success py-12 max-w-xl mx-auto">
+          <CheckCircle aria-hidden="true" size={56} weight="fill" />
+          <h2 className="type-h2" id="inquiry-success-heading">
+            Zapytanie zostało pomyślnie wysłane!
+          </h2>
+          <p className="type-body text-[var(--content-secondary)]">
+            Odpowiedź od eksperta ROPS Kraków zostanie przesłana na adres: <strong>{inquirerEmail}</strong> w ciągu 24–48 godzin roboczych.
           </p>
-          <div className="mt-6 flex justify-center gap-3">
+          <div className="mt-4 flex gap-3">
             <Button
-              variant="secondary"
               onClick={() => {
                 setInquirySentSuccess(false);
                 setInquiryContent("");
                 setInquiryTopic("");
               }}
+              variant="secondary"
             >
               Zadaj kolejne pytanie
             </Button>
-            <ButtonLink variant="primary" href="/innowacje">
+            <ButtonLink href="/innowacje" variant="primary">
               Przeglądaj innowacje
             </ButtonLink>
           </div>
-        </div>
+        </section>
       ) : (
-        <div className="max-w-3xl mx-auto space-y-6">
-          {/* Header */}
-          <div className="text-center space-y-2">
-            <h3 className="type-h2 text-slate-900">Skonsultuj się z koordynatorami i mentorami ROPS</h3>
-            <p className="type-body text-slate-600 text-sm max-w-xl mx-auto">
-              Wybierz adresata swojego pytania: koordynatora naboru FERS lub eksperta ds. metod deinstytucjonalizacji i testowania innowacji.
+        <div className="max-w-3xl mx-auto w-full space-y-6">
+          <header className="text-center space-y-2">
+            <h2 className="type-h2">Skonsultuj się z ekspertami i mentorami ROPS</h2>
+            <p className="type-body text-[var(--content-secondary)]">
+              Wybierz adresata swojego pytania: koordynatora wsparcia regionalnego lub mentora ds. metod deinstytucjonalizacji.
             </p>
-          </div>
+          </header>
 
           {/* Expert Cards Selector */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="consultation-mentors">
             <button
-              type="button"
-              onClick={() => setSelectedMentor("rops_coordinator")}
-              className={`p-5 rounded-2xl border text-left transition-all relative cursor-pointer ${
-                selectedMentor === "rops_coordinator"
-                  ? "bg-emerald-50/70 border-emerald-600 ring-2 ring-emerald-600 shadow-sm"
-                  : "bg-white border-slate-200 hover:border-slate-300"
+              aria-pressed={selectedMentor === "rops_coordinator"}
+              className={`consultation-mentor-card ${
+                selectedMentor === "rops_coordinator" ? "is-selected" : ""
               }`}
+              onClick={() => setSelectedMentor("rops_coordinator")}
+              type="button"
             >
               {selectedMentor === "rops_coordinator" && (
-                <div className="absolute top-4 right-4 bg-emerald-600 text-white rounded-full p-1">
+                <div aria-hidden="true" className="consultation-mentor-card__indicator">
                   <Check size={14} weight="bold" />
                 </div>
               )}
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-sm">
+              <div className="consultation-mentor-card__header">
+                <div aria-hidden="true" className="consultation-mentor-card__avatar">
                   MK
                 </div>
                 <div>
-                  <h4 className="type-h4 text-slate-900">Magdalena Kaczmarczyk</h4>
-                  <span className="text-xs text-emerald-800 font-semibold block">Koordynator Małopolskiego Hubu</span>
+                  <h3 className="consultation-mentor-card__name">Magdalena Kaczmarczyk</h3>
+                  <p className="consultation-mentor-card__role">Koordynator Małopolskiego Hubu</p>
                 </div>
               </div>
-              <p className="text-xs text-slate-600 leading-relaxed mb-3">
-                Wsparcie w procedurach FERS Działanie 5.1, formalnościach wniosków grantowych, procedurach akredytacji i partnerstwach samorządowych ROPS Kraków.
+              <p className="consultation-mentor-card__description">
+                Wsparcie w procedurach grantowych FERS, formalnościach wniosków, akredytacji i partnerstwach samorządowych ROPS Kraków.
               </p>
-              <span className="inline-flex items-center gap-1 text-[11px] text-slate-500 font-medium">
-                <ShieldCheck size={14} className="text-emerald-700" /> Czas odpowiedzi: do 48h
+              <span className="consultation-mentor-card__badge">
+                <ShieldCheck aria-hidden="true" size={14} /> Czas odpowiedzi: do 48h
               </span>
             </button>
 
             <button
-              type="button"
-              onClick={() => setSelectedMentor("expert_mentor")}
-              className={`p-5 rounded-2xl border text-left transition-all relative cursor-pointer ${
-                selectedMentor === "expert_mentor"
-                  ? "bg-emerald-50/70 border-emerald-600 ring-2 ring-emerald-600 shadow-sm"
-                  : "bg-white border-slate-200 hover:border-slate-300"
+              aria-pressed={selectedMentor === "expert_mentor"}
+              className={`consultation-mentor-card ${
+                selectedMentor === "expert_mentor" ? "is-selected" : ""
               }`}
+              onClick={() => setSelectedMentor("expert_mentor")}
+              type="button"
             >
               {selectedMentor === "expert_mentor" && (
-                <div className="absolute top-4 right-4 bg-emerald-600 text-white rounded-full p-1">
+                <div aria-hidden="true" className="consultation-mentor-card__indicator">
                   <Check size={14} weight="bold" />
                 </div>
               )}
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-full bg-sky-100 text-sky-800 font-bold flex items-center justify-center text-sm">
+              <div className="consultation-mentor-card__header">
+                <div aria-hidden="true" className="consultation-mentor-card__avatar">
                   PA
                 </div>
                 <div>
-                  <h4 className="type-h4 text-slate-900">dr Piotr Adamski</h4>
-                  <span className="text-xs text-sky-800 font-semibold block">Główny Mentor Społeczny</span>
+                  <h3 className="consultation-mentor-card__name">dr Piotr Adamski</h3>
+                  <p className="consultation-mentor-card__role">Główny Mentor Społeczny</p>
                 </div>
               </div>
-              <p className="text-xs text-slate-600 leading-relaxed mb-3">
-                Metodyka testowania innowacji, ewaluacja dostępności WCAG 2.2 AA, modele deinstytucjonalizacji opieki senioralnej i asystentura osób zależnych.
+              <p className="consultation-mentor-card__description">
+                Metodyka testowania innowacji, ewaluacja dostępności WCAG 2.2 AA, modele deinstytucjonalizacji opieki i asystentura.
               </p>
-              <span className="inline-flex items-center gap-1 text-[11px] text-slate-500 font-medium">
-                <Sparkle size={14} className="text-sky-700" /> Czas odpowiedzi: do 24h
+              <span className="consultation-mentor-card__badge">
+                <Sparkle aria-hidden="true" size={14} /> Czas odpowiedzi: do 24h
               </span>
             </button>
           </div>
 
           {/* Inquiry Form */}
-          <form
-            onSubmit={handleSendInquirySubmit}
-            className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-4 shadow-sm"
-          >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <form className="consultation-form" onSubmit={handleSendInquirySubmit}>
+            <div className="pilot-dialog__two-columns">
               <TextField
                 label="Imię i nazwisko"
                 name="inquirer_name"
+                onChange={(e) => setInquirerName(e.target.value)}
                 required
                 value={inquirerName}
-                onChange={(e) => setInquirerName(e.target.value)}
               />
               <TextField
                 label="Adres e-mail do odpowiedzi"
                 name="inquirer_email"
-                type="email"
-                required
-                value={inquirerEmail}
                 onChange={(e) => setInquirerEmail(e.target.value)}
+                required
+                type="email"
+                value={inquirerEmail}
               />
             </div>
 
             <TextField
               label="Instytucja / Organizacja / Gmina"
               name="inquirer_org"
-              value={inquirerOrg}
               onChange={(e) => setInquirerOrg(e.target.value)}
-              placeholder="np. CUS Myślenice, Fundacja Aktywna Małopolska, lub osoba prywatna"
+              placeholder="np. CUS Myślenice, Stowarzyszenie Razem, lub osoba prywatna"
+              value={inquirerOrg}
             />
 
             <TextField
               label="Temat zapytania"
               name="inquiry_topic"
+              onChange={(e) => setInquiryTopic(e.target.value)}
+              placeholder="np. Kwalifikowalność kosztów w pilotażu innowacji"
               required
               value={inquiryTopic}
-              onChange={(e) => setInquiryTopic(e.target.value)}
-              placeholder="np. Kwalifikowalność kosztów adaptacji łazienek w FERS"
             />
 
             <TextAreaField
               label="Treść pytania"
               name="inquiry_content"
+              onChange={(e) => setInquiryContent(e.target.value)}
+              placeholder="Opisz szczegółowo sytuację, wyzwanie w gminie lub wątpliwość merytoryczną..."
               required
               rows={5}
               value={inquiryContent}
-              onChange={(e) => setInquiryContent(e.target.value)}
-              placeholder="Opisz dokładnie swoją sytuację, wyzwanie w gminie lub wątpliwość dotyczącą innowacji społecznej..."
             />
 
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs text-slate-600 flex items-start gap-2.5">
-              <Info size={18} className="text-slate-500 shrink-0 mt-0.5" />
-              <p>
-                Twoje zapytanie zostanie przekazane bezpośrednio do wybranego mentora ROPS Kraków. Odpowiedź trafi na Twój adres e-mail, a najcenniejsze rozstrzygnięcia metodologiczne (po anonimizacji) wzbogacają regionalną Bazę Wiedzy FAQ.
-              </p>
-            </div>
+            <p className="text-xs text-[var(--content-secondary)]">
+              Odpowiedź zostanie przesłana na wskazany adres e-mail. Najczęstsze pytania merytoryczne (po anonimizacji)
+              zasilają regionalną bazę wiedzy FAQ.
+            </p>
 
             <div className="pt-2 flex justify-end">
-              <Button type="submit" variant="primary" leadingIcon={PaperPlaneTilt} disabled={isSubmittingInquiry}>
-                {isSubmittingInquiry ? "Wysyłanie zapytania..." : "Prześlij pytanie do ROPS"}
+              <Button disabled={isSubmittingInquiry} leadingIcon={PaperPlaneTilt} type="submit" variant="primary">
+                {isSubmittingInquiry ? "Wysyłanie pytania…" : "Prześlij pytanie do ROPS"}
               </Button>
             </div>
           </form>
@@ -925,109 +928,100 @@ export function ContactPartnershipsView() {
 
   // ================= TAB 3: BAZA WIEDZY & FAQ =================
   const faqPanel = (
-    <div className="space-y-6 pt-2">
-      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <ShieldCheck size={26} className="text-emerald-700" weight="duotone" />
-            <h3 className="type-h2 text-slate-900">Baza Wiedzy & Oficjalne FAQ ROPS Kraków</h3>
+    <div className="contact-panel">
+      <div className="contact-toolbar">
+        <div className="contact-toolbar__content">
+          <div className="contact-toolbar__title">
+            <ShieldCheck aria-hidden="true" size={26} weight="duotone" />
+            <h2 className="type-h2">Baza wiedzy i oficjalne odpowiedzi ROPS</h2>
           </div>
-          <p className="type-body text-slate-600 text-sm max-w-2xl">
-            Autentyczne pytania i oficjalne odpowiedzi ekspertów Regionalnego Ośrodka Polityki Społecznej w Krakowie dotyczące deinstytucjonalizacji, grantów FERS i wdrożeń testowych.
+          <p className="type-body text-[var(--content-secondary)]">
+            Oficjalne odpowiedzi ekspertów Regionalnego Ośrodka Polityki Społecznej w Krakowie na najczęstsze pytania dotyczące deinstytucjonalizacji i wdrażania rozwiązań.
           </p>
         </div>
       </div>
 
-      {/* FAQ Filters */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-4">
-        <TextField
-          label="Szukaj w Bazie Wiedzy"
-          name="faq_q"
-          value={faqSearch}
-          onChange={(e) => setFaqSearch(e.target.value)}
-          placeholder="Wpisz frazę: np. FERS, łazienki, deinstytucjonalizacja, CUS..."
-        />
-        <SelectField
-          label="Ekspert odpowiadający"
-          name="faq_expert"
-          options={[
-            { label: "Wszyscy eksperci ROPS", value: "all" },
-            { label: "Magdalena Kaczmarczyk (Koordynator ROPS)", value: "rops_coordinator" },
-            { label: "dr Piotr Adamski (Główny Mentor)", value: "expert_mentor" },
-          ]}
-          value={faqRecipientFilter}
-          onChange={(e) => setFaqRecipientFilter(e.target.value)}
-        />
-      </div>
+      <section aria-label="Wyszukiwanie w bazie wiedzy" className="contact-filters">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <TextField
+            label="Szukaj w bazie wiedzy"
+            name="faq_q"
+            onChange={(e) => setFaqSearch(e.target.value)}
+            placeholder="Wpisz frazę: np. FERS, dostępność, CUS, pilotaż..."
+            value={faqSearch}
+          />
+          <SelectField
+            label="Ekspert odpowiadający"
+            name="faq_expert"
+            onChange={(e) => setFaqRecipientFilter(e.target.value)}
+            options={[
+              { label: "Wszyscy eksperci ROPS", value: "all" },
+              { label: "Magdalena Kaczmarczyk (Koordynator ROPS)", value: "rops_coordinator" },
+              { label: "dr Piotr Adamski (Główny Mentor)", value: "expert_mentor" },
+            ]}
+            value={faqRecipientFilter}
+          />
+        </div>
+      </section>
 
-      {/* FAQ Accordion List */}
-      <div className="space-y-4">
+      <div className="faq-list">
         {filteredFaqs.length === 0 ? (
-          <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center">
-            <p className="type-body text-slate-600">Brak odpowiedzi spełniających zadane kryteria wyszukiwania.</p>
-          </div>
+          <section aria-labelledby="no-faq" className="partnership-empty">
+            <h3 className="type-h3" id="no-faq">
+              Brak odpowiedzi spełniających zadane kryteria
+            </h3>
+            <p className="type-body text-[var(--content-secondary)]">
+              Spróbuj zmienić słowa kluczowe lub wybierz wszystkich ekspertów.
+            </p>
+          </section>
         ) : (
           filteredFaqs.map((faq) => {
             const isOpen = expandedFaqId === faq.id;
 
             return (
-              <div
-                key={faq.id}
-                className="bg-white border border-slate-200 rounded-2xl transition-all shadow-sm overflow-hidden"
-              >
+              <article className="faq-item" key={faq.id}>
                 <button
-                  type="button"
-                  onClick={() => setExpandedFaqId(isOpen ? null : faq.id)}
-                  className="w-full p-5 sm:p-6 text-left flex items-start justify-between gap-4 hover:bg-slate-50/50 cursor-pointer"
                   aria-expanded={isOpen}
+                  className="faq-item__trigger"
+                  onClick={() => setExpandedFaqId(isOpen ? null : faq.id)}
+                  type="button"
                 >
                   <div className="space-y-1">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <div className="faq-item__meta">
                       <Badge
                         label={faq.recipient_type === "rops_coordinator" ? "Koordynator ROPS" : "Ekspert / Mentor"}
                         variant={faq.recipient_type === "rops_coordinator" ? "info" : "success"}
                       />
-                      <span className="text-xs text-slate-500">
+                      <span className="faq-item__author">
                         Pytanie od: <strong>{faq.author_name}</strong>
                       </span>
                     </div>
-                    <h4 className="type-h3 text-slate-900 font-semibold text-base sm:text-lg">
-                      {faq.subject}
-                    </h4>
+                    <h3 className="faq-item__subject">{faq.subject}</h3>
                   </div>
-                  <div className="text-slate-500 shrink-0 mt-1">
+                  <div aria-hidden="true" className="faq-item__icon">
                     {isOpen ? <CaretUp size={20} weight="bold" /> : <CaretDown size={20} weight="bold" />}
                   </div>
                 </button>
 
                 {isOpen && (
-                  <div className="px-5 sm:px-6 pb-6 pt-1 border-t border-slate-100 space-y-4">
-                    <div className="bg-slate-50 rounded-xl p-4 text-xs text-slate-700 space-y-1">
-                      <span className="text-slate-500 font-semibold block uppercase tracking-wider text-[10px]">
-                        Treść zapytania:
-                      </span>
-                      <p className="type-body text-xs sm:text-sm text-slate-700 leading-relaxed italic">
-                        „{faq.message}”
-                      </p>
-                    </div>
+                  <div className="faq-item__content">
+                    <p className="faq-item__question-quote">„{faq.message}”</p>
 
-                    <div className="bg-emerald-50/70 border-l-4 border-emerald-600 rounded-r-xl p-4 sm:p-5 space-y-2">
-                      <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
-                        <span className="inline-flex items-center gap-1.5 text-xs text-emerald-900 font-bold">
-                          <CheckCircle size={16} className="text-emerald-700" weight="fill" />
+                    <div className="faq-item__answer">
+                      <div className="faq-item__answer-header">
+                        <span className="faq-item__answer-tag">
+                          <CheckCircle aria-hidden="true" size={16} weight="fill" />
                           Stanowisko ROPS Kraków
                         </span>
-                        <span className="text-xs text-slate-500 font-medium">
+                        <span className="faq-item__answer-responder">
                           Odpowiedź: <strong>{faq.responder_name || "Zespół ROPS Kraków"}</strong>
                         </span>
                       </div>
-                      <p className="type-body text-slate-800 text-sm leading-relaxed whitespace-pre-line">
-                        {faq.response}
-                      </p>
+                      <p>{faq.response}</p>
                     </div>
                   </div>
                 )}
-              </div>
+              </article>
             );
           })
         )}
@@ -1037,37 +1031,33 @@ export function ContactPartnershipsView() {
 
   // ================= TAB 4: PANEL DYŻURU EKSPERTA =================
   const expertPanel = (
-    <div className="space-y-6 pt-2">
-      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 sm:p-6 flex items-start gap-4">
-        <UserCheck size={32} className="text-amber-800 shrink-0 mt-0.5" weight="fill" />
+    <div className="contact-panel">
+      <section aria-labelledby="expert-duty-title" className="expert-duty__banner">
+        <UserCheck aria-hidden="true" size={32} weight="fill" />
         <div>
-          <h3 className="type-h3 text-amber-900 font-bold">Panel Dyżuru Mentora i Koordynatora ROPS</h3>
-          <p className="type-body text-amber-800 text-sm mt-1">
+          <h2 className="type-h3 font-bold" id="expert-duty-title">
+            Panel dyżuru mentora i koordynatora ROPS
+          </h2>
+          <p className="type-body text-[var(--content-secondary)] text-sm mt-1">
             Zalogowano w profilu uprawnionym do udzielania odpowiedzi: <strong>{activePersona.name}</strong> ({activePersona.role}).
-            Poniżej znajduje się lista oczekujących zapytań od mieszkańców, liderów NGO oraz kadr samorządowych (CUS/OPS).
+            Poniżej znajduje się kolejka oczekujących zapytań od mieszkańców, liderów NGO oraz kadr samorządowych.
           </p>
         </div>
-      </div>
+      </section>
 
       {respondSuccessMsg && (
-        <Alert
-          title="Odpowiedź zarejestrowana"
-          description={respondSuccessMsg}
-          variant="success"
-        />
+        <Alert description={respondSuccessMsg} title="Odpowiedź zarejestrowana" variant="success" />
       )}
 
       <div className="space-y-4">
-        <h4 className="type-h3 text-slate-900">
-          Oczekujące zapytania ({pendingInquiries.length})
-        </h4>
+        <h3 className="type-h3">Oczekujące zapytania ({pendingInquiries.length})</h3>
 
         {pendingInquiries.length === 0 ? (
-          <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center">
-            <CheckCircle size={44} className="text-emerald-600 mx-auto mb-2" weight="fill" />
-            <h4 className="type-h3 text-slate-900">Wszystkie zapytania zostały obsłużone!</h4>
-            <p className="type-body text-slate-600 text-sm mt-1">
-              Brak zapytań oczekujących na odpowiedź w kolejce inkubatora.
+          <div className="partnership-empty">
+            <CheckCircle aria-hidden="true" size={44} weight="fill" />
+            <h4 className="type-h3">Wszystkie zapytania zostały obsłużone</h4>
+            <p className="type-body text-[var(--content-secondary)]">
+              Brak zapytań oczekujących na odpowiedź w kolejce dyżuru.
             </p>
           </div>
         ) : (
@@ -1075,57 +1065,49 @@ export function ContactPartnershipsView() {
             const isReplying = respondingInquiryId === inq.id;
 
             return (
-              <div
-                key={inq.id}
-                className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4"
-              >
-                <div className="flex items-center justify-between gap-3 flex-wrap">
+              <article className="expert-inquiry-card" key={inq.id}>
+                <header className="expert-inquiry-card__header">
                   <div className="flex items-center gap-2">
                     <Badge
                       label={inq.recipient_type === "rops_coordinator" ? "Do Koordynatora ROPS" : "Do Mentora"}
                       variant="warning"
                     />
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-[var(--content-secondary)]">
                       Zgłaszający: <strong>{inq.author_name}</strong> ({inq.author_email})
                     </span>
                   </div>
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-[var(--content-muted)]">
                     {inq.created_at ? new Date(inq.created_at).toLocaleDateString("pl-PL") : "Dziś"}
                   </span>
-                </div>
+                </header>
 
-                <div>
-                  <h4 className="type-h3 text-slate-900 font-semibold mb-2">{inq.subject}</h4>
-                  <p className="type-body text-slate-700 text-sm bg-slate-50 p-4 rounded-xl leading-relaxed">
-                    {inq.message}
-                  </p>
-                </div>
+                <h4 className="type-h3">{inq.subject}</h4>
+                <p className="expert-inquiry-card__message">{inq.message}</p>
 
                 {isReplying ? (
-                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-4 pt-4">
+                  <div className="expert-inquiry-card__reply-box">
                     <TextAreaField
                       label="Oficjalna odpowiedź ekspercka ROPS"
                       name="expert_response"
+                      onChange={(e) => setResponseText(e.target.value)}
+                      placeholder="Wprowadź merytoryczne wyjaśnienie, odniesienie do procedur lub wytycznych..."
                       required
                       rows={5}
                       value={responseText}
-                      onChange={(e) => setResponseText(e.target.value)}
-                      placeholder="Wprowadź merytoryczne wyjaśnienie, odniesienie do przepisów FERS lub wytycznych deinstytucjonalizacji..."
                     />
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                    <div className="pilot-dialog__two-columns items-center">
                       <TextField
                         label="Podpis eksperta"
                         name="expert_signature"
-                        value={responderName}
                         onChange={(e) => setResponderName(e.target.value)}
+                        value={responderName}
                       />
-                      <label className="flex items-center gap-2 pt-6 cursor-pointer text-xs text-slate-700">
+                      <label className="pilot-dialog__consent pt-6">
                         <input
-                          type="checkbox"
                           checked={makePublicFaq}
                           onChange={(e) => setMakePublicFaq(e.target.checked)}
-                          className="w-4 h-4 text-emerald-600 rounded"
+                          type="checkbox"
                         />
                         <span>Opublikuj jako oficjalne FAQ w Bazie Wiedzy</span>
                       </label>
@@ -1133,42 +1115,42 @@ export function ContactPartnershipsView() {
 
                     <div className="flex justify-end gap-3 pt-2">
                       <Button
-                        type="button"
-                        variant="tertiary"
                         onClick={() => {
                           setRespondingInquiryId(null);
                           setResponseText("");
                         }}
+                        type="button"
+                        variant="tertiary"
                       >
                         Anuluj
                       </Button>
                       <Button
+                        disabled={isResponding || !responseText.trim()}
+                        leadingIcon={Check}
+                        onClick={() => handleRespondSubmit(inq.id)}
                         type="button"
                         variant="primary"
-                        leadingIcon={Check}
-                        disabled={isResponding || !responseText.trim()}
-                        onClick={() => handleRespondSubmit(inq.id)}
                       >
-                        {isResponding ? "Zapisywanie..." : "Zatwierdź i wyślij odpowiedź"}
+                        {isResponding ? "Zapisywanie…" : "Zatwierdź i wyślij odpowiedź"}
                       </Button>
                     </div>
                   </div>
                 ) : (
                   <div className="flex justify-end">
                     <Button
-                      size="sm"
-                      variant="primary"
                       leadingIcon={PaperPlaneTilt}
                       onClick={() => {
                         setRespondingInquiryId(inq.id);
                         setResponseText("");
                       }}
+                      size="sm"
+                      variant="primary"
                     >
                       Udziel odpowiedzi jako ekspert
                     </Button>
                   </div>
                 )}
-              </div>
+              </article>
             );
           })
         )}
@@ -1177,20 +1159,36 @@ export function ContactPartnershipsView() {
   );
 
   const tabItems = [
-    { id: "partnerstwa", label: `Giełda Partnerstw (${filteredPartnerships.length})`, panel: partnershipsPanel },
-    { id: "konsultacje", label: "Zadaj pytanie ROPS", panel: consultationPanel },
-    { id: "faq", label: `Baza Wiedzy & FAQ (${filteredFaqs.length})`, panel: faqPanel },
+    {
+      id: "partnerstwa",
+      label: `Giełda partnerstw (${filteredPartnerships.length})`,
+      panel: partnershipsPanel,
+    },
+    {
+      id: "konsultacje",
+      label: "Zadaj pytanie ROPS",
+      panel: consultationPanel,
+    },
+    {
+      id: "faq",
+      label: `Baza wiedzy & FAQ (${filteredFaqs.length})`,
+      panel: faqPanel,
+    },
     ...(isExpertPersona
-      ? [{ id: "panel_eksperta", label: `Dyżur Eksperta (${pendingInquiries.length})`, panel: expertPanel }]
+      ? [
+          {
+            id: "panel_eksperta",
+            label: `Dyżur eksperta (${pendingInquiries.length})`,
+            panel: expertPanel,
+          },
+        ]
       : []),
   ];
 
   return (
-    <div className="contact-view max-w-6xl mx-auto space-y-8">
-      <TabSwitcher
-        items={tabItems}
-        label="Sekcje kontaktu, partnerstw i bazy wiedzy ROPS"
-      />
+    <div className="contact-view">
+      {loadNotice && <Alert description={loadNotice} title="Dane demonstracyjne" variant="info" />}
+      <TabSwitcher items={tabItems} label="Sekcje współpracy, kontaktu i bazy wiedzy" />
     </div>
   );
 }

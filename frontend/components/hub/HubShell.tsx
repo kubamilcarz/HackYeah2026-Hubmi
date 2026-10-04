@@ -33,7 +33,7 @@ const baseNavigationItems: NavigationItem[] = [
   { id: "kreator", label: "Kreator Pomysłów", href: "/kreator", icon: Sparkle },
   { id: "testy", label: "Pilotaże społeczne", href: "/testy", icon: Flask },
   { id: "middleman", label: "Middleman JST", href: "/middleman", icon: Buildings },
-  { id: "kontakt", label: "Kontakt & Partnerstwa", href: "/kontakt", icon: ChatTeardropText },
+  { id: "kontakt", label: "Kontakt i partnerstwa", href: "/kontakt", icon: ChatTeardropText },
   { id: "map", label: "Mapa inicjatyw", href: "/map", icon: MapTrifold },
 ];
 

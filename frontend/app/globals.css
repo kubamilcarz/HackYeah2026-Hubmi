@@ -4841,6 +4841,550 @@ a.app-navigation__link {
 }
 
 /* ==========================================================================
+   Współpraca i kontakt (.contact-view)
+   ========================================================================== */
+.contact-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  margin-top: var(--space-4);
+}
+
+.contact-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding-top: var(--space-2);
+}
+
+.contact-toolbar {
+  align-items: flex-start;
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6);
+}
+
+.contact-toolbar__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 48rem;
+}
+
+.contact-toolbar__content h2,
+.contact-toolbar__content h3,
+.contact-toolbar__content p {
+  margin: 0;
+}
+
+.contact-toolbar__title {
+  align-items: center;
+  display: flex;
+  gap: var(--space-2);
+}
+
+.contact-toolbar__title svg {
+  color: var(--action-primary);
+  flex-shrink: 0;
+}
+
+.contact-filters {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+}
+
+.contact-filters__grid {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: 1fr;
+}
+
+.contact-filters__footer {
+  align-items: center;
+  border-top: 1px solid var(--border-subtle);
+  color: var(--content-secondary);
+  display: flex;
+  font-size: var(--font-size-caption);
+  justify-content: space-between;
+  padding-top: var(--space-3);
+}
+
+.contact-filters__clear-btn {
+  align-items: center;
+  background: none;
+  border: none;
+  color: var(--action-primary);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  gap: var(--space-1);
+  padding: 0;
+}
+
+.contact-filters__clear-btn:hover {
+  text-decoration: underline;
+}
+
+.partnership-grid {
+  display: grid;
+  gap: var(--space-5);
+  grid-template-columns: 1fr;
+}
+
+.partnership-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: var(--space-6);
+  transition: box-shadow var(--transition-fast, 0.15s ease);
+}
+
+.partnership-card:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.partnership-card__header {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.partnership-card__location {
+  align-items: center;
+  background: var(--surface-canvas);
+  border-radius: var(--radius-pill);
+  color: var(--content-secondary);
+  display: inline-flex;
+  font-size: var(--font-size-caption);
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+}
+
+.partnership-card__title {
+  color: var(--content-primary);
+  font-size: var(--font-size-h3);
+  line-height: var(--line-height-h3);
+  margin: 0 0 var(--space-2) 0;
+}
+
+.partnership-card__initiator {
+  color: var(--content-secondary);
+  font-size: var(--font-size-caption);
+  margin-bottom: var(--space-3);
+}
+
+.partnership-card__initiator strong {
+  color: var(--content-primary);
+}
+
+.partnership-card__looking-for {
+  align-items: flex-start;
+  background: var(--surface-canvas);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  display: flex;
+  font-size: var(--font-size-caption);
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  padding: var(--space-3);
+}
+
+.partnership-card__looking-for svg {
+  color: var(--action-primary);
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.partnership-card__looking-for-label {
+  color: var(--content-primary);
+  display: block;
+  font-weight: var(--font-weight-semibold);
+}
+
+.partnership-card__description {
+  color: var(--content-secondary);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  margin: 0 0 var(--space-5) 0;
+}
+
+.partnership-card__footer {
+  align-items: center;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: space-between;
+  padding-top: var(--space-4);
+}
+
+.partnership-card__contacts {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.partnership-card__contact-link {
+  align-items: center;
+  color: var(--content-secondary);
+  display: inline-flex;
+  font-size: var(--font-size-caption);
+  gap: var(--space-1);
+  text-decoration: none;
+}
+
+.partnership-card__contact-link:hover {
+  color: var(--action-primary);
+  text-decoration: underline;
+}
+
+.partnership-card__contact-link svg {
+  color: var(--action-primary);
+}
+
+.partnership-empty {
+  align-items: center;
+  background: var(--surface-raised);
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-control);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-8);
+  text-align: center;
+}
+
+.partnership-empty svg {
+  color: var(--content-muted);
+}
+
+.partnership-empty h3,
+.partnership-empty p {
+  margin: 0;
+}
+
+/* Mentors selection */
+.consultation-mentors {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: 1fr;
+}
+
+.consultation-mentor-card {
+  align-items: flex-start;
+  background: var(--surface-raised);
+  border: 2px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  position: relative;
+  text-align: left;
+  transition: border-color var(--transition-fast, 0.15s ease), background var(--transition-fast, 0.15s ease);
+}
+
+.consultation-mentor-card:hover {
+  border-color: var(--border-strong);
+}
+
+.consultation-mentor-card.is-selected {
+  background: var(--surface-subtle);
+  border-color: var(--action-primary);
+}
+
+.consultation-mentor-card__indicator {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  background: var(--action-primary);
+  color: #ffffff;
+  border-radius: var(--radius-pill);
+  padding: 0.25rem;
+  display: flex;
+}
+
+.consultation-mentor-card__header {
+  align-items: center;
+  display: flex;
+  gap: var(--space-3);
+}
+
+.consultation-mentor-card__avatar {
+  align-items: center;
+  background: var(--surface-canvas);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  color: var(--action-primary);
+  display: flex;
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-bold);
+  height: 2.75rem;
+  justify-content: center;
+  width: 2.75rem;
+}
+
+.consultation-mentor-card__name {
+  color: var(--content-primary);
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-bold);
+  margin: 0;
+}
+
+.consultation-mentor-card__role {
+  color: var(--action-primary);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  margin: 0;
+}
+
+.consultation-mentor-card__description {
+  color: var(--content-secondary);
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-body);
+  margin: 0;
+}
+
+.consultation-mentor-card__badge {
+  align-items: center;
+  color: var(--content-muted);
+  display: inline-flex;
+  font-size: var(--font-size-caption);
+  gap: var(--space-1);
+}
+
+.consultation-form {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6);
+}
+
+/* FAQ list */
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.faq-item {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  overflow: hidden;
+  transition: border-color var(--transition-fast, 0.15s ease);
+}
+
+.faq-item__trigger {
+  align-items: flex-start;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-5);
+  text-align: left;
+  width: 100%;
+}
+
+.faq-item__trigger:hover {
+  background: var(--surface-subtle);
+}
+
+.faq-item__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.faq-item__author {
+  color: var(--content-muted);
+  font-size: var(--font-size-caption);
+}
+
+.faq-item__subject {
+  color: var(--content-primary);
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-semibold);
+  margin: 0;
+}
+
+.faq-item__icon {
+  color: var(--content-muted);
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+}
+
+.faq-item__content {
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+}
+
+.faq-item__question-quote {
+  background: var(--surface-canvas);
+  border-radius: var(--radius-control);
+  color: var(--content-secondary);
+  font-size: var(--font-size-caption);
+  font-style: italic;
+  margin: 0;
+  padding: var(--space-3);
+}
+
+.faq-item__answer {
+  background: var(--surface-subtle);
+  border-left: 3px solid var(--action-primary);
+  border-radius: 0 var(--radius-control) var(--radius-control) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+}
+
+.faq-item__answer-header {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: space-between;
+  margin-bottom: var(--space-1);
+}
+
+.faq-item__answer-tag {
+  align-items: center;
+  color: var(--action-primary);
+  display: inline-flex;
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-bold);
+  gap: var(--space-1);
+}
+
+.faq-item__answer-responder {
+  color: var(--content-muted);
+  font-size: var(--font-size-caption);
+}
+
+.faq-item__answer p {
+  color: var(--content-primary);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  margin: 0;
+  white-space: pre-line;
+}
+
+/* Expert Duty */
+.expert-duty__banner {
+  align-items: flex-start;
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  display: flex;
+  gap: var(--space-4);
+  padding: var(--space-5);
+}
+
+.expert-duty__banner svg {
+  color: var(--action-primary);
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.expert-duty__banner h3,
+.expert-duty__banner p {
+  margin: 0;
+}
+
+.expert-inquiry-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6);
+}
+
+.expert-inquiry-card__header {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: space-between;
+}
+
+.expert-inquiry-card__message {
+  background: var(--surface-canvas);
+  border-radius: var(--radius-control);
+  color: var(--content-primary);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  margin: 0;
+  padding: var(--space-4);
+}
+
+.expert-inquiry-card__reply-box {
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5);
+}
+
+@media (min-width: 48rem) {
+  .contact-toolbar {
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+  .contact-filters__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .partnership-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .consultation-mentors {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (forced-colors: active) {
+  .consultation-mentor-card.is-selected {
+    border: 2px solid Highlight;
+  }
+  .partnership-card__looking-for,
+  .faq-item__answer {
+    border: 1px solid CanvasText;
+  }
+}
+
+/* ==========================================================================
    Druk i eksport PDF (Moduł III & dokumenty urzędowe ROPS)
    ========================================================================== */
 @media print {

@@ -954,7 +954,7 @@ export function AdminDashboardView() {
                 <div className="bg-[var(--surface-subtle)] p-4 rounded-xl border border-[var(--border-subtle)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div>
                     <h3 id="heading-inquiries" className="type-h3 font-bold text-[var(--content-primary)]">
-                      Bezpośredni dialog z koordynatorem ROPS (Moduł V)
+                      Bezpośredni dialog z koordynatorem ROPS
                     </h3>
                     <p className="type-caption text-[var(--content-secondary)]">
                       Odpowiadaj na pytania mieszkańców, stowarzyszeń i gmin. Publikuj wartościowe odpowiedzi w publicznej Bazie Wiedzy FAQ.
@@ -966,7 +966,7 @@ export function AdminDashboardView() {
                     size="sm"
                     href="/kontakt"
                   >
-                    <span>Otwórz Platformę Komunikacji</span>
+                    <span>Otwórz kontakt i partnerstwa</span>
                   </ButtonLink>
                 </div>
 
