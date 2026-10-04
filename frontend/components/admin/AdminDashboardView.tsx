@@ -5,7 +5,6 @@ import {
   Bell,
   Check,
   CheckCircle,
-  DownloadSimple,
   Eye,
   Flask,
   HandHeart,
@@ -30,6 +29,7 @@ import { Banner } from "@/components/ui/Alert";
 import { Dialog } from "@/components/ui/Dialog";
 import { TabSwitcher } from "@/components/ui/TabSwitcher";
 import { Toast, ToastViewport } from "@/components/ui/Toast";
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { usePersona } from "@/contexts/PersonaContext";
 import {
   getAdminTrends,
@@ -76,6 +76,31 @@ const STAGE_LABELS: Record<string, { label: string; variant: TagVariant }> = {
   sprawdzona: { label: "Sprawdzona / Gotowa do skalowania", variant: "success" },
 };
 
+type CountyTableRow = {
+  county_name: string;
+  population: string;
+  senior_ratio: string;
+  submissions_count: number;
+  priority: string;
+};
+
+const COUNTY_COLUMNS: DataTableColumn<CountyTableRow>[] = [
+  { key: "county_name", label: "Powiat", sortable: true },
+  { key: "population", label: "Liczba mieszkańców", sortable: true },
+  { key: "senior_ratio", label: "Wskaźnik starości", sortable: true },
+  { key: "submissions_count", label: "Zgłoszone potrzeby", sortable: true },
+  {
+    key: "priority",
+    label: "Priorytet wsparcia",
+    sortable: true,
+    cellKind: "status",
+    statusVariants: {
+      "Wysoki priorytet": "warning",
+      Standardowy: "neutral",
+    },
+  },
+];
+
 export function AdminDashboardView() {
   const { activePersona, setActivePersonaKey } = usePersona();
 
@@ -94,7 +119,7 @@ export function AdminDashboardView() {
 
   // Filters for submissions
   const [submissionStatusFilter, setSubmissionStatusFilter] = useState<string>("all");
-  const [submissionCountyFilter] = useState<string>("all");
+  const [submissionCountyFilter, setSubmissionCountyFilter] = useState<string>("all");
   const [submissionQuery, setSubmissionQuery] = useState<string>("");
 
   // Modals & Drawers
@@ -147,13 +172,34 @@ export function AdminDashboardView() {
     loadAllData();
   }, []);
 
+  // Dynamic county options for filter
+  const countyOptions = useMemo(() => {
+    const options = [{ label: "Wszystkie powiaty", value: "all" }];
+    const uniqueCounties = Array.from(
+      new Set(
+        trends.by_county
+          .map((c) => c.county_name)
+          .filter(Boolean)
+      )
+    ).sort((a, b) => a.localeCompare(b, "pl"));
+
+    for (const county of uniqueCounties) {
+      options.push({ label: county, value: county });
+    }
+    return options;
+  }, [trends.by_county]);
+
   // Filtered submissions
   const filteredSubmissions = useMemo(() => {
     return submissions.filter((item) => {
       if (submissionStatusFilter !== "all" && item.status !== submissionStatusFilter) {
         return false;
       }
-      if (submissionCountyFilter !== "all" && item.county_name && !item.county_name.toLowerCase().includes(submissionCountyFilter.toLowerCase())) {
+      if (
+        submissionCountyFilter !== "all" &&
+        item.county_name &&
+        !item.county_name.toLowerCase().includes(submissionCountyFilter.toLowerCase())
+      ) {
         return false;
       }
       if (submissionQuery.trim()) {
@@ -205,7 +251,10 @@ export function AdminDashboardView() {
   function handleOpenEvaluation(idea: IdeaSubmissionItem) {
     setSelectedIdea(idea);
     setEvalScore(idea.admin_score || 92);
-    setEvalFeedback(idea.admin_feedback || "Wniosek spełnia wymogi deinstytucjonalizacji i kryteria formalno-merytoryczne ROPS Kraków.");
+    setEvalFeedback(
+      idea.admin_feedback ||
+        "Wniosek spełnia wymogi deinstytucjonalizacji i kryteria formalno-merytoryczne ROPS Kraków."
+    );
   }
 
   // Submit idea evaluation
@@ -219,12 +268,19 @@ export function AdminDashboardView() {
         status: decisionStatus,
       });
       setIdeas((prev) =>
-        prev.map((i) => (i.id === selectedIdea.id ? { ...i, ...updated, status: decisionStatus } : i))
+        prev.map((i) =>
+          i.id === selectedIdea.id ? { ...i, ...updated, status: decisionStatus } : i
+        )
       );
       setSelectedIdea(null);
       setToast({
-        title: decisionStatus === "zaakceptowany" ? "Wniosek zaakceptowany do grantu!" : "Zapisano ocenę wniosku",
-        description: `Wniosek „${selectedIdea.title}” otrzymał status: ${IDEA_STATUS_LABELS[decisionStatus]?.label || decisionStatus}.`,
+        title:
+          decisionStatus === "zaakceptowany"
+            ? "Wniosek zaakceptowany do grantu!"
+            : "Zapisano ocenę wniosku",
+        description: `Wniosek „${selectedIdea.title}” otrzymał status: ${
+          IDEA_STATUS_LABELS[decisionStatus]?.label || decisionStatus
+        }.`,
       });
     } catch {
       setToast({
@@ -240,7 +296,9 @@ export function AdminDashboardView() {
   function handleOpenPromotion(inn: SocialInnovation) {
     setSelectedInnovation(inn);
     setPromotionStage("sprawdzona");
-    setPromotionReadiness(inn.replication_readiness_score < 90 ? 95 : inn.replication_readiness_score);
+    setPromotionReadiness(
+      inn.replication_readiness_score < 90 ? 95 : inn.replication_readiness_score
+    );
   }
 
   // Submit stage promotion
@@ -258,7 +316,7 @@ export function AdminDashboardView() {
       setSelectedInnovation(null);
       setToast({
         title: "Innowacja awansowana pomyślnie!",
-        description: `Innowacja „${selectedInnovation.title}” ma teraz status: ${STAGE_LABELS[promotionStage]?.label}. Jest dostępna dla samorządów w Middlemanie AI.`,
+        description: `Innowacja „${selectedInnovation.title}” ma teraz status: ${STAGE_LABELS[promotionStage]?.label}. Jest gotowa do replikacji w gminach.`,
       });
     } catch {
       setToast({
@@ -295,7 +353,9 @@ export function AdminDashboardView() {
       setSelectedInquiry(null);
       setToast({
         title: "Wysłano odpowiedź na zapytanie",
-        description: isPublicFaq ? "Odpowiedź została opublikowana w publicznej Bazie Wiedzy FAQ." : "Odpowiedź wysłana do zgłaszającego.",
+        description: isPublicFaq
+          ? "Odpowiedź została opublikowana w publicznej Bazie Wiedzy FAQ."
+          : "Odpowiedź wysłana do zgłaszającego.",
       });
     } catch {
       setToast({
@@ -310,19 +370,34 @@ export function AdminDashboardView() {
   // Quick stats calculations
   const pendingSubmissionsCount = submissions.filter((s) => s.status === "pending").length;
   const whiteSpotsCount = submissions.filter((s) => s.status === "gap_identified").length;
-  const pendingIdeasCount = ideas.filter((i) => i.status === "w_ocenie" || i.status === "zlozony").length;
-  const testingInnovations = innovations.filter((i) => i.maturity_stage === "testy" || i.maturity_stage === "prototyp");
+  const pendingIdeasCount = ideas.filter(
+    (i) => i.status === "w_ocenie" || i.status === "zlozony"
+  ).length;
+  const testingInnovations = innovations.filter(
+    (i) => i.maturity_stage === "testy" || i.maturity_stage === "prototyp"
+  );
   const unansweredInquiriesCount = inquiries.filter((i) => !i.is_answered).length;
+
+  // County table data for DataTable
+  const countyTableRows: CountyTableRow[] = useMemo(() => {
+    return trends.by_county.map((c) => ({
+      county_name: c.county_name,
+      population: c.population ? c.population.toLocaleString("pl-PL") : "—",
+      senior_ratio: `${c.senior_ratio}%`,
+      submissions_count: c.submissions_count,
+      priority: c.senior_ratio >= 24 ? "Wysoki priorytet" : "Standardowy",
+    }));
+  }, [trends.by_county]);
 
   return (
     <div className="space-y-6">
       {/* Persona Context Banner */}
       {activePersona.roleType !== "admin" ? (
-        <div className="space-y-2">
+        <div className="space-y-3">
           <Banner
             variant="info"
             title="Tryb podglądu koordynatora ROPS"
-            description={`Przeglądasz panel administracyjny jako ${activePersona.name} (${activePersona.role}). W celu pełnej symulacji pracy koordynatora ROPS zalecamy przełączenie profilu na Magdalenę Kaczmarczyk.`}
+            description={`Przeglądasz panel koordynatora jako ${activePersona.name} (${activePersona.role}). Aby wykonywać akcje zarządcze, przełącz profil na Magdalenę Kaczmarczyk.`}
           />
           <div className="flex justify-end">
             <Button
@@ -330,109 +405,107 @@ export function AdminDashboardView() {
               size="sm"
               onClick={() => setActivePersonaKey("magdalena_kaczmarczyk")}
             >
-              Przełącz profil na Magdalenę Kaczmarczyk (ROPS)
+              Przełącz na profil Magdaleny Kaczmarczyk (ROPS)
             </Button>
           </div>
         </div>
       ) : (
-        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-raised)] p-5 sm:p-6 shadow-xs">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-3.5">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--action-primary)] text-white shadow-xs">
-                <ShieldCheck aria-hidden="true" size={28} weight="fill" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="type-h3 text-[var(--content-primary)] font-bold">
-                    {activePersona.name}
-                  </h2>
-                  <Badge label="Administrator ROPS" variant="info" />
-                </div>
-                <p className="type-caption text-[var(--content-secondary)]">
-                  Regionalny Ośrodek Polityki Społecznej w Krakowie • Koordynator Małopolskiego Hubu Innowacji Społecznych
-                </p>
-              </div>
+        <div className="admin-coordinator-bar">
+          <div className="admin-coordinator-bar__profile">
+            <div className="admin-coordinator-bar__avatar" aria-hidden="true">
+              <ShieldCheck size={28} weight="fill" />
             </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="admin-coordinator-bar__name">{activePersona.name}</h2>
+                <Badge label="Koordynator ROPS" variant="info" />
+              </div>
+              <p className="admin-coordinator-bar__role">
+                Regionalny Ośrodek Polityki Społecznej w Krakowie • Koordynacja Małopolskiego Hubu Innowacji
+              </p>
+            </div>
+          </div>
 
-            <div className="flex items-center gap-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setIsReportOpen(true)}
-              >
-                <Printer aria-hidden="true" size={18} />
-                <span>Raport Wojewódzki (Drukuj)</span>
-              </Button>
-            </div>
+          <div className="admin-coordinator-bar__actions">
+            <Button variant="secondary" size="sm" onClick={() => setIsReportOpen(true)}>
+              <Printer aria-hidden="true" size={18} />
+              <span>Raport Wojewódzki (Drukuj)</span>
+            </Button>
           </div>
         </div>
       )}
 
       {/* KPI Overview Cards */}
-      <section aria-label="Wskaźniki kluczowe hubu" className="grid grid-cols-2 md:grid-cols-5 gap-3.5 sm:gap-4">
-        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-raised)] p-4 sm:p-5 shadow-xs">
-          <div className="flex items-center justify-between text-[var(--content-muted)] mb-2">
-            <span className="type-caption font-semibold">Zgłoszenia potrzeb</span>
+      <section aria-label="Wskaźniki kluczowe hubu" className="admin-kpi-grid">
+        <div className="admin-kpi-card">
+          <div className="admin-kpi-card__header">
+            <span className="admin-kpi-card__label">Zgłoszenia potrzeb</span>
             <HandHeart size={20} aria-hidden="true" className="text-[var(--action-primary)]" />
           </div>
-          <div className="type-h2 font-bold text-[var(--content-primary)]">
-            {submissions.length}
-          </div>
-          <div className="mt-1 text-xs text-[var(--content-secondary)] flex items-center gap-1">
-            <span className="font-semibold text-amber-600">{pendingSubmissionsCount}</span> do moderacji
-          </div>
+          <div className="admin-kpi-card__value">{submissions.length}</div>
+          <p className="admin-kpi-card__meta">
+            <span className="admin-kpi-card__meta-highlight admin-kpi-card__meta-highlight--warning">
+              {pendingSubmissionsCount}
+            </span>{" "}
+            do moderacji
+          </p>
         </div>
 
-        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-raised)] p-4 sm:p-5 shadow-xs">
-          <div className="flex items-center justify-between text-[var(--content-muted)] mb-2">
-            <span className="type-caption font-semibold">Białe Plamy (Luki)</span>
-            <WarningCircle size={20} aria-hidden="true" className="text-red-500" />
+        <div className="admin-kpi-card">
+          <div className="admin-kpi-card__header">
+            <span className="admin-kpi-card__label">Białe plamy</span>
+            <WarningCircle
+              size={20}
+              aria-hidden="true"
+              className="text-[var(--feedback-danger-foreground)]"
+            />
           </div>
-          <div className="type-h2 font-bold text-red-600">
+          <div className="admin-kpi-card__value text-[var(--feedback-danger-foreground)]">
             {whiteSpotsCount}
           </div>
-          <div className="mt-1 text-xs text-[var(--content-secondary)]">
-            Tereny bez innowacji
-          </div>
+          <p className="admin-kpi-card__meta">Tereny bez innowacji</p>
         </div>
 
-        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-raised)] p-4 sm:p-5 shadow-xs">
-          <div className="flex items-center justify-between text-[var(--content-muted)] mb-2">
-            <span className="type-caption font-semibold">Wnioski FERS</span>
+        <div className="admin-kpi-card">
+          <div className="admin-kpi-card__header">
+            <span className="admin-kpi-card__label">Wnioski FERS</span>
             <Sparkle size={20} aria-hidden="true" className="text-[var(--action-primary)]" />
           </div>
-          <div className="type-h2 font-bold text-[var(--content-primary)]">
-            {ideas.length}
-          </div>
-          <div className="mt-1 text-xs text-[var(--content-secondary)] flex items-center gap-1">
-            <span className="font-semibold text-amber-600">{pendingIdeasCount}</span> w ocenie ROPS
-          </div>
+          <div className="admin-kpi-card__value">{ideas.length}</div>
+          <p className="admin-kpi-card__meta">
+            <span className="admin-kpi-card__meta-highlight admin-kpi-card__meta-highlight--warning">
+              {pendingIdeasCount}
+            </span>{" "}
+            w ocenie ROPS
+          </p>
         </div>
 
-        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-raised)] p-4 sm:p-5 shadow-xs">
-          <div className="flex items-center justify-between text-[var(--content-muted)] mb-2">
-            <span className="type-caption font-semibold">Pilotaże w toku</span>
-            <Flask size={20} aria-hidden="true" className="text-blue-600" />
+        <div className="admin-kpi-card">
+          <div className="admin-kpi-card__header">
+            <span className="admin-kpi-card__label">Pilotaże w toku</span>
+            <Flask size={20} aria-hidden="true" className="text-[var(--feedback-info-foreground)]" />
           </div>
-          <div className="type-h2 font-bold text-[var(--content-primary)]">
-            {trends.total_pilots || 3}
-          </div>
-          <div className="mt-1 text-xs text-[var(--content-secondary)] flex items-center gap-1">
-            <span className="font-semibold text-emerald-600">{testingInnovations.length}</span> gotowe do awansu
-          </div>
+          <div className="admin-kpi-card__value">{trends.total_pilots || 3}</div>
+          <p className="admin-kpi-card__meta">
+            <span className="admin-kpi-card__meta-highlight admin-kpi-card__meta-highlight--success">
+              {testingInnovations.length}
+            </span>{" "}
+            gotowe do awansu
+          </p>
         </div>
 
-        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-raised)] p-4 sm:p-5 shadow-xs col-span-2 md:col-span-1">
-          <div className="flex items-center justify-between text-[var(--content-muted)] mb-2">
-            <span className="type-caption font-semibold">Pytania do ROPS</span>
-            <Bell size={20} aria-hidden="true" className="text-purple-600" />
+        <div className="admin-kpi-card admin-kpi-card--span2">
+          <div className="admin-kpi-card__header">
+            <span className="admin-kpi-card__label">Pytania do ROPS</span>
+            <Bell size={20} aria-hidden="true" className="text-[var(--action-primary)]" />
           </div>
-          <div className="type-h2 font-bold text-[var(--content-primary)]">
-            {inquiries.length}
-          </div>
-          <div className="mt-1 text-xs text-[var(--content-secondary)] flex items-center gap-1">
-            <span className="font-semibold text-amber-600">{unansweredInquiriesCount}</span> bez odpowiedzi
-          </div>
+          <div className="admin-kpi-card__value">{inquiries.length}</div>
+          <p className="admin-kpi-card__meta">
+            <span className="admin-kpi-card__meta-highlight admin-kpi-card__meta-highlight--warning">
+              {unansweredInquiriesCount}
+            </span>{" "}
+            bez odpowiedzi
+          </p>
         </div>
       </section>
 
@@ -447,19 +520,19 @@ export function AdminDashboardView() {
             label: `Moderacja potrzeb (${submissions.length})`,
             panel: (
               <section aria-labelledby="heading-moderacja" className="space-y-4 pt-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-[var(--surface-subtle)] p-4 rounded-xl border border-[var(--border-subtle)]">
-                  <div>
-                    <h3 id="heading-moderacja" className="type-h3 font-bold text-[var(--content-primary)]">
-                      Moderacja zgłoszeń mieszkańców i samorządów (Matchmaking)
+                <div className="admin-toolbar">
+                  <div className="admin-toolbar__content">
+                    <h3 id="heading-moderacja" className="admin-toolbar__title">
+                      Moderacja zgłoszeń mieszkańców i samorządów
                     </h3>
-                    <p className="type-caption text-[var(--content-secondary)]">
-                      Weryfikuj dopasowania generowane przez algorytm, zatwierdzaj ścieżki wdrożenia lub oznaczaj zgłoszenia jako oficjalne „Białe plamy” ROPS.
+                    <p className="admin-toolbar__description">
+                      Weryfikuj dopasowania algorytmiczne, zatwierdzaj ścieżki wdrożenia lub oznaczaj zgłoszenia jako oficjalne Białe plamy ROPS.
                     </p>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="admin-filters-grid">
                     <SelectField
-                      label="Filtruj status"
+                      label="Status zgłoszenia"
                       hideLabel
                       value={submissionStatusFilter}
                       onChange={(e) => setSubmissionStatusFilter(e.target.value)}
@@ -471,6 +544,14 @@ export function AdminDashboardView() {
                         { label: "W realizacji", value: "in_progress" },
                         { label: "Rozwiązane", value: "resolved" },
                       ]}
+                    />
+
+                    <SelectField
+                      label="Powiat"
+                      hideLabel
+                      value={submissionCountyFilter}
+                      onChange={(e) => setSubmissionCountyFilter(e.target.value)}
+                      options={countyOptions}
                     />
 
                     <TextField
@@ -486,91 +567,95 @@ export function AdminDashboardView() {
                 {/* Submissions List */}
                 <div className="space-y-3">
                   {filteredSubmissions.length === 0 ? (
-                    <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-raised)] p-8 text-center type-body text-[var(--content-secondary)]">
-                      Brak zgłoszeń spełniających wybrane kryteria filtrów.
+                    <div className="admin-empty-state">
+                      <p className="type-body font-semibold">Brak zgłoszeń spełniających wybrane kryteria.</p>
+                      <p className="type-caption">Zmień filtry lub zresetuj zapytanie wyszukiwania.</p>
                     </div>
                   ) : (
                     filteredSubmissions.map((sub) => {
-                      const statusMeta = STATUS_LABELS[sub.status] || { label: sub.status, variant: "neutral" };
+                      const statusMeta = STATUS_LABELS[sub.status] || {
+                        label: sub.status,
+                        variant: "neutral",
+                      };
                       const hasMatches = sub.matches && sub.matches.length > 0;
                       const isGap = sub.status === "gap_identified";
 
                       return (
                         <article
                           key={sub.id}
-                          className={`rounded-2xl border bg-[var(--surface-raised)] p-5 sm:p-6 transition-all shadow-xs ${
-                            isGap ? "border-red-200 bg-red-50/20" : "border-[var(--border-subtle)]"
-                          }`}
+                          className={`admin-card ${isGap ? "admin-card--gap" : ""}`}
                         >
-                          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                            <div className="space-y-2 flex-1">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span className="type-caption font-mono text-[var(--content-muted)]">
-                                  #{sub.id}
-                                </span>
+                          <div className="admin-card__top">
+                            <div className="admin-card__body">
+                              <div className="admin-card__meta-row">
+                                <span className="admin-card__id">#{sub.id}</span>
                                 <Badge label={statusMeta.label} variant={statusMeta.variant} />
                                 {sub.category_name && <Tag label={sub.category_name} />}
                                 {sub.county_name && (
                                   <span className="type-caption text-[var(--content-secondary)] flex items-center gap-1">
                                     <MapPin size={14} aria-hidden="true" />
-                                    {sub.municipality_name ? `${sub.municipality_name}, ${sub.county_name}` : sub.county_name}
+                                    {sub.municipality_name
+                                      ? `${sub.municipality_name}, ${sub.county_name}`
+                                      : sub.county_name}
                                   </span>
                                 )}
                               </div>
 
-                              <h4 className="type-h3 text-[var(--content-primary)] font-bold">
-                                {sub.title}
-                              </h4>
+                              <h4 className="admin-card__title">{sub.title}</h4>
 
-                              <p className="type-body text-[var(--content-secondary)]">
-                                {sub.description}
-                              </p>
+                              <p className="admin-card__description">{sub.description}</p>
 
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 text-xs text-[var(--content-secondary)]">
+                              <div className="admin-card__details">
                                 <div>
-                                  <strong className="text-[var(--content-primary)]">Grupa dotknięta:</strong> {sub.affected_group}
+                                  <strong className="text-[var(--content-primary)]">Grupa docelowa:</strong>{" "}
+                                  {sub.affected_group}
                                 </div>
                                 <div>
-                                  <strong className="text-[var(--content-primary)]">Zgłaszający:</strong> {sub.reporter_name} ({sub.reporter_role})
+                                  <strong className="text-[var(--content-primary)]">Zgłaszający:</strong>{" "}
+                                  {sub.reporter_name} ({sub.reporter_role})
                                   {sub.reporter_institution && ` • ${sub.reporter_institution}`}
                                 </div>
                               </div>
 
-                              {/* Matches or Gap diagnosis */}
+                              {/* Algorithmic Match */}
                               {hasMatches && (
-                                <div className="mt-3 p-3.5 rounded-xl bg-blue-50/60 border border-blue-100 text-xs">
-                                  <span className="font-bold text-blue-900 flex items-center gap-1.5 mb-1">
-                                    <Sparkle size={14} className="text-blue-600" />
+                                <div className="admin-callout admin-callout--info">
+                                  <span className="admin-callout__title">
+                                    <Sparkle size={15} aria-hidden="true" />
                                     Dopasowanie algorytmiczne: {sub.matches![0].innovation.title} (Trafność: {sub.matches![0].similarity_score}%)
                                   </span>
-                                  <p className="text-blue-800">{sub.matches![0].justification}</p>
+                                  <p className="admin-callout__text">{sub.matches![0].justification}</p>
                                 </div>
                               )}
 
+                              {/* Gap Diagnosis */}
                               {isGap && (
-                                <div className="mt-3 p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs">
-                                  <span className="font-bold text-red-900 flex items-center gap-1.5 mb-1">
-                                    <WarningCircle size={14} className="text-red-600" />
+                                <div className="admin-callout admin-callout--gap">
+                                  <span className="admin-callout__title">
+                                    <WarningCircle size={15} aria-hidden="true" />
                                     Zidentyfikowano Białą Plamę w Małopolsce: Brak gotowej innowacji o trafności &ge; 45%
                                   </span>
-                                  <p className="text-red-800">
-                                    Zgłoszenie wymaga uruchomienia Kreatora Pomysłów i zaadresowania w najbliższym naborze mikrograntów FERS.
+                                  <p className="admin-callout__text">
+                                    Zgłoszenie kwalifikuje się do zaadresowania w najbliższym naborze mikrograntów FERS.
                                   </p>
                                 </div>
                               )}
 
+                              {/* Notes */}
                               {sub.admin_notes && (
-                                <div className="mt-2 text-xs text-[var(--content-secondary)] bg-[var(--surface-subtle)] p-2.5 rounded-lg border border-[var(--border-subtle)]">
-                                  <strong className="text-[var(--content-primary)]">Notatki ROPS:</strong> {sub.admin_notes}
+                                <div className="admin-callout admin-callout--subtle">
+                                  <strong className="text-[var(--content-primary)]">Notatki koordynatora ROPS:</strong>
+                                  <p className="admin-callout__text">{sub.admin_notes}</p>
                                 </div>
                               )}
                             </div>
 
-                            <div className="flex lg:flex-col items-center gap-2 self-end lg:self-start shrink-0">
+                            <div className="admin-card__actions">
                               <Button
                                 variant="primary"
                                 size="sm"
                                 onClick={() => handleOpenModeration(sub)}
+                                aria-label={`Moderuj zgłoszenie #${sub.id}: ${sub.title}`}
                               >
                                 <NotePencil aria-hidden="true" size={16} />
                                 <span>Moderuj zgłoszenie</span>
@@ -590,92 +675,105 @@ export function AdminDashboardView() {
             label: `Ocena wniosków FERS (${ideas.length})`,
             panel: (
               <section aria-labelledby="heading-fers" className="space-y-4 pt-4">
-                <div className="bg-[var(--surface-subtle)] p-4 rounded-xl border border-[var(--border-subtle)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <div>
-                    <h3 id="heading-fers" className="type-h3 font-bold text-[var(--content-primary)]">
-                      Weryfikacja i ocena Wniosków Grantowych FERS (12 pkt)
+                <div className="admin-toolbar">
+                  <div className="admin-toolbar__content">
+                    <h3 id="heading-fers" className="admin-toolbar__title">
+                      Weryfikacja i ocena wniosków grantowych FERS (12 pkt)
                     </h3>
-                    <p className="type-caption text-[var(--content-secondary)]">
-                      Oceniaj wnioski z Modułu III (Kreator Pomysłów) pod kątem deinstytucjonalizacji i budżetu do 50 000 zł.
-                      Zatwierdzaj wnioski na żywo do inkubacji.
+                    <p className="admin-toolbar__description">
+                      Oceniaj wnioski z Kreatora Pomysłów pod kątem deinstytucjonalizacji i kryteriów FERS Działanie 5.1 (do 50 000 zł).
                     </p>
                   </div>
 
-                  <ButtonLink
-                    variant="secondary"
-                    size="sm"
-                    href="/kreator"
-                  >
-                    <span>Przejdź do Kreatora FERS</span>
-                  </ButtonLink>
+                  <div className="admin-toolbar__actions">
+                    <ButtonLink variant="secondary" size="sm" href="/kreator">
+                      <span>Przejdź do Kreatora FERS</span>
+                    </ButtonLink>
+                  </div>
                 </div>
 
                 <div className="space-y-4">
                   {ideas.map((idea) => {
-                    const statusMeta = IDEA_STATUS_LABELS[idea.status] || { label: idea.status, variant: "neutral" };
+                    const statusMeta = IDEA_STATUS_LABELS[idea.status] || {
+                      label: idea.status,
+                      variant: "neutral",
+                    };
                     const isGrant = idea.submission_type === "grant_fers";
 
                     return (
-                      <article
-                        key={idea.id}
-                        className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-raised)] p-5 sm:p-6 shadow-xs space-y-4"
-                      >
-                        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                          <div className="space-y-2 flex-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="type-caption font-mono text-[var(--content-muted)]">
-                                #{idea.id}
-                              </span>
-                              <Badge label={isGrant ? "Wniosek Grantowy FERS (50k zł)" : "Fiszka Pomysłu"} variant="info" />
+                      <article key={idea.id} className="admin-card">
+                        <div className="admin-card__top">
+                          <div className="admin-card__body">
+                            <div className="admin-card__meta-row">
+                              <span className="admin-card__id">#{idea.id}</span>
+                              <Badge
+                                label={isGrant ? "Wniosek Grantowy FERS (50k zł)" : "Fiszka Pomysłu"}
+                                variant="info"
+                              />
                               <Badge label={statusMeta.label} variant={statusMeta.variant} />
                               {idea.category_name && <Tag label={idea.category_name} />}
                               {idea.county_name && <Tag label={`Powiat ${idea.county_name}`} />}
                             </div>
 
-                            <h4 className="type-h3 text-[var(--content-primary)] font-bold">
-                              {idea.title}
-                            </h4>
+                            <h4 className="admin-card__title">{idea.title}</h4>
 
-                            <div className="text-xs text-[var(--content-secondary)] flex flex-wrap gap-x-4 gap-y-1">
-                              <span><strong>Wnioskodawca:</strong> {idea.applicant_name}</span>
-                              {idea.organization_representative && <span><strong>Reprezentant:</strong> {idea.organization_representative}</span>}
-                              {idea.organization_krs && <span><strong>KRS:</strong> {idea.organization_krs}</span>}
-                              {idea.organization_nip && <span><strong>NIP:</strong> {idea.organization_nip}</span>}
+                            <div className="admin-card__details">
+                              <div>
+                                <strong>Wnioskodawca:</strong> {idea.applicant_name}
+                              </div>
+                              {idea.organization_representative && (
+                                <div>
+                                  <strong>Reprezentant:</strong> {idea.organization_representative}
+                                </div>
+                              )}
+                              {idea.organization_krs && (
+                                <div>
+                                  <strong>KRS:</strong> {idea.organization_krs}
+                                </div>
+                              )}
+                              {idea.organization_nip && (
+                                <div>
+                                  <strong>NIP:</strong> {idea.organization_nip}
+                                </div>
+                              )}
                             </div>
 
-                            <p className="type-body text-[var(--content-secondary)]">
+                            <p className="admin-card__description">
                               {idea.innovation_description || idea.solution_concept}
                             </p>
 
                             {idea.uniqueness_rationale && (
-                              <div className="p-3 bg-amber-50/60 border border-amber-100 rounded-xl text-xs text-amber-900">
-                                <strong>Wyróżniki innowacji:</strong> {idea.uniqueness_rationale}
+                              <div className="admin-callout admin-callout--warning">
+                                <span className="admin-callout__title">Wyróżniki innowacji:</span>
+                                <p className="admin-callout__text">{idea.uniqueness_rationale}</p>
                               </div>
                             )}
 
                             {/* Financial & Testing summary */}
                             {isGrant && (
-                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                                <div className="bg-[var(--surface-subtle)] p-3 rounded-xl border border-[var(--border-subtle)]">
-                                  <span className="type-caption text-[var(--content-muted)] block">Wnioskowana kwota</span>
-                                  <span className="type-body font-bold text-emerald-600">
+                              <div className="admin-stat-summary">
+                                <div className="admin-stat-summary__item">
+                                  <span className="admin-stat-summary__label">Wnioskowana kwota</span>
+                                  <span className="admin-stat-summary__value text-[var(--action-primary)]">
                                     {(idea.requested_grant_amount || 50000).toLocaleString("pl-PL")} PLN
                                   </span>
-                                  <span className="type-caption text-[var(--content-secondary)] block text-[11px]">100% dofinansowania FERS</span>
+                                  <span className="admin-stat-summary__hint">100% dofinansowania FERS</span>
                                 </div>
 
-                                <div className="bg-[var(--surface-subtle)] p-3 rounded-xl border border-[var(--border-subtle)]">
-                                  <span className="type-caption text-[var(--content-muted)] block">Harmonogram realizacji</span>
-                                  <span className="type-body font-bold text-[var(--content-primary)]">12 miesięcy</span>
-                                  <span className="type-caption text-[var(--content-secondary)] block text-[11px]">3 m-ce przygotowanie + 9 m-cy testy</span>
+                                <div className="admin-stat-summary__item">
+                                  <span className="admin-stat-summary__label">Harmonogram realizacji</span>
+                                  <span className="admin-stat-summary__value">12 miesięcy</span>
+                                  <span className="admin-stat-summary__hint">3 m-ce przygotowanie + 9 m-cy testy</span>
                                 </div>
 
-                                <div className="bg-[var(--surface-subtle)] p-3 rounded-xl border border-[var(--border-subtle)]">
-                                  <span className="type-caption text-[var(--content-muted)] block">Ocena ROPS</span>
-                                  <span className="type-body font-bold text-[var(--content-primary)]">
-                                    {idea.admin_score !== null && idea.admin_score !== undefined ? `${idea.admin_score} / 100 pkt` : "Oczekuje na ocenę"}
+                                <div className="admin-stat-summary__item">
+                                  <span className="admin-stat-summary__label">Ocena ROPS</span>
+                                  <span className="admin-stat-summary__value">
+                                    {idea.admin_score !== null && idea.admin_score !== undefined
+                                      ? `${idea.admin_score} / 100 pkt`
+                                      : "Oczekuje na ocenę"}
                                   </span>
-                                  <span className="type-caption text-[var(--content-secondary)] block text-[11px]">
+                                  <span className="admin-stat-summary__hint">
                                     {idea.admin_feedback ? "Uzasadnienie zarejestrowane" : "Brak uzasadnienia"}
                                   </span>
                                 </div>
@@ -683,20 +781,24 @@ export function AdminDashboardView() {
                             )}
 
                             {idea.admin_feedback && (
-                              <div className="text-xs p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900">
-                                <strong>Opinia i decyzja ROPS:</strong> {idea.admin_feedback}
+                              <div className="admin-callout admin-callout--success">
+                                <span className="admin-callout__title">Opinia i decyzja ROPS:</span>
+                                <p className="admin-callout__text">{idea.admin_feedback}</p>
                               </div>
                             )}
                           </div>
 
-                          <div className="shrink-0 flex lg:flex-col gap-2 self-end lg:self-start">
+                          <div className="admin-card__actions">
                             <Button
                               variant={idea.status === "zaakceptowany" ? "secondary" : "primary"}
                               size="sm"
                               onClick={() => handleOpenEvaluation(idea)}
+                              aria-label={`Oceń wniosek FERS #${idea.id}: ${idea.title}`}
                             >
                               <Sparkle aria-hidden="true" size={16} />
-                              <span>{idea.status === "zaakceptowany" ? "Zmień ocenę" : "Oceń wniosek FERS"}</span>
+                              <span>
+                                {idea.status === "zaakceptowany" ? "Zmień ocenę" : "Oceń wniosek FERS"}
+                              </span>
                             </Button>
                           </div>
                         </div>
@@ -712,53 +814,53 @@ export function AdminDashboardView() {
             label: `Awans innowacji (${testingInnovations.length})`,
             panel: (
               <section aria-labelledby="heading-awans" className="space-y-4 pt-4">
-                <div className="bg-[var(--surface-subtle)] p-4 rounded-xl border border-[var(--border-subtle)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <div>
-                    <h3 id="heading-awans" className="type-h3 font-bold text-[var(--content-primary)]">
-                      Zarządzanie dojrzałością innowacji (Pilotaże &rarr; Wdrożenia)
+                <div className="admin-toolbar">
+                  <div className="admin-toolbar__content">
+                    <h3 id="heading-awans" className="admin-toolbar__title">
+                      Zarządzanie dojrzałością innowacji (Pilotaże → Wdrożenia)
                     </h3>
-                    <p className="type-caption text-[var(--content-secondary)]">
-                      Przeglądaj wyniki pilotaży społecznych i awansuj przetestowane prototypy do statusu „Sprawdzona / Gotowa do skalowania”,
-                      czyniąc je natychmiast dostępnymi w generatorze wdrożeń dla 182 gmin Małopolski.
+                    <p className="admin-toolbar__description">
+                      Przeglądaj wyniki pilotaży społecznych i awansuj przetestowane prototypy do statusu «Sprawdzona / Gotowa do skalowania», udostępniając je w generatorze wdrożeń dla 182 gmin Małopolski.
                     </p>
                   </div>
 
-                  <ButtonLink
-                    variant="secondary"
-                    size="sm"
-                    href="/testy"
-                  >
-                    <Flask aria-hidden="true" size={16} />
-                    <span>Otwórz pilotaże społeczne</span>
-                  </ButtonLink>
+                  <div className="admin-toolbar__actions">
+                    <ButtonLink variant="secondary" size="sm" href="/testy">
+                      <Flask aria-hidden="true" size={16} />
+                      <span>Otwórz pilotaże społeczne</span>
+                    </ButtonLink>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="admin-innovation-grid">
                   {innovations.map((inn) => {
                     const isTested = inn.maturity_stage === "testy" || inn.maturity_stage === "prototyp";
-                    const stageMeta = STAGE_LABELS[inn.maturity_stage] || { label: inn.maturity_stage, variant: "neutral" };
+                    const stageMeta = STAGE_LABELS[inn.maturity_stage] || {
+                      label: inn.maturity_stage,
+                      variant: "neutral",
+                    };
 
                     return (
                       <div
                         key={inn.id}
-                        className={`rounded-2xl border p-5 bg-[var(--surface-raised)] space-y-3.5 transition-all shadow-xs ${
-                          isTested ? "border-amber-300 ring-2 ring-amber-100" : "border-[var(--border-subtle)]"
+                        className={`admin-innovation-card ${
+                          isTested ? "admin-innovation-card--tested" : ""
                         }`}
                       >
-                        <div className="flex items-start justify-between gap-2">
+                        <div className="admin-innovation-card__header">
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
                               <Badge label={stageMeta.label} variant={stageMeta.variant} />
-                              <span className="type-caption text-[var(--content-muted)] font-mono">#{inn.id}</span>
+                              <span className="admin-card__id">#{inn.id}</span>
                             </div>
-                            <h4 className="type-h3 font-bold text-[var(--content-primary)]">
-                              {inn.title}
-                            </h4>
+                            <h4 className="admin-card__title">{inn.title}</h4>
                           </div>
 
                           <div className="text-right">
-                            <span className="type-caption text-[var(--content-muted)] block">Gotowość wdrożenia</span>
-                            <strong className="text-emerald-600 type-body font-bold">
+                            <span className="type-caption text-[var(--content-muted)] block">
+                              Gotowość wdrożenia
+                            </span>
+                            <strong className="text-[var(--action-primary)] type-body font-bold">
                               {inn.replication_readiness_score}%
                             </strong>
                           </div>
@@ -768,8 +870,8 @@ export function AdminDashboardView() {
                           {inn.short_summary}
                         </p>
 
-                        {/* Test metrics if available */}
-                        <div className="p-3 bg-[var(--surface-subtle)] rounded-xl border border-[var(--border-subtle)] grid grid-cols-3 gap-2 text-center text-xs">
+                        {/* Test metrics */}
+                        <div className="admin-innovation-card__metrics">
                           <div>
                             <span className="text-[var(--content-muted)] block">Użyteczność</span>
                             <strong className="text-[var(--content-primary)]">4.9 / 5.0</strong>
@@ -780,16 +882,12 @@ export function AdminDashboardView() {
                           </div>
                           <div>
                             <span className="text-[var(--content-muted)] block">Rekomendacja</span>
-                            <strong className="text-emerald-600">100% gmin</strong>
+                            <strong className="text-[var(--action-primary)]">100% gmin</strong>
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between pt-1">
-                          <ButtonLink
-                            variant="tertiary"
-                            size="sm"
-                            href={`/innowacje/${inn.slug}`}
-                          >
+                        <div className="admin-innovation-card__actions">
+                          <ButtonLink variant="tertiary" size="sm" href={`/innowacje/${inn.slug}`}>
                             <Eye aria-hidden="true" size={16} />
                             <span>Karta wiedzy</span>
                           </ButtonLink>
@@ -798,6 +896,7 @@ export function AdminDashboardView() {
                             variant={isTested ? "primary" : "secondary"}
                             size="sm"
                             onClick={() => handleOpenPromotion(inn)}
+                            aria-label={`Zmień status innowacji: ${inn.title}`}
                           >
                             <Sparkle aria-hidden="true" size={16} />
                             <span>{isTested ? "Awansuj do sprawdzonych" : "Zmień dojrzałość"}</span>
@@ -815,43 +914,41 @@ export function AdminDashboardView() {
             label: "Trendy regionalne & Raport",
             panel: (
               <section aria-labelledby="heading-trends" className="space-y-6 pt-4">
-                <div className="bg-[var(--surface-subtle)] p-4 rounded-xl border border-[var(--border-subtle)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <div>
-                    <h3 id="heading-trends" className="type-h3 font-bold text-[var(--content-primary)]">
+                <div className="admin-toolbar">
+                  <div className="admin-toolbar__content">
+                    <h3 id="heading-trends" className="admin-toolbar__title">
                       Regionalna analityka trendów i Białych Plam (22 powiaty)
                     </h3>
-                    <p className="type-caption text-[var(--content-secondary)]">
+                    <p className="admin-toolbar__description">
                       Agregacja potrzeb społecznych według 9 oficjalnych kategorii ROPS Kraków i mapy demograficznej Małopolski.
                     </p>
                   </div>
 
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => setIsReportOpen(true)}
-                  >
-                    <DownloadSimple aria-hidden="true" size={18} />
-                    <span>Generuj Raport Wojewódzki (PDF)</span>
-                  </Button>
+                  <div className="admin-toolbar__actions">
+                    <Button variant="primary" size="sm" onClick={() => setIsReportOpen(true)}>
+                      <Printer aria-hidden="true" size={18} />
+                      <span>Generuj Raport Wojewódzki (PDF)</span>
+                    </Button>
+                  </div>
                 </div>
 
                 {/* White spots alert box */}
                 {trends.white_spots && trends.white_spots.length > 0 && (
-                  <div className="rounded-2xl border border-red-200 bg-red-50/50 p-5 space-y-3">
-                    <div className="flex items-center gap-2">
-                      <WarningCircle size={22} className="text-red-600" weight="fill" />
-                      <h4 className="type-h3 font-bold text-red-900">
+                  <div className="admin-white-spots-banner">
+                    <div className="admin-white-spots-banner__header">
+                      <WarningCircle size={22} weight="fill" aria-hidden="true" />
+                      <h4>
                         Wykryte Białe Plamy Innowacji Społecznych ({trends.white_spots.length})
                       </h4>
                     </div>
-                    <p className="type-caption text-red-800">
+                    <p className="admin-white-spots-banner__description">
                       Poniższe obszary wykazują wysokie zapotrzebowanie mieszkańców przy jednoczesnym braku gotowej innowacji w katalogu ROPS (trafność dopasowania &lt; 45%).
                     </p>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                    <div className="admin-white-spots-grid">
                       {trends.white_spots.map((ws, i) => (
-                        <div key={i} className="bg-white p-3.5 rounded-xl border border-red-100 shadow-xs text-xs space-y-1">
-                          <div className="flex items-center justify-between text-red-600 font-bold">
+                        <div key={i} className="admin-white-spot-item">
+                          <div className="flex items-center justify-between text-[var(--feedback-danger-foreground)] font-bold">
                             <span>{ws.category_name}</span>
                             <span>{ws.county_name}</span>
                           </div>
@@ -872,24 +969,22 @@ export function AdminDashboardView() {
                   <h4 className="type-h3 font-bold text-[var(--content-primary)]">
                     Rozkład zgłoszeń wg 9 kategorii ROPS Kraków
                   </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                  <div className="admin-categories-grid">
                     {trends.by_category.map((cat) => {
                       const ratio = Math.min(100, Math.round((cat.submissions_count / 10) * 100));
                       return (
-                        <div
-                          key={cat.category_id}
-                          className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-raised)] p-4 space-y-2 shadow-xs"
-                        >
-                          <div className="flex items-center justify-between text-xs">
-                            <strong className="text-[var(--content-primary)] font-semibold truncate">
-                              {cat.category_name}
-                            </strong>
-                            <span className="font-bold text-emerald-600 shrink-0">
+                        <div key={cat.category_id} className="admin-category-card">
+                          <div className="admin-category-card__header">
+                            <strong className="admin-category-card__title">{cat.category_name}</strong>
+                            <span className="admin-category-card__count">
                               {cat.submissions_count} zgłoszeń
                             </span>
                           </div>
-                          <LinearProgress value={ratio} label={`Udział zgłoszeń kategorii ${cat.category_name}`} />
-                          <div className="flex items-center justify-between text-[11px] text-[var(--content-muted)]">
+                          <LinearProgress
+                            value={ratio}
+                            label={`Udział zgłoszeń kategorii ${cat.category_name}`}
+                          />
+                          <div className="admin-category-card__footer">
                             <span>Gotowe innowacje: {cat.innovations_count}</span>
                             <span>{cat.innovations_count === 0 ? "Brak innowacji" : "Pokryte"}</span>
                           </div>
@@ -899,49 +994,16 @@ export function AdminDashboardView() {
                   </div>
                 </div>
 
-                {/* Counties Table */}
+                {/* Counties Table with Splot DataTable */}
                 <div className="space-y-3">
-                  <h4 className="type-h3 font-bold text-[var(--content-primary)]">
-                    Aktywność i wskaźniki senioralne w powiatach
-                  </h4>
-                  <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-raised)] overflow-hidden shadow-xs">
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-xs border-collapse">
-                        <thead>
-                          <tr className="bg-[var(--surface-subtle)] border-b border-[var(--border-subtle)] text-[var(--content-muted)] font-semibold">
-                            <th className="p-3.5">Powiat</th>
-                            <th className="p-3.5">Liczba mieszkańców</th>
-                            <th className="p-3.5">Wskaźnik starości (senior ratio)</th>
-                            <th className="p-3.5">Liczba zgłoszonych potrzeb</th>
-                            <th className="p-3.5 text-right">Priorytet wsparcia</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[var(--border-subtle)]">
-                          {trends.by_county.map((c) => {
-                            const isHighSenior = c.senior_ratio >= 24;
-                            return (
-                              <tr key={c.county_id} className="hover:bg-[var(--surface-subtle)] transition-colors">
-                                <td className="p-3.5 font-bold text-[var(--content-primary)]">{c.county_name}</td>
-                                <td className="p-3.5 text-[var(--content-secondary)]">{c.population?.toLocaleString("pl-PL") || "—"}</td>
-                                <td className="p-3.5 font-semibold text-[var(--content-primary)]">
-                                  <span className={isHighSenior ? "text-amber-600 font-bold" : ""}>
-                                    {c.senior_ratio}%
-                                  </span>
-                                </td>
-                                <td className="p-3.5 font-bold text-[var(--action-primary)]">{c.submissions_count}</td>
-                                <td className="p-3.5 text-right">
-                                  <Badge
-                                    label={isHighSenior ? "Wysoki priorytet" : "Standardowy"}
-                                    variant={isHighSenior ? "warning" : "neutral"}
-                                  />
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
+                  <DataTable<CountyTableRow>
+                    heading="Aktywność i wskaźniki senioralne w powiatach"
+                    caption="Zestawienie demograficzne 22 powiatów Małopolski, wskaźnik starości i zgłoszone potrzeby"
+                    columns={COUNTY_COLUMNS}
+                    rows={countyTableRows}
+                    rowKey="county_name"
+                    searchLabel="Szukaj powiatu"
+                  />
                 </div>
               </section>
             ),
@@ -951,23 +1013,21 @@ export function AdminDashboardView() {
             label: `Dialog z koordynatorem (${inquiries.length})`,
             panel: (
               <section aria-labelledby="heading-inquiries" className="space-y-4 pt-4">
-                <div className="bg-[var(--surface-subtle)] p-4 rounded-xl border border-[var(--border-subtle)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <div>
-                    <h3 id="heading-inquiries" className="type-h3 font-bold text-[var(--content-primary)]">
+                <div className="admin-toolbar">
+                  <div className="admin-toolbar__content">
+                    <h3 id="heading-inquiries" className="admin-toolbar__title">
                       Bezpośredni dialog z koordynatorem ROPS
                     </h3>
-                    <p className="type-caption text-[var(--content-secondary)]">
+                    <p className="admin-toolbar__description">
                       Odpowiadaj na pytania mieszkańców, stowarzyszeń i gmin. Publikuj wartościowe odpowiedzi w publicznej Bazie Wiedzy FAQ.
                     </p>
                   </div>
 
-                  <ButtonLink
-                    variant="secondary"
-                    size="sm"
-                    href="/kontakt"
-                  >
-                    <span>Otwórz kontakt i partnerstwa</span>
-                  </ButtonLink>
+                  <div className="admin-toolbar__actions">
+                    <ButtonLink variant="secondary" size="sm" href="/kontakt">
+                      <span>Otwórz kontakt i partnerstwa</span>
+                    </ButtonLink>
+                  </div>
                 </div>
 
                 <div className="space-y-3">
@@ -975,49 +1035,51 @@ export function AdminDashboardView() {
                     const isAnswered = inq.is_answered;
 
                     return (
-                      <article
-                        key={inq.id}
-                        className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-raised)] p-5 sm:p-6 shadow-xs space-y-3"
-                      >
-                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
+                      <article key={inq.id} className="admin-card">
+                        <div className="admin-card__top">
+                          <div className="admin-card__body">
+                            <div className="admin-card__meta-row">
                               <Badge
-                                label={isAnswered ? "Udzielono odpowiedzi" : "Oczekuje na odpowiedź ROPS"}
+                                label={
+                                  isAnswered
+                                    ? "Udzielono odpowiedzi"
+                                    : "Oczekuje na odpowiedź ROPS"
+                                }
                                 variant={isAnswered ? "success" : "warning"}
                               />
                               {inq.is_public_faq && <Badge label="Baza FAQ" variant="info" />}
-                              <span className="type-caption text-[var(--content-muted)] font-mono">#{inq.id}</span>
+                              <span className="admin-card__id">#{inq.id}</span>
                             </div>
-                            <h4 className="type-h3 font-bold text-[var(--content-primary)]">
-                              {inq.subject || "Zapytanie ogólne"}
-                            </h4>
+                            <h4 className="admin-card__title">{inq.subject || "Zapytanie ogólne"}</h4>
                             <div className="type-caption text-[var(--content-secondary)]">
                               Zgłaszający: <strong>{inq.author_name}</strong> ({inq.author_email})
                             </div>
                           </div>
 
-                          <Button
-                            variant={isAnswered ? "secondary" : "primary"}
-                            size="sm"
-                            onClick={() => handleOpenInquiry(inq)}
-                          >
-                            <NotePencil aria-hidden="true" size={16} />
-                            <span>{isAnswered ? "Edytuj odpowiedź" : "Odpowiedz"}</span>
-                          </Button>
+                          <div className="admin-card__actions">
+                            <Button
+                              variant={isAnswered ? "secondary" : "primary"}
+                              size="sm"
+                              onClick={() => handleOpenInquiry(inq)}
+                              aria-label={`${isAnswered ? "Edytuj odpowiedź" : "Odpowiedz"} na zapytanie #${inq.id}`}
+                            >
+                              <NotePencil aria-hidden="true" size={16} />
+                              <span>{isAnswered ? "Edytuj odpowiedź" : "Odpowiedz"}</span>
+                            </Button>
+                          </div>
                         </div>
 
-                        <div className="p-3 bg-[var(--surface-subtle)] rounded-xl border border-[var(--border-subtle)] text-xs text-[var(--content-primary)]">
+                        <div className="p-3.5 bg-[var(--surface-subtle)] rounded-xl border border-[var(--border-subtle)] text-xs text-[var(--content-primary)]">
                           {inq.message}
                         </div>
 
                         {isAnswered && inq.response && (
-                          <div className="p-3.5 bg-emerald-50/70 border border-emerald-100 rounded-xl text-xs space-y-1">
-                            <div className="font-bold text-emerald-900 flex items-center gap-1.5">
-                              <CheckCircle size={15} className="text-emerald-600" />
+                          <div className="admin-callout admin-callout--success">
+                            <span className="admin-callout__title">
+                              <CheckCircle size={15} aria-hidden="true" />
                               Odpowiedź ({inq.responder_name || "Koordynator ROPS Kraków"}):
-                            </div>
-                            <p className="text-emerald-800">{inq.response}</p>
+                            </span>
+                            <p className="admin-callout__text">{inq.response}</p>
                           </div>
                         )}
                       </article>
@@ -1045,9 +1107,7 @@ export function AdminDashboardView() {
               <strong className="text-sm font-bold text-[var(--content-primary)] block">
                 {selectedSubmission.title}
               </strong>
-              <p className="text-[var(--content-secondary)]">
-                {selectedSubmission.description}
-              </p>
+              <p className="text-[var(--content-secondary)]">{selectedSubmission.description}</p>
               <div className="grid grid-cols-2 gap-2 text-[var(--content-muted)] pt-1">
                 <span>Zgłaszający: {selectedSubmission.reporter_name}</span>
                 <span>Powiat: {selectedSubmission.county_name || "Brak"}</span>
@@ -1061,7 +1121,10 @@ export function AdminDashboardView() {
               options={[
                 { label: "Oczekujące na analizę (pending)", value: "pending" },
                 { label: "Dopasowano innowację ROPS (matched)", value: "matched" },
-                { label: "Biała plama – brak gotowej innowacji (gap_identified)", value: "gap_identified" },
+                {
+                  label: "Biała plama – brak gotowej innowacji (gap_identified)",
+                  value: "gap_identified",
+                },
                 { label: "W trakcie wdrażania w samorządzie (in_progress)", value: "in_progress" },
                 { label: "Rozwiązane / Zakończone sukcesem (resolved)", value: "resolved" },
               ]}
@@ -1077,10 +1140,7 @@ export function AdminDashboardView() {
             />
 
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-[var(--border-subtle)]">
-              <Button
-                variant="tertiary"
-                onClick={() => setSelectedSubmission(null)}
-              >
+              <Button variant="tertiary" onClick={() => setSelectedSubmission(null)}>
                 Anuluj
               </Button>
               <Button
@@ -1089,7 +1149,9 @@ export function AdminDashboardView() {
                 onClick={handleSaveModeration}
               >
                 <Check aria-hidden="true" size={16} />
-                <span>{isSubmittingModeration ? "Zapisywanie..." : "Zapisz decyzję moderacyjną"}</span>
+                <span>
+                  {isSubmittingModeration ? "Zapisywanie..." : "Zapisz decyzję moderacyjną"}
+                </span>
               </Button>
             </div>
           </div>
@@ -1100,7 +1162,9 @@ export function AdminDashboardView() {
       {selectedIdea && (
         <Dialog
           title={`Ocena formalno-merytoryczna wniosku #${selectedIdea.id}`}
-          description={`Wniosek: „${selectedIdea.title}” (${(selectedIdea.requested_grant_amount || 50000).toLocaleString("pl-PL")} PLN)`}
+          description={`Wniosek: „${selectedIdea.title}” (${(
+            selectedIdea.requested_grant_amount || 50000
+          ).toLocaleString("pl-PL")} PLN)`}
           open={Boolean(selectedIdea)}
           onOpenChange={(open) => {
             if (!open) setSelectedIdea(null);
@@ -1109,13 +1173,16 @@ export function AdminDashboardView() {
           <div className="space-y-4">
             <div className="p-3 bg-[var(--surface-subtle)] rounded-xl border border-[var(--border-subtle)] text-xs space-y-1.5">
               <div>
-                <strong>Wnioskodawca:</strong> {selectedIdea.applicant_name} ({selectedIdea.applicant_email})
+                <strong>Wnioskodawca:</strong> {selectedIdea.applicant_name} (
+                {selectedIdea.applicant_email})
               </div>
               <div>
-                <strong>Koncepcja:</strong> {selectedIdea.innovation_description || selectedIdea.solution_concept}
+                <strong>Koncepcja:</strong>{" "}
+                {selectedIdea.innovation_description || selectedIdea.solution_concept}
               </div>
               <div>
-                <strong>Kwota grantu FERS:</strong> {(selectedIdea.requested_grant_amount || 50000).toLocaleString("pl-PL")} PLN (Maks. 50 000 zł)
+                <strong>Kwota grantu FERS:</strong>{" "}
+                {(selectedIdea.requested_grant_amount || 50000).toLocaleString("pl-PL")} PLN (Maks. 50 000 zł)
               </div>
             </div>
 
@@ -1198,7 +1265,10 @@ export function AdminDashboardView() {
                 { label: "Koncepcja (koncepcja)", value: "koncepcja" },
                 { label: "Prototyp (prototyp)", value: "prototyp" },
                 { label: "W fazie testów społecznych (testy)", value: "testy" },
-                { label: "Sprawdzona / Gotowa do skalowania (sprawdzona)", value: "sprawdzona" },
+                {
+                  label: "Sprawdzona / Gotowa do skalowania (sprawdzona)",
+                  value: "sprawdzona",
+                },
               ]}
               helperText="Status «Sprawdzona» udostępnia innowację w generatorze Middleman AI dla wszystkich gmin."
             />
@@ -1218,10 +1288,7 @@ export function AdminDashboardView() {
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-3 border-t border-[var(--border-subtle)]">
-              <Button
-                variant="tertiary"
-                onClick={() => setSelectedInnovation(null)}
-              >
+              <Button variant="tertiary" onClick={() => setSelectedInnovation(null)}>
                 Anuluj
               </Button>
               <Button
@@ -1230,7 +1297,9 @@ export function AdminDashboardView() {
                 onClick={handleSavePromotion}
               >
                 <Check aria-hidden="true" size={16} />
-                <span>{isSubmittingPromotion ? "Aktualizowanie..." : "Zatwierdź awans innowacji"}</span>
+                <span>
+                  {isSubmittingPromotion ? "Aktualizowanie..." : "Zatwierdź awans innowacji"}
+                </span>
               </Button>
             </div>
           </div>
@@ -1250,9 +1319,7 @@ export function AdminDashboardView() {
           <div className="space-y-4">
             <div className="p-3 bg-[var(--surface-subtle)] rounded-xl border border-[var(--border-subtle)] text-xs space-y-1">
               <strong>Treść pytania:</strong>
-              <p className="text-[var(--content-secondary)]">
-                {selectedInquiry.message}
-              </p>
+              <p className="text-[var(--content-secondary)]">{selectedInquiry.message}</p>
             </div>
 
             <TextAreaField
@@ -1274,10 +1341,7 @@ export function AdminDashboardView() {
             </label>
 
             <div className="flex items-center justify-end gap-2 pt-3 border-t border-[var(--border-subtle)]">
-              <Button
-                variant="tertiary"
-                onClick={() => setSelectedInquiry(null)}
-              >
+              <Button variant="tertiary" onClick={() => setSelectedInquiry(null)}>
                 Anuluj
               </Button>
               <Button
@@ -1302,56 +1366,80 @@ export function AdminDashboardView() {
           onOpenChange={setIsReportOpen}
         >
           <div className="space-y-6">
-            <div id="print-report-container" className="p-6 bg-white rounded-xl border border-[var(--border-subtle)] space-y-5 text-[var(--content-primary)]">
+            <div id="print-report-container" className="admin-report-sheet">
               {/* Header */}
-              <div className="border-b pb-4 flex items-center justify-between">
+              <div className="admin-report-sheet__header">
                 <div>
-                  <span className="type-caption font-bold text-emerald-800 tracking-wider uppercase block">
+                  <span className="type-caption font-bold text-[var(--action-primary)] tracking-wider uppercase block">
                     Regionalny Ośrodek Polityki Społecznej w Krakowie
                   </span>
-                  <h2 className="type-h2 font-bold text-navy-950 mt-1">
+                  <h2 className="type-h2 font-bold text-[var(--content-primary)] mt-1">
                     Raport Trendów Społecznych & Białych Plam
                   </h2>
                   <span className="type-caption text-[var(--content-muted)] block mt-0.5">
-                    Sygnatura: ROPS/MHIS/2026/Q3 • Data wygenerowania: {new Date().toLocaleDateString("pl-PL")}
+                    Sygnatura: ROPS/MHIS/2026/Q3 • Data wygenerowania:{" "}
+                    {new Date().toLocaleDateString("pl-PL")}
                   </span>
                 </div>
                 <div className="text-right">
                   <Badge label="Województwo Małopolskie" variant="info" />
-                  <span className="type-caption text-[var(--content-muted)] block mt-1">22 powiaty objęte monitoringiem</span>
+                  <span className="type-caption text-[var(--content-muted)] block mt-1">
+                    22 powiaty objęte monitoringiem
+                  </span>
                 </div>
               </div>
 
               {/* KPI Summary */}
-              <div className="grid grid-cols-4 gap-3 text-center border-b pb-4">
-                <div className="p-2.5 bg-slate-50 rounded-lg">
-                  <span className="text-[11px] text-slate-500 block">Zgłoszone potrzeby</span>
-                  <strong className="text-lg font-bold text-slate-900">{submissions.length}</strong>
+              <div className="admin-report-sheet__kpis">
+                <div className="admin-report-sheet__kpi-box">
+                  <span className="text-[11px] text-[var(--content-muted)] block">
+                    Zgłoszone potrzeby
+                  </span>
+                  <strong className="text-lg font-bold text-[var(--content-primary)]">
+                    {submissions.length}
+                  </strong>
                 </div>
-                <div className="p-2.5 bg-red-50 rounded-lg">
-                  <span className="text-[11px] text-red-600 block">Zidentyfikowane luki</span>
-                  <strong className="text-lg font-bold text-red-700">{whiteSpotsCount}</strong>
+                <div className="admin-report-sheet__kpi-box">
+                  <span className="text-[11px] text-[var(--feedback-danger-foreground)] block">
+                    Zidentyfikowane luki
+                  </span>
+                  <strong className="text-lg font-bold text-[var(--feedback-danger-foreground)]">
+                    {whiteSpotsCount}
+                  </strong>
                 </div>
-                <div className="p-2.5 bg-emerald-50 rounded-lg">
-                  <span className="text-[11px] text-emerald-600 block">Wnioski grantowe</span>
-                  <strong className="text-lg font-bold text-emerald-700">{ideas.length}</strong>
+                <div className="admin-report-sheet__kpi-box">
+                  <span className="text-[11px] text-[var(--action-primary)] block">
+                    Wnioski grantowe
+                  </span>
+                  <strong className="text-lg font-bold text-[var(--action-primary)]">
+                    {ideas.length}
+                  </strong>
                 </div>
-                <div className="p-2.5 bg-blue-50 rounded-lg">
-                  <span className="text-[11px] text-blue-600 block">Sprawdzone innowacje</span>
-                  <strong className="text-lg font-bold text-blue-700">{innovations.filter(i => i.maturity_stage === "sprawdzona").length}</strong>
+                <div className="admin-report-sheet__kpi-box">
+                  <span className="text-[11px] text-[var(--feedback-info-foreground)] block">
+                    Sprawdzone innowacje
+                  </span>
+                  <strong className="text-lg font-bold text-[var(--feedback-info-foreground)]">
+                    {innovations.filter((i) => i.maturity_stage === "sprawdzona").length}
+                  </strong>
                 </div>
               </div>
 
               {/* White Spots section */}
               <div>
-                <h3 className="type-h3 font-bold text-red-900 mb-2">
+                <h3 className="type-h3 font-bold text-[var(--feedback-danger-foreground)] mb-2">
                   1. Wykaz Białych Plam Innowacji Społecznych (Brak pokrycia &lt; 45%)
                 </h3>
                 <div className="space-y-2 text-xs">
                   {trends.white_spots.map((ws, idx) => (
-                    <div key={idx} className="p-2.5 bg-red-50/70 border border-red-100 rounded-lg">
-                      <strong className="text-red-950 font-bold block">{ws.title}</strong>
-                      <div className="flex justify-between text-red-800 mt-1">
+                    <div
+                      key={idx}
+                      className="p-3 bg-[var(--feedback-danger-background)] border border-[var(--feedback-danger-foreground)] rounded-lg"
+                    >
+                      <strong className="text-[var(--content-primary)] font-bold block">
+                        {ws.title}
+                      </strong>
+                      <div className="flex justify-between text-[var(--content-secondary)] mt-1">
                         <span>Kategoria: {ws.category_name}</span>
                         <span>Lokalizacja: {ws.county_name}</span>
                         <span>Grupa: {ws.affected_group}</span>
@@ -1363,31 +1451,33 @@ export function AdminDashboardView() {
 
               {/* Categories breakdown */}
               <div>
-                <h3 className="type-h3 font-bold text-navy-950 mb-2">
+                <h3 className="type-h3 font-bold text-[var(--content-primary)] mb-2">
                   2. Zapotrzebowanie według kategorii ROPS
                 </h3>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   {trends.by_category.slice(0, 6).map((c) => (
-                    <div key={c.category_id} className="p-2 border rounded-lg flex justify-between">
+                    <div
+                      key={c.category_id}
+                      className="p-2 border border-[var(--border-subtle)] rounded-lg flex justify-between"
+                    >
                       <span>{c.category_name}:</span>
-                      <strong className="font-bold text-emerald-700">{c.submissions_count} potrzeb ({c.innovations_count} innowacji)</strong>
+                      <strong className="font-bold text-[var(--action-primary)]">
+                        {c.submissions_count} potrzeb ({c.innovations_count} innowacji)
+                      </strong>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Footer */}
-              <div className="border-t pt-4 flex justify-between text-xs text-slate-500">
+              <div className="admin-report-sheet__footer">
                 <span>Sporządziła: Magdalena Kaczmarczyk, Koordynator ROPS Kraków</span>
                 <span>Dokument wygenerowany w ramach platformy Splot</span>
               </div>
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-[var(--border-subtle)]">
-              <Button
-                variant="secondary"
-                onClick={() => setIsReportOpen(false)}
-              >
+              <Button variant="secondary" onClick={() => setIsReportOpen(false)}>
                 Zamknij
               </Button>
               <Button
@@ -1417,4 +1507,3 @@ export function AdminDashboardView() {
     </div>
   );
 }
-

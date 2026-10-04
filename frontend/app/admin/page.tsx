@@ -6,9 +6,9 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { AdminDashboardView } from "@/components/admin/AdminDashboardView";
 
 export const metadata: Metadata = {
-  title: "Panel Administratora ROPS Kraków | Splot",
+  title: "Panel koordynatora ROPS Kraków | Splot",
   description:
-    "Kokpit koordynatora Małopolskiego Hubu Innowacji Społecznych: analityka trendów regionalnych, moderacja potrzeb, wykrywanie Białych plam, ocena wniosków grantowych FERS i zarządzanie dojrzałością innowacji.",
+    "Zarządzanie zgłoszeniami mieszkańców, moderacja luk regionalnych (Białe plamy), ocena wniosków grantowych FERS i monitorowanie dojrzałości innowacji w Małopolsce.",
 };
 
 export default function AdminPage() {
@@ -17,15 +17,15 @@ export default function AdminPage() {
       <nav aria-label="Okruszki" className="hub-breadcrumbs">
         <Link href="/">Strona główna</Link>
         <span aria-hidden="true">›</span>
-        <span aria-current="page">Panel Administratora ROPS</span>
+        <span aria-current="page">Panel koordynatora ROPS</span>
       </nav>
 
       <PageHeader
-        title="Panel Koordynatora ROPS Kraków"
-        description="Zarządzaj zgłoszeniami mieszkańców i samorządów, moderuj luki regionalne (Białe plamy), oceniaj wnioski grantowe FERS Działanie 5.1 i monitoruj trendy innowacji społecznych w 22 powiatach Małopolski."
+        title="Panel koordynatora ROPS Kraków"
+        description="Moderacja zgłoszeń mieszkańców i samorządów, zarządzanie lukami regionalnymi (Białe plamy), ocena wniosków grantowych FERS oraz monitorowanie dojrzałości innowacji społecznych w 22 powiatach Małopolski."
       />
 
-      <Suspense fallback={<div className="p-8 text-center type-body">Ładowanie panelu administratora ROPS...</div>}>
+      <Suspense fallback={<div className="p-8 text-center type-body text-[var(--content-secondary)]">Ładowanie panelu koordynatora...</div>}>
         <AdminDashboardView />
       </Suspense>
     </HubShell>
