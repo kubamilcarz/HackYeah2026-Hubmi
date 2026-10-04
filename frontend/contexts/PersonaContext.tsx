@@ -120,7 +120,7 @@ export const DEMO_PERSONAS: Record<PersonaKey, PersonaProfile> = {
     city: "Kraków",
     postalCode: "30-552",
     description: "Ekspert deinstytucjonalizacji i mentor zespołów innowacyjnych.",
-    keyPaths: "Mentoring, ewaluacja w testerze",
+    keyPaths: "Mentoring, ewaluacja pilotaży",
   },
   magdalena_kaczmarczyk: {
     key: "magdalena_kaczmarczyk",

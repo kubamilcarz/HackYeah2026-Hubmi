@@ -715,10 +715,10 @@ export function AdminDashboardView() {
                 <div className="bg-[var(--surface-subtle)] p-4 rounded-xl border border-[var(--border-subtle)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div>
                     <h3 id="heading-awans" className="type-h3 font-bold text-[var(--content-primary)]">
-                      Zarządzanie dojrzałością innowacji (Tester &rarr; Middleman)
+                      Zarządzanie dojrzałością innowacji (Pilotaże &rarr; Wdrożenia)
                     </h3>
                     <p className="type-caption text-[var(--content-secondary)]">
-                      Przeglądaj wyniki testów społecznych (Moduł IV) i awansuj przetestowane prototypy do statusu „Sprawdzona / Gotowa do skalowania”,
+                      Przeglądaj wyniki pilotaży społecznych i awansuj przetestowane prototypy do statusu „Sprawdzona / Gotowa do skalowania”,
                       czyniąc je natychmiast dostępnymi w generatorze wdrożeń dla 182 gmin Małopolski.
                     </p>
                   </div>
@@ -729,7 +729,7 @@ export function AdminDashboardView() {
                     href="/testy"
                   >
                     <Flask aria-hidden="true" size={16} />
-                    <span>Otwórz Tester Innowacji</span>
+                    <span>Otwórz pilotaże społeczne</span>
                   </ButtonLink>
                 </div>
 

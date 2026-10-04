@@ -4083,6 +4083,270 @@ a.app-navigation__link {
 
 /* Kondycja Małopolski, Wyzwania i Analityka Trendów (.challenges-view) */
 
+/* Pilotaże społeczne */
+.pilot-tester {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.pilot-tester__coordinator-bar {
+  align-items: flex-start;
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.pilot-tester__coordinator-bar p {
+  margin: 0;
+}
+
+.pilot-tester__intro h2,
+.pilot-tester__intro p,
+.pilot-card h3,
+.pilot-card p,
+.pilot-dialog h3,
+.pilot-dialog p,
+.pilot-dialog__success h3,
+.pilot-dialog__success p {
+  margin: 0;
+}
+
+.pilot-tester__intro p,
+.pilot-card__body > p,
+.pilot-dialog > p,
+.pilot-dialog__evaluations p {
+  color: var(--content-secondary);
+}
+
+.pilot-tester__filters {
+  align-items: end;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-4);
+}
+
+.pilot-tester__stages .choice-group__options {
+  flex-wrap: wrap;
+}
+
+.pilot-tester__result-count {
+  color: var(--content-secondary);
+  margin: 0;
+}
+
+.pilot-tester__grid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.pilot-card,
+.pilot-tester__empty {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+}
+
+.pilot-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.pilot-card__header,
+.pilot-card__body,
+.pilot-card__actions {
+  padding: var(--space-5);
+}
+
+.pilot-card__header {
+  align-items: flex-start;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.pilot-card__location,
+.pilot-card__innovation,
+.pilot-card__audience,
+.pilot-card__rating,
+.pilot-dialog__meta > span {
+  align-items: center;
+  display: flex;
+  gap: var(--space-2);
+}
+
+.pilot-card__location,
+.pilot-card__innovation {
+  color: var(--content-muted);
+  font-size: var(--font-size-caption);
+}
+
+.pilot-card__innovation a {
+  color: var(--content-link);
+  font-weight: var(--font-weight-semibold);
+}
+
+.pilot-card__body {
+  display: grid;
+  flex: 1;
+  gap: var(--space-3);
+}
+
+.pilot-card__body h3 {
+  font-size: var(--font-size-h3);
+  line-height: var(--line-height-h3);
+}
+
+.pilot-card__audience {
+  align-items: flex-start;
+  background: var(--surface-canvas);
+  border-radius: var(--radius-control);
+  font-size: var(--font-size-caption);
+  padding: var(--space-3);
+}
+
+.pilot-card__audience svg,
+.pilot-card__rating svg {
+  color: var(--action-primary);
+  flex: 0 0 auto;
+  margin-top: 0.125rem;
+}
+
+.pilot-card__capacity {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: auto;
+}
+
+.pilot-card__capacity > div {
+  align-items: center;
+  display: flex;
+  font-size: var(--font-size-caption);
+  justify-content: space-between;
+}
+
+.pilot-card__capacity p,
+.pilot-card__rating {
+  color: var(--content-secondary);
+  font-size: var(--font-size-caption);
+}
+
+.pilot-card__actions {
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.pilot-tester__empty {
+  align-items: flex-start;
+  border-style: dashed;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-6);
+}
+
+.pilot-tester__empty svg,
+.pilot-dialog__success > svg {
+  color: var(--action-primary);
+}
+
+.pilot-dialog {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.pilot-dialog__meta,
+.pilot-dialog__scores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.pilot-dialog__meta {
+  align-items: center;
+  color: var(--content-secondary);
+  font-size: var(--font-size-caption);
+}
+
+.pilot-dialog__two-columns {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.pilot-dialog__scores {
+  background: var(--surface-canvas);
+  border-radius: var(--radius-control);
+  flex-direction: column;
+  padding: var(--space-4);
+}
+
+.pilot-dialog__evaluations {
+  display: grid;
+  gap: var(--space-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pilot-dialog__evaluations li {
+  border-left: 3px solid var(--action-primary);
+  display: grid;
+  gap: var(--space-1);
+  padding-left: var(--space-3);
+}
+
+.pilot-dialog__evaluations span {
+  color: var(--content-muted);
+  font-size: var(--font-size-caption);
+}
+
+.pilot-dialog__consent {
+  align-items: flex-start;
+  color: var(--content-secondary);
+  display: flex;
+  font-size: var(--font-size-caption);
+  gap: var(--space-2);
+}
+
+.pilot-dialog__consent input {
+  accent-color: var(--action-primary);
+  height: 1.25rem;
+  margin-top: 0.125rem;
+  min-width: 1.25rem;
+}
+
+.pilot-dialog__success {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  text-align: center;
+}
+
+@media (min-width: 42rem) {
+  .pilot-tester__coordinator-bar { align-items: center; flex-direction: row; justify-content: space-between; }
+  .pilot-tester__filters { grid-template-columns: minmax(14rem, 1fr) minmax(12rem, 15rem); }
+  .pilot-tester__stages { grid-column: 1 / -1; }
+  .pilot-tester__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pilot-dialog__two-columns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pilot-dialog__scores { flex-direction: row; }
+  .pilot-dialog__scores > .field { flex: 1 1 10rem; }
+}
+
+@media (forced-colors: active) {
+  .pilot-card__audience,
+  .pilot-dialog__scores { border: 1px solid CanvasText; }
+}
+
 .challenges-view {
   margin-top: var(--space-4);
 }

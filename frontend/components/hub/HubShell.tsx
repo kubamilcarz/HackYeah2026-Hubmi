@@ -31,7 +31,7 @@ const baseNavigationItems: NavigationItem[] = [
   { id: "wyzwania", label: "Wyzwania Regionu", href: "/wyzwania", icon: ChartLineUp },
   { id: "solutions", label: "Dopasuj pomoc", href: "/solutions", icon: Lightbulb },
   { id: "kreator", label: "Kreator Pomysłów", href: "/kreator", icon: Sparkle },
-  { id: "testy", label: "Tester Innowacji", href: "/testy", icon: Flask },
+  { id: "testy", label: "Pilotaże społeczne", href: "/testy", icon: Flask },
   { id: "middleman", label: "Middleman JST", href: "/middleman", icon: Buildings },
   { id: "kontakt", label: "Kontakt & Partnerstwa", href: "/kontakt", icon: ChatTeardropText },
   { id: "map", label: "Mapa inicjatyw", href: "/map", icon: MapTrifold },

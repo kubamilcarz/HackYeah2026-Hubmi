@@ -367,7 +367,7 @@ export function NeedReportFlow() {
                               leadingIcon={Flask}
                               size="sm"
                             >
-                              Zgłoś się do testów innowacji
+                              Dołącz do pilotażu
                             </ButtonLink>
                           )}
                           {item.suggested_next_step === "contact" && (
