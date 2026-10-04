@@ -810,6 +810,85 @@ class BackendFullTestSuite(TestCase):
             self.assertNotIn("source", res_err.data)
             self.assertIn("deinstytucjonalizacji", res_err.data["suggestion"])
 
+    def test_idea_ai_validate_single_field_needs_work_on_vague(self):
+        """Test walidacji AI wykrywającej lakoniczny/niejasny opis problemu"""
+        res = self.client.post("/api/ideas/ai-validate/", {
+            "field": "problem_diagnosis",
+            "content": "Seniorzy mają problem ze zdrowiem.",
+            "title": "Mobilna Opieka Senioralna",
+            "county": self.county.id,
+        }, format="json")
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data["status"], "needs_work")
+        self.assertLess(res.data["score"], 50)
+        self.assertIn("głębszego opisu", res.data["verdict"])
+        self.assertGreaterEqual(len(res.data["improvements"]), 2)
+
+    def test_idea_ai_validate_single_field_valid_on_rich(self):
+        """Test walidacji AI potwierdzającej rzetelny i wyczerpujący opis z danymi lokalnymi"""
+        rich_content = (
+            "Na podstawie raportu Obserwatorium Polityki Społecznej ROPS Kraków w powiecie krakowskim "
+            "ponad 24% mieszkańców to osoby w wieku 60+. Zdiagnozowano brak mobilnych kadr opiekuńczych na obszarach wiejskich, "
+            "co dotyka bezpośrednio około 350 niesamodzielnych seniorów pozbawionych dostępu do wsparcia środowiskowego."
+        )
+        res = self.client.post("/api/ideas/ai-validate/", {
+            "field": "problem_diagnosis",
+            "content": rich_content,
+            "title": "Mobilna Opieka Senioralna",
+            "county": self.county.id,
+        }, format="json")
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data["status"], "valid")
+        self.assertGreaterEqual(res.data["score"], 75)
+        self.assertIn("Diagnoza", res.data["verdict"])
+
+    def test_idea_ai_validate_batch_fields(self):
+        """Test walidacji wielopolowej kroków formularza FERS (batch validation)"""
+        res = self.client.post("/api/ideas/ai-validate/", {
+            "title": "Kawiarenka Naprawcza Senior+",
+            "county": self.county.id,
+            "fields": {
+                "problem_diagnosis": "Krótki opis.",
+                "innovation_desc": "Innowacja polega na deinstytucjonalizacji usług i wsparciu sąsiedzkim w środowisku lokalnym podopiecznych, stanowiąc alternatywę dla pobytu w DPS.",
+            },
+        }, format="json")
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertTrue(res.data["batch"])
+        self.assertIn("problem_diagnosis", res.data["results"])
+        self.assertIn("innovation_desc", res.data["results"])
+        self.assertEqual(res.data["results"]["problem_diagnosis"]["status"], "needs_work")
+        self.assertEqual(res.data["results"]["innovation_desc"]["status"], "valid")
+        self.assertEqual(res.data["overall_status"], "needs_work")
+
+    def test_idea_ai_validate_with_openai_mock(self):
+        """Test walidacji AI z odpowiedzią OpenAI Responses API"""
+        mock_response = MagicMock()
+        mock_response.output_text = (
+            '{"field": "problem_diagnosis", "status": "warning", "score": 60, '
+            '"verdict": "Opis wymaga pogłębienia danych o powiecie", '
+            '"summary": "Wskazano problem, ale brakuje twardych liczb.", '
+            '"strengths": ["Jasny temat"], "improvements": ["Dodaj dane GUS"], '
+            '"suggested_questions": ["Ilu seniorów?"]}'
+        )
+
+        with patch("api.llm_service.get_openai_client") as mock_get_client:
+            mock_client = MagicMock()
+            mock_client.responses.create.return_value = mock_response
+            mock_get_client.return_value = mock_client
+
+            res = self.client.post("/api/ideas/ai-validate/", {
+                "field": "problem_diagnosis",
+                "content": "Ogólny opis problemu bez liczb.",
+            }, format="json")
+
+            self.assertEqual(res.status_code, status.HTTP_200_OK)
+            self.assertEqual(res.data["source"], "openai")
+            self.assertEqual(res.data["status"], "warning")
+            self.assertEqual(res.data["score"], 60)
+
     def test_pilot_apply_and_evaluation(self):
         """Test zapisu na testy, limitu miejsc, formularza ewaluacji z aliasami oraz filtrowania i wskaźników"""
         # 1. Poprawne zgłoszenie kandydata na testera

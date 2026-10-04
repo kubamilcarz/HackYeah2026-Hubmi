@@ -12,6 +12,8 @@ import {
   Lightbulb,
   Plus,
   Printer,
+  ShieldCheck,
+  Sparkle,
   Trash,
   WarningCircle,
 } from "@phosphor-icons/react";
@@ -26,14 +28,17 @@ import { Alert } from "@/components/ui/Alert";
 import { Badge, Tag } from "@/components/ui/Tag";
 import { ConceptDiagramView, type DiagramStep } from "@/components/kreator/ConceptDiagramView";
 import { FersPrintView } from "@/components/kreator/FersPrintView";
+import { AiValidationCard } from "@/components/kreator/AiValidationCard";
 import type {
   InnovationCategory,
   County,
   IdeaSubmissionPayload,
   ActionPlanItem,
   GroupMember,
+  AiValidationResult,
+  AiBatchValidationResponse,
 } from "@/lib/api";
-import { aiAssistIdea } from "@/lib/api";
+import { aiAssistIdea, aiValidateIdea } from "@/lib/api";
 
 const STEPS = [
   { label: "1. Wnioskodawca" },
@@ -158,6 +163,15 @@ export function FersGrantWizard({
   const [aiLoadingField, setAiLoadingField] = useState<string | null>(null);
   const [aiMessage, setAiMessage] = useState<{ title: string; desc: string; variant?: "info" | "success" } | null>(null);
 
+  // Stan walidacji AI (na bieżąco, w krokach i audyt końcowy)
+  const [validatingField, setValidatingField] = useState<string | null>(null);
+  const [validationResults, setValidationResults] = useState<Record<string, AiValidationResult | null>>({});
+  const [isValidatingStep, setIsValidatingStep] = useState(false);
+  const [stepGateWarning, setStepGateWarning] = useState<{ step: number; message: string; fieldKey?: string } | null>(null);
+  const [bypassedSteps, setBypassedSteps] = useState<number[]>([]);
+  const [finalAuditResult, setFinalAuditResult] = useState<AiBatchValidationResponse | null>(null);
+  const [isAuditingFinal, setIsAuditingFinal] = useState(false);
+
   const stepContainerRef = useRef<HTMLDivElement>(null);
 
   // Obliczenia budżetowe (Pkt 10)
@@ -278,6 +292,168 @@ export function FersGrantWizard({
     }
   }
 
+  // Walidacja AI pojedynczego pola
+  async function triggerAiValidate(fieldKey: string, content: string) {
+    setValidatingField(fieldKey);
+    setStepGateWarning(null);
+    try {
+      const res = await aiValidateIdea({
+        field: fieldKey,
+        content: content || "",
+        title: title || "Innowacja Społeczna",
+        category: categoryId,
+        county: countyId,
+        target_recipients: targetRecipients,
+      });
+
+      if (!("batch" in res)) {
+        setValidationResults((prev) => ({
+          ...prev,
+          [fieldKey]: res,
+        }));
+      }
+    } catch {
+      // Ignore network errors
+    } finally {
+      setValidatingField(null);
+    }
+  }
+
+  function handleDismissValidation(fieldKey: string) {
+    setValidationResults((prev) => ({
+      ...prev,
+      [fieldKey]: null,
+    }));
+  }
+
+  async function handleApplyAiFix(fieldKey: "deinstitutionalization" | "innovation_uniqueness" | "county_diagnosis" | "scalability") {
+    await triggerAiAssist(fieldKey);
+    setTimeout(() => {
+      let content = "";
+      if (fieldKey === "deinstitutionalization") content = innovationDesc;
+      else if (fieldKey === "innovation_uniqueness") content = uniquenessRationale;
+      else if (fieldKey === "county_diagnosis") content = problemDiagnosis;
+      else if (fieldKey === "scalability") content = scalabilityModel;
+      if (content) {
+        triggerAiValidate(fieldKey, content);
+      }
+    }, 400);
+  }
+
+  // Automatyczna walidacja przed przejściem do kolejnego kroku
+  async function handleNextStep() {
+    setStepGateWarning(null);
+
+    // Krok 1: Weryfikacja formalna
+    if (currentStep === 1) {
+      if (!applicantName.trim()) {
+        setStepGateWarning({ step: 1, message: "Wpisz nazwę wnioskodawcy przed przejściem do kolejnego etapu." });
+        return;
+      }
+      setCurrentStep(2);
+      return;
+    }
+
+    // Jeśli ten krok został już pominięty przez użytkownika
+    if (bypassedSteps.includes(currentStep)) {
+      setCurrentStep((prev) => Math.min(5, prev + 1));
+      return;
+    }
+
+    // Sprawdzane pola dla bieżącego kroku
+    const fieldsToValidate: Record<string, string> = {};
+    if (currentStep === 2) {
+      fieldsToValidate["innovation_desc"] = innovationDesc;
+      fieldsToValidate["innovation_uniqueness"] = uniquenessRationale;
+    } else if (currentStep === 3) {
+      fieldsToValidate["problem_diagnosis"] = problemDiagnosis;
+      fieldsToValidate["target_recipients"] = targetRecipients;
+    } else if (currentStep === 4) {
+      fieldsToValidate["scalability"] = scalabilityModel;
+    }
+
+    if (Object.keys(fieldsToValidate).length > 0) {
+      setIsValidatingStep(true);
+      try {
+        const res = await aiValidateIdea({
+          fields: fieldsToValidate,
+          title: title || "Innowacja Społeczna",
+          category: categoryId,
+          county: countyId,
+          target_recipients: targetRecipients,
+        });
+
+        if ("batch" in res && res.batch) {
+          // Uzupełnij wyniki w formularzu
+          setValidationResults((prev) => ({
+            ...prev,
+            ...res.results,
+          }));
+
+          // Sprawdź czy któreś pole wymaga pogłębienia (status needs_work lub warning < 55)
+          const problematic = Object.entries(res.results).filter(
+            ([, r]) => r.status === "needs_work" || (r.status === "warning" && r.score < 55)
+          );
+
+          if (problematic.length > 0) {
+            const [firstFieldKey, firstRes] = problematic[0];
+            setStepGateWarning({
+              step: currentStep,
+              message: `${firstRes.verdict} – Asystent AI zaleca dopracowanie opisu przed oceną przez komisję ROPS Kraków. Możesz uzupełnić treść lub przejść mimo to.`,
+              fieldKey: firstFieldKey,
+            });
+            setIsValidatingStep(false);
+            return;
+          }
+        }
+      } catch {
+        // Fallback w razie błędu sieci nie blokuje
+      } finally {
+        setIsValidatingStep(false);
+      }
+    }
+
+    setCurrentStep((prev) => Math.min(5, prev + 1));
+  }
+
+  function handleBypassStep() {
+    setBypassedSteps((prev) => [...prev, currentStep]);
+    setStepGateWarning(null);
+    setCurrentStep((prev) => Math.min(5, prev + 1));
+  }
+
+  // Pre-flight check / pełny audyt całego wniosku
+  async function runFinalPreflightAudit() {
+    setIsAuditingFinal(true);
+    try {
+      const res = await aiValidateIdea({
+        fields: {
+          problem_diagnosis: problemDiagnosis,
+          innovation_desc: innovationDesc,
+          innovation_uniqueness: uniquenessRationale,
+          target_recipients: targetRecipients,
+          scalability: scalabilityModel,
+        },
+        title: title || "Innowacja Społeczna",
+        category: categoryId,
+        county: countyId,
+        target_recipients: targetRecipients,
+      });
+
+      if ("batch" in res && res.batch) {
+        setFinalAuditResult(res);
+        setValidationResults((prev) => ({
+          ...prev,
+          ...res.results,
+        }));
+      }
+    } catch {
+      // Ignore
+    } finally {
+      setIsAuditingFinal(false);
+    }
+  }
+
   // Akcje dodawania/usuwania działań w harmonogramie
   function addPrepItem() {
     setActionPlanPrep([
@@ -313,9 +489,50 @@ export function FersGrantWizard({
     setGroupMembers(groupMembers.filter((_, i) => i !== idx));
   }
 
-  // Złożenie ostateczne wniosku
-  function handleFinalSubmit() {
+  // Złożenie ostateczne wniosku z audytem
+  async function handleFinalSubmit() {
     if (isSubmitting || isBudgetOverLimit || !formalAccepted) return;
+
+    if (!finalAuditResult) {
+      setIsAuditingFinal(true);
+      try {
+        const res = await aiValidateIdea({
+          fields: {
+            problem_diagnosis: problemDiagnosis,
+            innovation_desc: innovationDesc,
+            innovation_uniqueness: uniquenessRationale,
+            target_recipients: targetRecipients,
+            scalability: scalabilityModel,
+          },
+          title: title || "Innowacja Społeczna",
+          category: categoryId,
+          county: countyId,
+          target_recipients: targetRecipients,
+        });
+
+        if ("batch" in res && res.batch) {
+          setFinalAuditResult(res);
+          setValidationResults((prev) => ({
+            ...prev,
+            ...res.results,
+          }));
+
+          if (res.overall_status === "needs_work") {
+            setAiMessage({
+              title: "Audyt FERS: Wykryto sekcje wymagające uzupełnienia",
+              desc: "Niektóre sekcje wniosku (np. diagnoza lub opis innowacji) wymagają głębszego opisu przed oceną przez ROPS. Zapoznaj się z audytem poniżej lub potwierdź wysłanie.",
+              variant: "info",
+            });
+            setIsAuditingFinal(false);
+            return;
+          }
+        }
+      } catch {
+        // Fallback pozwala złożyć
+      } finally {
+        setIsAuditingFinal(false);
+      }
+    }
 
     onSubmit({
       submission_type: "grant_fers",
@@ -661,18 +878,32 @@ export function FersGrantWizard({
           <div className="creator-section">
             <div className="creator-section__header">
               <h4 className="type-h3">Pkt 3: Opis innowacji & deinstytucjonalizacja</h4>
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                leadingIcon={Lightbulb}
-                disabled={aiLoadingField === "deinstitutionalization"}
-                onClick={() => triggerAiAssist("deinstitutionalization")}
-              >
-                {aiLoadingField === "deinstitutionalization"
-                  ? "Generowanie..."
-                  : "Wskazówka: Deinstytucjonalizacja"}
-              </Button>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  leadingIcon={Lightbulb}
+                  disabled={aiLoadingField === "deinstitutionalization"}
+                  onClick={() => triggerAiAssist("deinstitutionalization")}
+                >
+                  {aiLoadingField === "deinstitutionalization"
+                    ? "Generowanie..."
+                    : "Wskazówka: Deinstytucjonalizacja"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="tertiary"
+                  size="sm"
+                  leadingIcon={ShieldCheck}
+                  disabled={validatingField === "deinstitutionalization"}
+                  onClick={() => triggerAiValidate("deinstitutionalization", innovationDesc)}
+                >
+                  {validatingField === "deinstitutionalization"
+                    ? "Sprawdzanie..."
+                    : "Sprawdź jakość (AI)"}
+                </Button>
+              </div>
             </div>
 
             <TextAreaField
@@ -684,23 +915,50 @@ export function FersGrantWizard({
               onChange={(e) => setInnovationDesc(e.target.value)}
               helperText="Pokaż, w jaki sposób usługa wspiera podopiecznego w jego naturalnym środowisku lokalnym."
             />
+
+            {validationResults["deinstitutionalization"] && (
+              <div className="mt-3">
+                <AiValidationCard
+                  result={validationResults["deinstitutionalization"]}
+                  onDismiss={() => handleDismissValidation("deinstitutionalization")}
+                  onApplyAiFix={() => handleApplyAiFix("deinstitutionalization")}
+                  onRevalidate={() => triggerAiValidate("deinstitutionalization", innovationDesc)}
+                  isFixing={aiLoadingField === "deinstitutionalization"}
+                  isValidating={validatingField === "deinstitutionalization"}
+                />
+              </div>
+            )}
           </div>
 
           <div className="creator-section">
             <div className="creator-section__header">
               <h4 className="type-h3">Pkt 4: Innowacyjność i unikalne wyróżniki</h4>
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                leadingIcon={Lightbulb}
-                disabled={aiLoadingField === "innovation_uniqueness"}
-                onClick={() => triggerAiAssist("innovation_uniqueness")}
-              >
-                {aiLoadingField === "innovation_uniqueness"
-                  ? "Generowanie..."
-                  : "Wskazówka: Wyróżniki innowacji"}
-              </Button>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  leadingIcon={Lightbulb}
+                  disabled={aiLoadingField === "innovation_uniqueness"}
+                  onClick={() => triggerAiAssist("innovation_uniqueness")}
+                >
+                  {aiLoadingField === "innovation_uniqueness"
+                    ? "Generowanie..."
+                    : "Wskazówka: Wyróżniki innowacji"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="tertiary"
+                  size="sm"
+                  leadingIcon={ShieldCheck}
+                  disabled={validatingField === "innovation_uniqueness"}
+                  onClick={() => triggerAiValidate("innovation_uniqueness", uniquenessRationale)}
+                >
+                  {validatingField === "innovation_uniqueness"
+                    ? "Sprawdzanie..."
+                    : "Sprawdź jakość (AI)"}
+                </Button>
+              </div>
             </div>
 
             <TextAreaField
@@ -712,6 +970,19 @@ export function FersGrantWizard({
               onChange={(e) => setUniquenessRationale(e.target.value)}
               helperText="Wskaż konkretną nową wartość (np. niższy koszt jednostkowy, lepsza dostępność, technologia asystująca)."
             />
+
+            {validationResults["innovation_uniqueness"] && (
+              <div className="mt-3">
+                <AiValidationCard
+                  result={validationResults["innovation_uniqueness"]}
+                  onDismiss={() => handleDismissValidation("innovation_uniqueness")}
+                  onApplyAiFix={() => handleApplyAiFix("innovation_uniqueness")}
+                  onRevalidate={() => triggerAiValidate("innovation_uniqueness", uniquenessRationale)}
+                  isFixing={aiLoadingField === "innovation_uniqueness"}
+                  isValidating={validatingField === "innovation_uniqueness"}
+                />
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -726,18 +997,32 @@ export function FersGrantWizard({
           <div className="creator-section">
             <div className="creator-section__header">
               <h4 className="type-h3">Pkt 5: Diagnoza problemu & raporty ROPS Kraków</h4>
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                leadingIcon={ChartLineUp}
-                disabled={aiLoadingField === "county_diagnosis"}
-                onClick={() => triggerAiAssist("county_diagnosis")}
-              >
-                {aiLoadingField === "county_diagnosis"
-                  ? "Pobieranie..."
-                  : `Dane ROPS: ${currentCounty?.name || "powiat"}`}
-              </Button>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  leadingIcon={ChartLineUp}
+                  disabled={aiLoadingField === "county_diagnosis"}
+                  onClick={() => triggerAiAssist("county_diagnosis")}
+                >
+                  {aiLoadingField === "county_diagnosis"
+                    ? "Pobieranie..."
+                    : `Dane ROPS: ${currentCounty?.name || "powiat"}`}
+                </Button>
+                <Button
+                  type="button"
+                  variant="tertiary"
+                  size="sm"
+                  leadingIcon={ShieldCheck}
+                  disabled={validatingField === "problem_diagnosis"}
+                  onClick={() => triggerAiValidate("problem_diagnosis", problemDiagnosis)}
+                >
+                  {validatingField === "problem_diagnosis"
+                    ? "Sprawdzanie..."
+                    : "Sprawdź jakość (AI)"}
+                </Button>
+              </div>
             </div>
 
             <TextAreaField
@@ -749,10 +1034,37 @@ export function FersGrantWizard({
               onChange={(e) => setProblemDiagnosis(e.target.value)}
               helperText="Podaj dane statystyczne wybranego powiatu lub powołaj się na regionalną diagnozę ROPS Kraków."
             />
+
+            {validationResults["problem_diagnosis"] && (
+              <div className="mt-3">
+                <AiValidationCard
+                  result={validationResults["problem_diagnosis"]}
+                  onDismiss={() => handleDismissValidation("problem_diagnosis")}
+                  onApplyAiFix={() => handleApplyAiFix("county_diagnosis")}
+                  onRevalidate={() => triggerAiValidate("problem_diagnosis", problemDiagnosis)}
+                  isFixing={aiLoadingField === "county_diagnosis"}
+                  isValidating={validatingField === "problem_diagnosis"}
+                />
+              </div>
+            )}
           </div>
 
           <div className="creator-section">
-            <h4 className="type-h3">Pkt 6: Opis odbiorców i przyczyny wykluczenia</h4>
+            <div className="creator-section__header">
+              <h4 className="type-h3">Pkt 6: Opis odbiorców i przyczyny wykluczenia</h4>
+              <Button
+                type="button"
+                variant="tertiary"
+                size="sm"
+                leadingIcon={ShieldCheck}
+                disabled={validatingField === "target_recipients"}
+                onClick={() => triggerAiValidate("target_recipients", targetRecipients)}
+              >
+                {validatingField === "target_recipients"
+                  ? "Sprawdzanie..."
+                  : "Sprawdź jakość (AI)"}
+              </Button>
+            </div>
             <TextAreaField
               label="Grupa docelowa innowacji i bariery, z którymi się mierzy"
               name="target_recipients"
@@ -762,10 +1074,35 @@ export function FersGrantWizard({
               onChange={(e) => setTargetRecipients(e.target.value)}
               helperText="Kto konkretnie skorzysta z rozwiązania? Ile osób zostanie objętych wsparciem w fazie testów?"
             />
+
+            {validationResults["target_recipients"] && (
+              <div className="mt-3">
+                <AiValidationCard
+                  result={validationResults["target_recipients"]}
+                  onDismiss={() => handleDismissValidation("target_recipients")}
+                  onRevalidate={() => triggerAiValidate("target_recipients", targetRecipients)}
+                  isValidating={validatingField === "target_recipients"}
+                />
+              </div>
+            )}
           </div>
 
           <div className="creator-section">
-            <h4 className="type-h3">Pkt 7: Zmiana wprowadzana przez innowację</h4>
+            <div className="creator-section__header">
+              <h4 className="type-h3">Pkt 7: Zmiana wprowadzana przez innowację</h4>
+              <Button
+                type="button"
+                variant="tertiary"
+                size="sm"
+                leadingIcon={ShieldCheck}
+                disabled={validatingField === "expected_change"}
+                onClick={() => triggerAiValidate("expected_change", expectedChange)}
+              >
+                {validatingField === "expected_change"
+                  ? "Sprawdzanie..."
+                  : "Sprawdź jakość (AI)"}
+              </Button>
+            </div>
             <TextAreaField
               label="Oczekiwane rezultaty społeczne i trwała zmiana w życiu beneficjentów"
               name="expected_change"
@@ -775,6 +1112,17 @@ export function FersGrantWizard({
               onChange={(e) => setExpectedChange(e.target.value)}
               helperText="Jakie mierzalne efekty przyniesie wdrożenie innowacji (np. samodzielność, ograniczenie izolacji)?"
             />
+
+            {validationResults["expected_change"] && (
+              <div className="mt-3">
+                <AiValidationCard
+                  result={validationResults["expected_change"]}
+                  onDismiss={() => handleDismissValidation("expected_change")}
+                  onRevalidate={() => triggerAiValidate("expected_change", expectedChange)}
+                  isValidating={validatingField === "expected_change"}
+                />
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -807,16 +1155,30 @@ export function FersGrantWizard({
           <div className="creator-section">
             <div className="creator-section__header">
               <h4 className="type-h3">Pkt 8: Wizja przyszłości i replikowalność w JST</h4>
-              <Button
-                type="button"
-                variant="tertiary"
-                size="sm"
-                leadingIcon={Buildings}
-                disabled={aiLoadingField === "scalability"}
-                onClick={() => triggerAiAssist("scalability")}
-              >
-                Wskazówka: Model CUS
-              </Button>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button
+                  type="button"
+                  variant="tertiary"
+                  size="sm"
+                  leadingIcon={Buildings}
+                  disabled={aiLoadingField === "scalability"}
+                  onClick={() => triggerAiAssist("scalability")}
+                >
+                  Wskazówka: Model CUS
+                </Button>
+                <Button
+                  type="button"
+                  variant="tertiary"
+                  size="sm"
+                  leadingIcon={ShieldCheck}
+                  disabled={validatingField === "scalability"}
+                  onClick={() => triggerAiValidate("scalability", scalabilityModel)}
+                >
+                  {validatingField === "scalability"
+                    ? "Sprawdzanie..."
+                    : "Sprawdź jakość (AI)"}
+                </Button>
+              </div>
             </div>
             <TextAreaField
               label="Jak innowacja będzie rozwijana po zakończeniu mikrograntu?"
@@ -827,6 +1189,19 @@ export function FersGrantWizard({
               onChange={(e) => setScalabilityModel(e.target.value)}
               helperText="Wskaż potencjał wdrożenia rozwiązania jako Program Usług Społecznych (PUS) w małopolskich CUS lub OPS."
             />
+
+            {validationResults["scalability"] && (
+              <div className="mt-3">
+                <AiValidationCard
+                  result={validationResults["scalability"]}
+                  onDismiss={() => handleDismissValidation("scalability")}
+                  onApplyAiFix={() => handleApplyAiFix("scalability")}
+                  onRevalidate={() => triggerAiValidate("scalability", scalabilityModel)}
+                  isFixing={aiLoadingField === "scalability"}
+                  isValidating={validatingField === "scalability"}
+                />
+              </div>
+            )}
           </div>
 
           {/* Pkt 9: Harmonogram i budżet */}
@@ -1093,6 +1468,96 @@ export function FersGrantWizard({
             />
           </div>
 
+          {/* Kompleksowy audyt gotowości wniosku FERS (AI) */}
+          <div className="creator-section border border-indigo-100 bg-indigo-50/40 p-5 rounded-2xl">
+            <div className="flex items-start justify-between flex-wrap gap-4">
+              <div className="flex items-start gap-3">
+                <ShieldCheck size={26} weight="fill" className="text-indigo-600 shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="type-h3 text-slate-900">Audyt gotowości wniosku FERS (AI)</h4>
+                  <p className="type-caption text-slate-600 mt-1 max-w-xl">
+                    Przed złożeniem wniosku do ROPS Kraków asystent AI może dokonać szybkiej recenzji wszystkich sekcji:
+                    diagnozy problemu, innowacyjności, deinstytucjonalizacji, odbiorców i skalowalności.
+                  </p>
+                </div>
+              </div>
+
+              <Button
+                type="button"
+                variant={finalAuditResult ? "secondary" : "primary"}
+                size="sm"
+                leadingIcon={Sparkle}
+                disabled={isAuditingFinal}
+                onClick={runFinalPreflightAudit}
+              >
+                {isAuditingFinal
+                  ? "Analizowanie wniosku..."
+                  : finalAuditResult
+                  ? "Odśwież audyt wniosku"
+                  : "Uruchom audyt wniosku (AI)"}
+              </Button>
+            </div>
+
+            {finalAuditResult && (
+              <div className="mt-4 pt-4 border-t border-indigo-100/80 space-y-3">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-slate-700">Ogólna jakość wniosku:</span>
+                    <Badge
+                      variant={
+                        finalAuditResult.overall_status === "valid"
+                          ? "success"
+                          : finalAuditResult.overall_status === "warning"
+                          ? "warning"
+                          : "danger"
+                      }
+                      label={
+                        finalAuditResult.overall_status === "valid"
+                          ? `Gotowy do złożenia (${finalAuditResult.overall_score}/100)`
+                          : finalAuditResult.overall_status === "warning"
+                          ? `Zalecane dopracowanie (${finalAuditResult.overall_score}/100)`
+                          : `Wymaga pogłębienia opisu (${finalAuditResult.overall_score}/100)`
+                      }
+                    />
+                  </div>
+                  <span className="text-xs text-slate-500">
+                    Oceniono 5 kluczowych sekcji FERS 5.1
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                  {Object.entries(finalAuditResult.results).map(([fKey, fRes]) => {
+                    const stepNum = fKey === "innovation_desc" || fKey === "innovation_uniqueness" ? 2 : fKey === "problem_diagnosis" || fKey === "target_recipients" ? 3 : 4;
+                    const fTitle = fKey === "problem_diagnosis" ? "Diagnoza problemu" : fKey === "innovation_desc" ? "Opis innowacji" : fKey === "innovation_uniqueness" ? "Wyróżniki" : fKey === "target_recipients" ? "Odbiorcy" : "Skalowalność";
+                    return (
+                      <div key={fKey} className="p-3 bg-white border border-slate-200 rounded-xl text-xs flex flex-col justify-between gap-2">
+                        <div>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-semibold text-slate-800">{fTitle}</span>
+                            <Badge
+                              variant={fRes.status === "valid" ? "success" : fRes.status === "warning" ? "warning" : "danger"}
+                              label={`${fRes.score}/100`}
+                            />
+                          </div>
+                          <p className="text-slate-600 mt-1 line-clamp-2">{fRes.verdict}</p>
+                        </div>
+                        {fRes.status !== "valid" && (
+                          <button
+                            type="button"
+                            onClick={() => setCurrentStep(stepNum)}
+                            className="text-left text-emerald-700 hover:text-emerald-800 font-medium underline mt-1"
+                          >
+                            Przejdź do Kroku {stepNum} i popraw
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Pkt 12: Oświadczenia */}
           <div className="creator-section">
             <h4 className="type-h3">Pkt 12: Oświadczenia formalne</h4>
@@ -1137,6 +1602,29 @@ export function FersGrantWizard({
         </div>
       )}
 
+      {/* Baner zatrzymania kroku (Walidacja AI) */}
+      {stepGateWarning && (
+        <div className="mt-6 p-4 rounded-xl border border-amber-300 bg-amber-50 text-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fadeIn">
+          <div className="flex items-start gap-3">
+            <WarningCircle size={24} className="text-amber-700 shrink-0 mt-0.5" weight="fill" />
+            <div>
+              <p className="text-sm font-semibold text-slate-900">Walidacja AI ROPS Kraków: Wymagane dopracowanie treści</p>
+              <p className="text-xs text-slate-700 mt-0.5">{stepGateWarning.message}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+            <Button
+              type="button"
+              variant="tertiary"
+              size="sm"
+              onClick={handleBypassStep}
+            >
+              Przejdź mimo to
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Pasek nawigacji między krokami */}
       <div className="pt-6 border-t border-slate-200 flex items-center justify-between flex-wrap gap-4">
         {currentStep === 1 ? (
@@ -1160,19 +1648,24 @@ export function FersGrantWizard({
               type="button"
               variant="primary"
               trailingIcon={ArrowRight}
-              onClick={() => setCurrentStep((prev) => Math.min(5, prev + 1))}
+              disabled={isValidatingStep}
+              onClick={handleNextStep}
             >
-              Kolejny krok: {STEPS[currentStep].label}
+              {isValidatingStep ? "Weryfikacja jakości AI..." : `Kolejny krok: ${STEPS[currentStep].label}`}
             </Button>
           ) : (
             <Button
               type="button"
               variant="primary"
-              disabled={isSubmitting || !formalAccepted || isBudgetOverLimit}
+              disabled={isSubmitting || !formalAccepted || isBudgetOverLimit || isAuditingFinal}
               leadingIcon={CheckCircle}
               onClick={handleFinalSubmit}
             >
-              {isSubmitting ? "Wysyłanie wniosku..." : "Złóż wniosek FERS do ROPS"}
+              {isSubmitting
+                ? "Wysyłanie wniosku..."
+                : isAuditingFinal
+                ? "Audyt jakości wniosku..."
+                : "Złóż wniosek FERS do ROPS"}
             </Button>
           )}
         </div>

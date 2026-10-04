@@ -1485,6 +1485,159 @@ export async function aiAssistIdea(params: {
   }
 }
 
+export type AiValidationStatus = "valid" | "warning" | "needs_work";
+
+export type AiValidationResult = {
+  field: string;
+  status: AiValidationStatus;
+  score: number;
+  verdict: string;
+  summary: string;
+  strengths: string[];
+  improvements: string[];
+  suggested_questions?: string[];
+  source?: string;
+};
+
+export type AiBatchValidationResponse = {
+  batch: boolean;
+  overall_status: AiValidationStatus;
+  overall_score: number;
+  results: Record<string, AiValidationResult>;
+};
+
+export async function aiValidateIdea(params: {
+  field?: string;
+  content?: string;
+  fields?: Record<string, string>;
+  title?: string;
+  category?: number | string;
+  county?: number | string;
+  target_recipients?: string;
+}): Promise<AiValidationResult | AiBatchValidationResponse> {
+  try {
+    return await apiFetch<AiValidationResult | AiBatchValidationResponse>("/ideas/ai-validate/", {
+      method: "POST",
+      body: JSON.stringify(params),
+    });
+  } catch {
+    // Offline client fallback
+    const { fields, field = "problem_diagnosis", content = "", county = 1 } = params;
+    const countyName = Number(county) === 3 ? "powiat tarnowski" : Number(county) === 2 ? "powiat myślenicki" : "powiat krakowski";
+
+    function evaluateText(fType: string, txt: string): AiValidationResult {
+      const trimmed = (txt || "").trim();
+      if (trimmed.length < 40) {
+        let verdict = "Opis jest zbyt krótki lub niekompletny";
+        if ((fType === "problem_diagnosis" || fType === "county_diagnosis") && trimmed.length > 0) {
+          verdict = "Problem wymaga głębszego opisu i danych lokalnych";
+        } else if (trimmed.length === 0) {
+          verdict = "Pole nie zostało jeszcze wypełnione";
+        }
+        return {
+          field: fType,
+          status: "needs_work",
+          score: trimmed.length > 0 ? 30 : 10,
+          verdict,
+          summary: "Treść jest zbyt lakoniczna, aby eksperci ROPS mogli ocenić zasadność mikrograntu.",
+          strengths: trimmed.length > 0 ? ["Rozpoczęto edycję"] : [],
+          improvements: [
+            "Rozwiń opis o minimum 2-3 zdania z detalami.",
+            `Powołaj się na sytuację w powiecie: ${countyName}.`,
+            "Możesz skorzystać z podpowiedzi asystenta AI.",
+          ],
+          suggested_questions: ["Jakie dokładnie trudności napotykają mieszkańcy?"],
+          source: "offline_fallback",
+        };
+      }
+
+      const hasNumbers = /\d+/.test(trimmed);
+      const lower = trimmed.toLowerCase();
+      const hasLocal = ["powiat", "gmin", "małopolsk", "kraków", countyName.toLowerCase(), "wiejsk", "miejsk"].some(k => lower.includes(k));
+
+      if (fType === "problem_diagnosis" || fType === "county_diagnosis") {
+        if (!hasNumbers || !hasLocal || trimmed.length < 110) {
+          return {
+            field: fType,
+            status: trimmed.length < 80 ? "needs_work" : "warning",
+            score: trimmed.length < 80 ? 45 : 62,
+            verdict: "Problem wymaga głębszego opisu i danych lokalnych",
+            summary: `Diagnoza problemu jest zbyt ogólna. Warto odnieść się do wyzwań w: ${countyName} oraz podać szacunkową liczbę beneficjentów.`,
+            strengths: ["Zidentyfikowano ogólny obszar problemowy."],
+            improvements: [
+              `Wzbogać opis o wskaźniki Obserwatorium ROPS dla powiatu: ${countyName}.`,
+              "Wskaż szacunkową liczbę osób dotkniętych wykluczeniem.",
+              "Określ konkretne bariery infrastrukturalne lub kadrowe.",
+            ],
+            suggested_questions: [`Ilu mieszkańców w rejonie ${countyName} dotyka ten problem?`],
+            source: "offline_fallback",
+          };
+        } else {
+          return {
+            field: fType,
+            status: "valid",
+            score: 92,
+            verdict: "Diagnoza problemu rzetelna i osadzona w realiach regionu",
+            summary: `Opis wyczerpująco przedstawia uwarunkowania w: ${countyName} i przekonująco uzasadnia potrzebę mikrograntu.`,
+            strengths: ["Uwzględniono specyfikę lokalną i mierzalne odniesienia."],
+            improvements: ["Upewnij się, że harmonogram testów odpowiada dokładnie zdiagnozowanym barierom."],
+            source: "offline_fallback",
+          };
+        }
+      }
+
+      if (fType === "deinstitutionalization" || fType === "innovation_desc") {
+        const hasDeinst = ["deinstytucjonaliz", "środowisk", "domow", "sąsiedz", "mieszkani", "dps", "zol"].some(k => lower.includes(k));
+        if (!hasDeinst || trimmed.length < 90) {
+          return {
+            field: fType,
+            status: "warning",
+            score: 55,
+            verdict: "Opis innowacji wymaga silniejszego powiązania z deinstytucjonalizacją",
+            summary: "Wskaż, w jaki sposób innowacja wspiera podopiecznego w jego środowisku domowym jako alternatywę dla placówki całodobowej (DPS).",
+            strengths: ["Zarysowano koncepcję świadczenia wsparcia."],
+            improvements: ["Wskaż rolę wsparcia sąsiedzkiego i mobilnych opiekunów."],
+            source: "offline_fallback",
+          };
+        }
+      }
+
+      return {
+        field: fType,
+        status: "valid",
+        score: 88,
+        verdict: "Treść spełnia standardy wniosku FERS",
+        summary: "Opis jest spójny, zrozumiały i wyczerpujący merytorycznie.",
+        strengths: ["Konkretna i czytelna treść."],
+        improvements: [],
+        source: "offline_fallback",
+      };
+    }
+
+    if (fields && typeof fields === "object") {
+      const results: Record<string, AiValidationResult> = {};
+      let total = 0;
+      let worst: AiValidationStatus = "valid";
+      const keys = Object.keys(fields);
+      for (const k of keys) {
+        const res = evaluateText(k, fields[k]);
+        results[k] = res;
+        total += res.score;
+        if (res.status === "needs_work") worst = "needs_work";
+        else if (res.status === "warning" && worst !== "needs_work") worst = "warning";
+      }
+      return {
+        batch: true,
+        overall_status: worst,
+        overall_score: Math.round(total / Math.max(keys.length, 1)),
+        results,
+      };
+    }
+
+    return evaluateText(field, content);
+  }
+}
+
 export type MiddlemanPackagePayload = {
   innovation_id: number | string;
   county_id: number | string;
