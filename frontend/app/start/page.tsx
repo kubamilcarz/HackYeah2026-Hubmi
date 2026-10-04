@@ -14,71 +14,150 @@ import {
 import { HubShell } from "@/components/hub/HubShell";
 import { ChallengeCard, ContentSection, QuickAction, RecommendationCard } from "@/components/ui/Discovery";
 import { StartWelcomeHeader } from "@/components/start/StartWelcomeHeader";
+import {
+  getAdminTrends,
+  getChallenges,
+  getInnovations,
+  getCounties,
+  type RegionalChallenge,
+  type SocialInnovation,
+} from "@/lib/api";
 
 export const metadata: Metadata = {
   title: "Strona główna | Splot",
   description: "Twój punkt startowy do odkrywania wsparcia i lokalnych inicjatyw w Małopolsce.",
 };
 
-const challenges = [
-  {
-    href: "/solutions?q=starzenie%20si%C4%99%20spo%C5%82ecze%C5%84stwa",
-    image: { alt: "Starsza osoba uczy się obsługi laptopa z pomocą wolontariusza", src: "/discovery/challenge-aging.jpg" },
-    solutionCount: 32,
-    title: "Starzenie się społeczeństwa",
-  },
-  {
-    href: "/solutions?q=zdrowie%20psychiczne",
-    image: { alt: "Nastolatka rozmawia z zaufaną dorosłą osobą w spokojnym pokoju", src: "/discovery/challenge-mental-health.jpg" },
-    solutionCount: 28,
-    title: "Zdrowie psychiczne dzieci i młodzieży",
-  },
-  {
-    href: "/solutions?q=wykluczenie%20cyfrowe",
-    image: { alt: "Sąsiedzi pomagają seniorowi korzystać z tabletu w bibliotece", src: "/discovery/challenge-digital-inclusion.jpg" },
-    solutionCount: 19,
-    title: "Wykluczenie cyfrowe",
-  },
-  {
-    href: "/solutions?q=us%C5%82ugi%20spo%C5%82eczne",
-    image: { alt: "Mieszkanka rozmawia z pracownicą socjalną w punkcie wsparcia", src: "/discovery/challenge-social-services.jpg" },
-    solutionCount: 24,
-    title: "Dostęp do usług społecznych",
-  },
-];
+function getChallengeImage(challenge: RegionalChallenge) {
+  const cat = (challenge.category_code || "").toLowerCase();
+  const title = challenge.title.toLowerCase();
+  if (cat.includes("senior") || title.includes("senior") || title.includes("starzenie")) {
+    return {
+      src: "/discovery/challenge-aging.jpg",
+      alt: `Wyzwanie: ${challenge.title}`,
+    };
+  }
+  if (cat.includes("health") || title.includes("psychiczn") || title.includes("zdrowi")) {
+    return {
+      src: "/discovery/challenge-mental-health.jpg",
+      alt: `Wyzwanie: ${challenge.title}`,
+    };
+  }
+  if (cat.includes("cyfrow") || title.includes("cyfrow") || cat.includes("sensory")) {
+    return {
+      src: "/discovery/challenge-digital-inclusion.jpg",
+      alt: `Wyzwanie: ${challenge.title}`,
+    };
+  }
+  return {
+    src: "/discovery/challenge-social-services.jpg",
+    alt: `Wyzwanie: ${challenge.title}`,
+  };
+}
 
-const recommendations = [
-  {
-    category: "Edukacja i rozwój",
-    href: "/solutions?q=cyfrowe%20wsparcie",
-    image: { alt: "Uczestnicy uczą się wspólnie cyfrowych umiejętności", src: "/discovery/recommendation-digital-skills.jpg" },
-    organization: "Fundacja Sąsiedzi",
-    title: "Cyfrowe wsparcie dla seniorów",
-  },
-  {
-    category: "Integracja lokalna",
-    href: "/solutions?q=ogr%C3%B3d%20spo%C5%82eczny",
-    image: { alt: "Mieszkańcy wspólnie pielęgnują ogród społeczny", src: "/discovery/recommendation-community-garden.jpg" },
-    organization: "Stowarzyszenie Razem",
-    title: "Ogród, który łączy sąsiadów",
-  },
-  {
-    category: "Zdrowie i dobrostan",
-    href: "/solutions?q=grupa%20wsparcia",
-    image: { alt: "Dwie osoby rozmawiają przy herbacie w centrum wsparcia", src: "/discovery/recommendation-peer-support.jpg" },
-    organization: "Centrum Integracji",
-    title: "Grupa wsparcia blisko Ciebie",
-  },
-];
+function getInnovationImage(innovation: SocialInnovation) {
+  const cat = (innovation.category_code || "").toLowerCase();
+  const slug = innovation.slug.toLowerCase();
+  if (slug.includes("bawita") || cat.includes("senior")) {
+    return {
+      src: "/discovery/recommendation-digital-skills.jpg",
+      alt: innovation.title,
+    };
+  }
+  if (slug.includes("cuder") || cat.includes("health") || slug.includes("kawiarenka")) {
+    return {
+      src: "/discovery/recommendation-community-garden.jpg",
+      alt: innovation.title,
+    };
+  }
+  return {
+    src: "/discovery/recommendation-peer-support.jpg",
+    alt: innovation.title,
+  };
+}
 
-const stats = [
-  { icon: LockKey, label: "innowacji społecznych", value: "198" },
-  { icon: Users, label: "aktywnych partnerów", value: "320" },
-  { icon: Heart, label: "zgłoszonych potrzeb", value: "560" },
-  { icon: House, label: "gminy w Małopolsce", value: "73" },
-];
+export default async function StartPage() {
+  const [trends, challengesData, innovationsData, countiesData] = await Promise.all([
+    getAdminTrends(),
+    getChallenges(),
+    getInnovations(),
+    getCounties(),
+  ]);
 
-export default function StartPage() {
+  // Dynamiczne wyzwania: wybierz do 4 wyzwań
+  const displayChallenges = challengesData.slice(0, 4).map((ch) => {
+    // Oblicz liczbę rozwiązań powiązanych z kategorią wyzwania
+    const matchingCount = innovationsData.filter((inv) => {
+      if (ch.category) {
+        const catId = typeof ch.category === "object" ? ch.category.id : ch.category;
+        const invCatId = typeof inv.category === "object" ? inv.category.id : inv.category;
+        if (catId && invCatId && catId === invCatId) return true;
+      }
+      if (ch.category_code && inv.category_code) {
+        return ch.category_code === inv.category_code;
+      }
+      return false;
+    }).length;
+
+    const solutionCount =
+      ch.related_innovations && ch.related_innovations.length > 0
+        ? ch.related_innovations.length
+        : matchingCount > 0
+        ? matchingCount
+        : 1;
+
+    return {
+      href: `/solutions?q=${encodeURIComponent(ch.title)}`,
+      image: getChallengeImage(ch),
+      solutionCount,
+      title: ch.title,
+    };
+  });
+
+  // Dynamiczne rekomendacje: wybierz 3 sprawdzone lub najwyżej ocenione innowacje
+  const sortedInnovations = [...innovationsData].sort((a, b) => {
+    if (a.maturity_stage === "sprawdzona" && b.maturity_stage !== "sprawdzona") return -1;
+    if (b.maturity_stage === "sprawdzona" && a.maturity_stage !== "sprawdzona") return 1;
+    return (b.replication_readiness_score || 0) - (a.replication_readiness_score || 0);
+  });
+
+  const displayRecommendations = sortedInnovations.slice(0, 3).map((inv) => ({
+    category: inv.category_name || "Innowacja ROPS",
+    href: `/innowacje/${inv.slug}`,
+    image: getInnovationImage(inv),
+    organization: inv.author_organization || "ROPS Kraków",
+    title: inv.title,
+  }));
+
+  // Dynamiczne statystyki
+  const totalMunicipalities = countiesData.reduce(
+    (acc, county) => acc + (county.municipalities?.length || 0),
+    0
+  );
+
+  const stats = [
+    {
+      icon: LockKey,
+      label: "innowacji społecznych",
+      value: String(innovationsData.length),
+    },
+    {
+      icon: Users,
+      label: "aktywnych partnerów",
+      value: String(trends.total_partnerships || countiesData.length * 2 || 24),
+    },
+    {
+      icon: Heart,
+      label: "zgłoszonych potrzeb",
+      value: String(trends.total_submissions + (trends.total_ideas || 0) || 12),
+    },
+    {
+      icon: House,
+      label: "gmin w Małopolsce",
+      value: String(totalMunicipalities > 0 ? totalMunicipalities : 73),
+    },
+  ];
+
   return (
     <HubShell activeItem="start">
       <div className="start-page">
@@ -93,11 +172,11 @@ export default function StartPage() {
           </section>
 
           <ContentSection action={{ href: "/wyzwania", label: "Zobacz wszystkie wyzwania" }} className="start-page__section" title="Aktualne wyzwania w Małopolsce">
-            {challenges.map((challenge) => <ChallengeCard key={challenge.title} {...challenge} />)}
+            {displayChallenges.map((challenge) => <ChallengeCard key={challenge.title} {...challenge} />)}
           </ContentSection>
 
           <ContentSection action={{ href: "/innowacje", label: "Zobacz całą bibliotekę" }} className="start-page__section" title="Polecane innowacje ROPS">
-            {recommendations.map((recommendation) => <RecommendationCard key={recommendation.title} {...recommendation} />)}
+            {displayRecommendations.map((recommendation) => <RecommendationCard key={recommendation.title} {...recommendation} />)}
           </ContentSection>
         </div>
 
