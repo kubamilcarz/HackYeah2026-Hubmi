@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
+  ArrowsLeftRight,
   Buildings,
   ChatCircleDots,
   DownloadSimple,
@@ -11,7 +12,6 @@ import {
   FileText,
   HandHeart,
   Heart,
-  Sparkle,
   UsersThree,
   VideoCamera,
   Wrench,
@@ -382,7 +382,7 @@ export function InnovationDetailView({ innovation }: InnovationDetailViewProps) 
                 </button>
 
                 <span className="innovation-sidebar-card__matches-badge">
-                  <Sparkle aria-hidden="true" size={18} weight="fill" />
+                  <ArrowsLeftRight aria-hidden="true" size={18} weight="bold" />
                   <span>{innovation.matches_count} dopasowań</span>
                 </span>
               </div>
@@ -399,7 +399,7 @@ export function InnovationDetailView({ innovation }: InnovationDetailViewProps) 
                 leadingIcon={Buildings}
                 variant="primary"
               >
-                Wdróż w gminie (Middleman AI)
+                Wdróż w gminie (pakiet JST)
               </ButtonLink>
 
               {innovation.maturity_stage === "testy" && (

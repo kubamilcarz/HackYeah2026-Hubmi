@@ -4,11 +4,14 @@ import { useState, useRef, useEffect } from "react";
 import {
   ArrowLeft,
   ArrowRight,
+  ArrowsClockwise,
+  Buildings,
+  ChartLineUp,
   CheckCircle,
   FileText,
+  Lightbulb,
   Plus,
   Printer,
-  Sparkle,
   Trash,
   WarningCircle,
 } from "@phosphor-icons/react";
@@ -266,8 +269,8 @@ export function FersGrantWizard({
       }
     } catch {
       setAiMessage({
-        title: "Błąd asystenta",
-        desc: "Nie udało się połączyć z usługą AI. Spróbuj ponownie za chwilę.",
+        title: "Błąd usługi doradczej",
+        desc: "Nie udało się połączyć z usługą doradczą ROPS. Spróbuj ponownie za chwilę.",
         variant: "info",
       });
     } finally {
@@ -395,7 +398,7 @@ export function FersGrantWizard({
               type="button"
               variant="tertiary"
               size="sm"
-              leadingIcon={Sparkle}
+              leadingIcon={FileText}
               onClick={handleLoadSampleData}
             >
               Wczytaj wzorzec
@@ -662,13 +665,13 @@ export function FersGrantWizard({
                 type="button"
                 variant="secondary"
                 size="sm"
-                leadingIcon={Sparkle}
+                leadingIcon={Lightbulb}
                 disabled={aiLoadingField === "deinstitutionalization"}
                 onClick={() => triggerAiAssist("deinstitutionalization")}
               >
                 {aiLoadingField === "deinstitutionalization"
                   ? "Generowanie..."
-                  : "Podpowiedź AI: Deinstytucjonalizacja"}
+                  : "Wskazówka: Deinstytucjonalizacja"}
               </Button>
             </div>
 
@@ -690,13 +693,13 @@ export function FersGrantWizard({
                 type="button"
                 variant="secondary"
                 size="sm"
-                leadingIcon={Sparkle}
+                leadingIcon={Lightbulb}
                 disabled={aiLoadingField === "innovation_uniqueness"}
                 onClick={() => triggerAiAssist("innovation_uniqueness")}
               >
                 {aiLoadingField === "innovation_uniqueness"
                   ? "Generowanie..."
-                  : "Podpowiedź AI: Wyróżniki"}
+                  : "Wskazówka: Wyróżniki innowacji"}
               </Button>
             </div>
 
@@ -727,7 +730,7 @@ export function FersGrantWizard({
                 type="button"
                 variant="secondary"
                 size="sm"
-                leadingIcon={Sparkle}
+                leadingIcon={ChartLineUp}
                 disabled={aiLoadingField === "county_diagnosis"}
                 onClick={() => triggerAiAssist("county_diagnosis")}
               >
@@ -790,7 +793,7 @@ export function FersGrantWizard({
               type="button"
               variant="secondary"
               size="sm"
-              leadingIcon={Sparkle}
+              leadingIcon={FileText}
               disabled={aiLoadingField === "budget_action_plan"}
               onClick={() => triggerAiAssist("budget_action_plan")}
             >
@@ -808,11 +811,11 @@ export function FersGrantWizard({
                 type="button"
                 variant="tertiary"
                 size="sm"
-                leadingIcon={Sparkle}
+                leadingIcon={Buildings}
                 disabled={aiLoadingField === "scalability"}
                 onClick={() => triggerAiAssist("scalability")}
               >
-                Podpowiedź AI: Model CUS
+                Wskazówka: Model CUS
               </Button>
             </div>
             <TextAreaField
@@ -1072,11 +1075,11 @@ export function FersGrantWizard({
                 type="button"
                 variant="tertiary"
                 size="sm"
-                leadingIcon={Sparkle}
+                leadingIcon={ArrowsClockwise}
                 disabled={aiLoadingField === "concept_diagram"}
                 onClick={() => triggerAiAssist("concept_diagram")}
               >
-                Odśwież schemat (AI)
+                Odśwież schemat logiki
               </Button>
             </div>
 

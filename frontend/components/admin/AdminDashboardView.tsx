@@ -6,13 +6,15 @@ import {
   Check,
   CheckCircle,
   Eye,
+  FileText,
   Flask,
   HandHeart,
   MapPin,
   NotePencil,
   Printer,
   ShieldCheck,
-  Sparkle,
+  SlidersHorizontal,
+  TrendUp,
   WarningCircle,
 } from "@phosphor-icons/react";
 
@@ -469,7 +471,7 @@ export function AdminDashboardView() {
         <div className="admin-kpi-card">
           <div className="admin-kpi-card__header">
             <span className="admin-kpi-card__label">Wnioski FERS</span>
-            <Sparkle size={20} aria-hidden="true" className="text-[var(--action-primary)]" />
+            <FileText size={20} aria-hidden="true" className="text-[var(--action-primary)]" />
           </div>
           <div className="admin-kpi-card__value">{ideas.length}</div>
           <p className="admin-kpi-card__meta">
@@ -621,7 +623,7 @@ export function AdminDashboardView() {
                               {hasMatches && (
                                 <div className="admin-callout admin-callout--info">
                                   <span className="admin-callout__title">
-                                    <Sparkle size={15} aria-hidden="true" />
+                                    <SlidersHorizontal size={15} aria-hidden="true" />
                                     Dopasowanie algorytmiczne: {sub.matches![0].innovation.title} (Trafność: {sub.matches![0].similarity_score}%)
                                   </span>
                                   <p className="admin-callout__text">{sub.matches![0].justification}</p>
@@ -795,7 +797,7 @@ export function AdminDashboardView() {
                               onClick={() => handleOpenEvaluation(idea)}
                               aria-label={`Oceń wniosek FERS #${idea.id}: ${idea.title}`}
                             >
-                              <Sparkle aria-hidden="true" size={16} />
+                              <CheckCircle aria-hidden="true" size={16} />
                               <span>
                                 {idea.status === "zaakceptowany" ? "Zmień ocenę" : "Oceń wniosek FERS"}
                               </span>
@@ -898,7 +900,7 @@ export function AdminDashboardView() {
                             onClick={() => handleOpenPromotion(inn)}
                             aria-label={`Zmień status innowacji: ${inn.title}`}
                           >
-                            <Sparkle aria-hidden="true" size={16} />
+                            <TrendUp aria-hidden="true" size={16} />
                             <span>{isTested ? "Awansuj do sprawdzonych" : "Zmień dojrzałość"}</span>
                           </Button>
                         </div>
@@ -1270,7 +1272,7 @@ export function AdminDashboardView() {
                   value: "sprawdzona",
                 },
               ]}
-              helperText="Status «Sprawdzona» udostępnia innowację w generatorze Middleman AI dla wszystkich gmin."
+              helperText="Status «Sprawdzona» udostępnia innowację w generatorze Middleman JST dla wszystkich gmin."
             />
 
             <div className="space-y-2">

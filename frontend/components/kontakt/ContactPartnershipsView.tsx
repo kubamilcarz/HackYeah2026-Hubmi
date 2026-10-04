@@ -7,6 +7,7 @@ import {
   CaretUp,
   Check,
   CheckCircle,
+  Clock,
   EnvelopeSimple,
   Handshake,
   MapPin,
@@ -14,7 +15,6 @@ import {
   Phone,
   Plus,
   ShieldCheck,
-  Sparkle,
   UserCheck,
   Users,
 } from "@phosphor-icons/react";
@@ -858,7 +858,7 @@ export function ContactPartnershipsView() {
                 Metodyka testowania innowacji, ewaluacja dostępności WCAG 2.2 AA, modele deinstytucjonalizacji opieki i asystentura.
               </p>
               <span className="consultation-mentor-card__badge">
-                <Sparkle aria-hidden="true" size={14} /> Czas odpowiedzi: do 24h
+                <Clock aria-hidden="true" size={14} /> Czas odpowiedzi: do 24h
               </span>
             </button>
           </div>

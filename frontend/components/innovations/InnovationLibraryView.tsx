@@ -4,10 +4,10 @@ import { useId, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
+  ArrowsLeftRight,
   HandHeart,
   Heart,
   Lightbulb,
-  Sparkle,
   UsersThree,
 } from "@phosphor-icons/react";
 import type { InnovationCategory, SocialInnovation } from "@/lib/api";
@@ -255,7 +255,7 @@ export function InnovationLibraryView({ initialInnovations, categories }: Innova
                 <footer className="innovation-card__footer">
                   <div className="innovation-card__engagement" aria-label={`Polubienia: ${item.likes_count}, dopasowania: ${item.matches_count}`}>
                     <span><Heart aria-hidden="true" size={16} weight="fill" /> {item.likes_count}</span>
-                    <span><Sparkle aria-hidden="true" size={16} weight="fill" /> {item.matches_count} dopasowań</span>
+                    <span><ArrowsLeftRight aria-hidden="true" size={16} weight="bold" /> {item.matches_count} dopasowań</span>
                   </div>
 
                   <div className="innovation-card__actions">

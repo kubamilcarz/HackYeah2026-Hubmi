@@ -4,10 +4,10 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   ArrowLeft,
   ArrowRight,
+  ArrowsClockwise,
+  Compass,
   Lightbulb,
-  MagicWand,
   PencilSimple,
-  Sparkle,
 } from "@phosphor-icons/react";
 import type { Solution } from "@/lib/solutions";
 import { Dialog } from "@/components/ui/Dialog";
@@ -68,7 +68,7 @@ function EditMatcherDialog({ error, onDescriptionChange, onOpenChange, onSubmit,
         />
         <div className="dialog__actions">
           <Button onClick={() => onOpenChange(false)} type="button" variant="tertiary">Anuluj</Button>
-          <Button trailingIcon={MagicWand} type="submit">Dopasuj ponownie</Button>
+          <Button trailingIcon={ArrowsClockwise} type="submit">Dopasuj ponownie</Button>
         </div>
       </form>
     </Dialog>
@@ -234,7 +234,7 @@ export function SolutionMatcher({ initialDescription = "", solutions: initialSol
     return (
       <section aria-labelledby="solution-prompt-heading" className="solution-matcher solution-matcher--prompt">
         <div className="solution-matcher__intro">
-          <MagicWand aria-hidden="true" size={36} weight="duotone" />
+          <Compass aria-hidden="true" size={36} weight="duotone" />
           <div>
             <h2 className="type-h2" id="solution-prompt-heading">
               Czego teraz potrzebujesz?
@@ -269,8 +269,7 @@ export function SolutionMatcher({ initialDescription = "", solutions: initialSol
     return (
       <section aria-labelledby="matching-progress-heading" className="solution-matcher solution-matcher--processing">
         <div aria-hidden="true" className="solution-matcher__magic">
-          <Sparkle size={52} weight="fill" />
-          <MagicWand size={42} weight="duotone" />
+          <ArrowsClockwise size={40} weight="bold" />
         </div>
         <h2 className="type-h2" id="matching-progress-heading">
           Dopasowujemy innowacje ROPS Kraków
@@ -334,7 +333,7 @@ export function SolutionMatcher({ initialDescription = "", solutions: initialSol
         </h2>
         <Alert description={analysisError} title="Analiza jest chwilowo niedostępna" variant="warning" />
         <div className="solution-matcher__error-actions">
-          <Button onClick={() => startMatching(description)} trailingIcon={MagicWand}>Spróbuj ponownie</Button>
+          <Button onClick={() => startMatching(description)} trailingIcon={ArrowsClockwise}>Spróbuj ponownie</Button>
           <Button leadingIcon={PencilSimple} onClick={openEditDialog} variant="secondary">Zmień opis</Button>
           <ButtonLink href="/innowacje" variant="tertiary">Przeglądaj bibliotekę</ButtonLink>
         </div>

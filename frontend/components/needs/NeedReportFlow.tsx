@@ -6,7 +6,6 @@ import {
   ArrowRight,
   CheckCircle,
   Lightbulb,
-  Sparkle,
   Buildings,
   Flask,
   ChatCircleText,
@@ -328,7 +327,7 @@ export function NeedReportFlow() {
                         <div className="need-match-item__top">
                           <div className="need-match-item__score-row">
                             <span className="need-match-item__score-pill">
-                              <Sparkle size={14} weight="fill" />
+                              <CheckCircle size={14} weight="bold" />
                               {item.similarity_score}% zgodności
                             </span>
                             <Badge label={`Etap: ${item.innovation.maturity_stage}`} variant="info" />

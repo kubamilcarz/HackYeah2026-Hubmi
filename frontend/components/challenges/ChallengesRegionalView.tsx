@@ -9,7 +9,6 @@ import {
   HandHeart,
   House,
   Lightbulb,
-  Sparkle,
   TrendUp,
   UsersThree,
   Warning,
@@ -459,7 +458,7 @@ export function ChallengesRegionalView({
                 <MatchmakingGap
                   actions={
                     <>
-                      <ButtonLink href="/kreator" leadingIcon={Sparkle} variant="primary">
+                      <ButtonLink href="/kreator" leadingIcon={Lightbulb} variant="primary">
                         Zgłoś pomysł na rozwiązanie
                       </ButtonLink>
                       <ButtonLink href="/innowacje" variant="secondary">
@@ -537,7 +536,7 @@ export function ChallengesRegionalView({
               Obszary zgłoszone przez mieszkańców, dla których w regionie brakuje sprawdzonych innowacji.
             </p>
           </div>
-          <ButtonLink href="/kreator" leadingIcon={Sparkle} variant="primary">
+          <ButtonLink href="/kreator" leadingIcon={Lightbulb} variant="primary">
             Zgłoś pomysł
           </ButtonLink>
         </div>

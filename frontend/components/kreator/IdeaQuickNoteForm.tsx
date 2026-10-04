@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, FileText, Sparkle } from "@phosphor-icons/react";
+import { ArrowRight, FileText, Lightbulb } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/Button";
 import {
   SelectField,
@@ -205,11 +205,11 @@ export function IdeaQuickNoteForm({
             type="button"
             variant="tertiary"
             size="sm"
-            leadingIcon={Sparkle}
+            leadingIcon={Lightbulb}
             disabled={isAiLoading}
             onClick={handleAiAssist}
           >
-            {isAiLoading ? "Przygotowuję..." : "Podpowiedź AI"}
+            {isAiLoading ? "Przygotowuję..." : "Wskazówka doradcy"}
           </Button>
         </div>
 

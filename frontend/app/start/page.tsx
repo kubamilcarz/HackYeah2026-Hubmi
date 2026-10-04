@@ -13,6 +13,7 @@ import {
 } from "@phosphor-icons/react/ssr";
 import { HubShell } from "@/components/hub/HubShell";
 import { ChallengeCard, ContentSection, QuickAction, RecommendationCard } from "@/components/ui/Discovery";
+import { StartWelcomeHeader } from "@/components/start/StartWelcomeHeader";
 
 export const metadata: Metadata = {
   title: "Strona główna | Splot",
@@ -82,10 +83,7 @@ export default function StartPage() {
     <HubShell activeItem="start">
       <div className="start-page">
         <div className="start-page__content">
-          <header className="start-page__welcome">
-            <h1 className="type-h1">Witaj, Anno! <span aria-hidden="true">👋</span></h1>
-            <p className="type-body">Razem możemy więcej. Co chcesz dziś zrobić?</p>
-          </header>
+          <StartWelcomeHeader />
 
           <section aria-label="Szybkie działania" className="quick-actions">
             <QuickAction href="/needs/new" icon={Plus} label="Zgłoś potrzebę" variant="primary" />

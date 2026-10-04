@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { ArrowRight, CheckCircle, HandHeart, Heart, MapPin, ShieldCheck, Sparkle, UsersThree } from "@phosphor-icons/react/ssr";
+import { ArrowRight, ArrowsLeftRight, CheckCircle, HandHeart, Heart, MapPin, ShieldCheck, UsersThree } from "@phosphor-icons/react/ssr";
 import { Badge, Tag, type TagVariant } from "@/components/ui/Tag";
 
 export type CardAction = { href: string; label: string };
@@ -50,7 +50,7 @@ export function SolutionCard({ action, availability, category, className, engage
     </div>
     <div className="card__content"><span className="card__availability"><CheckCircle aria-hidden="true" size={16} weight="fill" />{availability}</span>
       <h3 className="card__title">{title}</h3><p className="card__organization">{organization}</p><p className="card__summary">{summary}</p><Tag label={category} variant="success" />
-      {engagement && <div aria-label={`Reakcje: ${engagement.likes}; dopasowania: ${engagement.matches}`} className="card__engagement"><span><Heart aria-hidden="true" size={20} weight="bold" />{engagement.likes}</span><span><Sparkle aria-hidden="true" size={20} weight="bold" />{engagement.matches}</span></div>}
+      {engagement && <div aria-label={`Reakcje: ${engagement.likes}; dopasowania: ${engagement.matches}`} className="card__engagement"><span><Heart aria-hidden="true" size={20} weight="bold" />{engagement.likes}</span><span><ArrowsLeftRight aria-hidden="true" size={20} weight="bold" />{engagement.matches}</span></div>}
     </div><CardActionLink action={action} />
   </article>;
 }

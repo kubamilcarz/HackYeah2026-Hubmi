@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, CheckCircle, Code, Eye, Sparkle } from "@phosphor-icons/react";
+import { ArrowRight, CheckCircle, Code, Eye, TreeStructure } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Tag";
 
@@ -64,7 +64,7 @@ export function ConceptDiagramView({
     <div className="creator-diagram-container" role="region" aria-label="Wizualizacja koncepcji innowacji">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
-          <Sparkle className="text-emerald-700" size={20} weight="fill" aria-hidden="true" />
+          <TreeStructure className="text-emerald-700" size={20} weight="bold" aria-hidden="true" />
           <h4 className="type-h3 text-slate-900">Schemat koncepcji i logiki innowacji</h4>
         </div>
         <div className="flex items-center gap-2">

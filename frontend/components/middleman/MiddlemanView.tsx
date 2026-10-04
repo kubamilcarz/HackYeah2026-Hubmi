@@ -8,9 +8,9 @@ import {
   Check,
   Copy,
   DownloadSimple,
+  FileText,
   Handshake,
   Printer,
-  Sparkle,
 } from "@phosphor-icons/react";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { SelectField, TextField } from "@/components/ui/FormControls";
@@ -341,7 +341,7 @@ export function MiddlemanView() {
             type="submit"
             variant="primary"
             disabled={isGenerating}
-            leadingIcon={Sparkle}
+            leadingIcon={FileText}
             aria-label="Generuj pakiet wdrożeniowy"
           >
             {isGenerating ? "Generowanie..." : "Przygotuj pakiet wdrożeniowy"}

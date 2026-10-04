@@ -3402,10 +3402,8 @@ a.app-navigation__link {
 .solution-matcher__form .button { justify-self: start; }
 .solution-matcher--processing { align-items: center; display: grid; gap: var(--space-5); justify-items: center; margin-inline: auto; max-width: 38rem; text-align: center; }
 .solution-matcher--processing .type-h2, .solution-matcher--processing .type-body, .solution-matcher__note { margin: 0; }
-.solution-matcher--processing .progress { max-width: 28rem; text-align: start; width: 100%; }
-.solution-matcher__magic { align-items: center; background: var(--feedback-success-background); border-radius: 50%; color: var(--feedback-success-foreground); display: flex; height: 7rem; justify-content: center; position: relative; width: 7rem; }
-.solution-matcher__magic svg:first-child { animation: solution-magic-pulse 1.4s ease-in-out infinite; position: absolute; right: 0.35rem; top: 0.35rem; }
-.solution-matcher__magic svg:last-child { transform: rotate(-18deg); }
+.solution-matcher__magic { align-items: center; background: var(--surface-subtle); border: 1px solid var(--border-subtle); border-radius: 50%; color: var(--action-primary); display: flex; height: 5.5rem; justify-content: center; position: relative; width: 5.5rem; }
+.solution-matcher__magic svg { animation: spin 2s linear infinite; }
 .solution-matcher__results-header { display: grid; gap: var(--space-4); }
 .solution-matcher__results-header h2, .solution-matcher__results-header p { margin: 0; }
 .solution-matcher__results-header p { color: var(--content-secondary); margin-top: var(--space-2); }
@@ -3427,8 +3425,6 @@ a.app-navigation__link {
 .solution-carousel__page::before { background: var(--border-strong); border-radius: 50%; content: ""; height: 0.625rem; width: 0.625rem; }
 .solution-carousel__page[aria-current="true"]::before { background: var(--action-primary); transform: scale(1.15); }
 .solution-carousel__page:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
-
-@keyframes solution-magic-pulse { 50% { opacity: 0.45; transform: scale(0.8) rotate(18deg); } }
 
 @media (min-width: 40rem) {
   .hub-shell__main { padding: var(--space-8) var(--space-6) var(--space-16); }
@@ -3468,7 +3464,7 @@ a.app-navigation__link {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .solution-matcher__magic svg:first-child { animation: none; }
+  .solution-matcher__magic svg { animation: none; }
   .solution-carousel__viewport { scroll-behavior: auto; }
 }
 

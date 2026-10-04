@@ -14,7 +14,6 @@ import {
   House,
   Lightbulb,
   MapTrifold,
-  Sparkle,
   ShieldCheck,
 } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
@@ -29,8 +28,8 @@ const baseNavigationItems: NavigationItem[] = [
   { id: "report-need", label: "Zgłoś potrzebę", href: "/needs/new", icon: HandHeart },
   { id: "innowacje", label: "Biblioteka Innowacji", href: "/innowacje", icon: BookOpen },
   { id: "wyzwania", label: "Wyzwania Regionu", href: "/wyzwania", icon: ChartLineUp },
-  { id: "solutions", label: "Dopasuj pomoc", href: "/solutions", icon: Lightbulb },
-  { id: "kreator", label: "Kreator Pomysłów", href: "/kreator", icon: Sparkle },
+  { id: "solutions", label: "Dopasuj pomoc", href: "/solutions", icon: Compass },
+  { id: "kreator", label: "Kreator Pomysłów", href: "/kreator", icon: Lightbulb },
   { id: "testy", label: "Pilotaże społeczne", href: "/testy", icon: Flask },
   { id: "middleman", label: "Middleman JST", href: "/middleman", icon: Buildings },
   { id: "kontakt", label: "Kontakt i partnerstwa", href: "/kontakt", icon: ChatTeardropText },
