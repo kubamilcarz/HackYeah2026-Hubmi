@@ -145,7 +145,7 @@ export function FersGrantWizard({
   const [teamExperience, setTeamExperience] = useState(
     "Zespół posiada 8 lat udokumentowanego doświadczenia w realizacji projektów społecznych i aktywizacyjnych na terenie Małopolski, w tym programów FERS, ASOS i grantów ROPS Kraków. Koordynator projektu posiada certyfikat zarządzania usługami deinstytucjonalnymi."
   );
-  const [formalAccepted, setFormalAccepted] = useState(true);
+  const [formalAccepted, setFormalAccepted] = useState(false);
 
   // Diagram state
   const [diagramSteps, setDiagramSteps] = useState<DiagramStep[] | undefined>(undefined);
@@ -168,8 +168,9 @@ export function FersGrantWizard({
   const currentCounty = counties.find((c) => String(c.id) === countyId);
 
   useEffect(() => {
-    // Focus na nagłówku po zmianie kroku
-    stepContainerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    // Keep a keyboard user oriented after changing the in-place step.
+    stepContainerRef.current?.scrollIntoView({ behavior: "auto", block: "start" });
+    stepContainerRef.current?.focus({ preventScroll: true });
   }, [currentStep]);
 
   // Asystent AI
@@ -281,6 +282,8 @@ export function FersGrantWizard({
 
   // Złożenie ostateczne wniosku
   function handleFinalSubmit() {
+    if (isSubmitting || isBudgetOverLimit || !formalAccepted) return;
+
     onSubmit({
       submission_type: "grant_fers",
       persona_key: activePersona.key,
@@ -350,14 +353,11 @@ export function FersGrantWizard({
   }
 
   return (
-    <div ref={stepContainerRef} className="space-y-8">
+    <div ref={stepContainerRef} className="space-y-8" tabIndex={-1}>
       {/* Pasek postępu 5 etapów */}
       <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-6 space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div>
-            <span className="type-caption font-semibold text-emerald-800 uppercase tracking-wider">
-              Inkubator Włączenia Społecznego 2.0 • FERS Działanie 5.1
-            </span>
             <h2 className="type-h2">Generator Wniosków Grantowych (12 punktów)</h2>
           </div>
           <Tag label="Maks. mikrogrant: 50 000 PLN" variant="info" />
@@ -384,9 +384,6 @@ export function FersGrantWizard({
         <div className="space-y-6">
           <div className="border-b border-slate-100 pb-3">
             <h3 className="type-h2">1. Przedmiot innowacji i dane wnioskodawcy</h3>
-            <p className="type-body text-slate-600 mt-1">
-              Podaj oficjalny tytuł projektu, wskaż właściwą kategorię ROPS Kraków oraz dane podmiotu składającego wniosek.
-            </p>
           </div>
 
           <div className="space-y-4">
@@ -615,9 +612,6 @@ export function FersGrantWizard({
         <div className="space-y-6">
           <div className="border-b border-slate-100 pb-3">
             <h3 className="type-h2">2. Koncepcja rozwiązania i innowacyjność</h3>
-            <p className="type-body text-slate-600 mt-1">
-              Wyjaśnij na czym polega innowacja, jak realizuje deinstytucjonalizację i czym różni się od metod stosowanych dotychczas.
-            </p>
           </div>
 
           <div className="space-y-4">
@@ -644,7 +638,7 @@ export function FersGrantWizard({
               rows={5}
               value={innovationDesc}
               onChange={(e) => setInnovationDesc(e.target.value)}
-              helperText="Kluczowe kryterium ROPS: wyjaśnij, jak projekt wspiera usługi w środowisku lokalnym (mieszkanie, klub, sąsiedztwo) zamiast instytucjonalnej opieki całodobowej w DPS/ZOL."
+              helperText="Pokaż, jak wsparcie działa w lokalnym środowisku."
             />
           </div>
 
@@ -683,9 +677,6 @@ export function FersGrantWizard({
         <div className="space-y-6">
           <div className="border-b border-slate-100 pb-3">
             <h3 className="type-h2">3. Diagnoza problemu i grupa docelowa</h3>
-            <p className="type-body text-slate-600 mt-1">
-              Przedstaw uzasadnienie potrzeby wdrożenia na podstawie regionalnych danych ROPS oraz scharakteryzuj beneficjentów.
-            </p>
           </div>
 
           <div className="space-y-4">
@@ -1023,9 +1014,6 @@ export function FersGrantWizard({
         <div className="space-y-6">
           <div className="border-b border-slate-100 pb-3">
             <h3 className="type-h2">5. Zespół projektowy, wizualizacja i oświadczenia</h3>
-            <p className="type-body text-slate-600 mt-1">
-              Ostatni krok przed złożeniem: potwierdź doświadczenie zespołu, zweryfikuj schemat koncepcji i zaakceptuj regulamin naboru FERS.
-            </p>
           </div>
 
           <div className="space-y-4">
@@ -1095,9 +1083,6 @@ export function FersGrantWizard({
                 <FileText size={22} className="text-emerald-400" />
                 Oficjalna karta wniosku do druku
               </h5>
-              <p className="type-caption text-slate-300">
-                Możesz przejrzeć pełny, oficjalny dokument 12-punktowy i wydrukować go w formacie PDF.
-              </p>
             </div>
             <Button
               type="button"

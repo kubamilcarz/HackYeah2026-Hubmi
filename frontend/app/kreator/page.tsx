@@ -7,8 +7,7 @@ import { IdeaCreatorView } from "@/components/kreator/IdeaCreatorView";
 
 export const metadata: Metadata = {
   title: "Kreator Pomysłów i Wniosków FERS | Splot",
-  description:
-    "Przekształć problem społeczny w działającą innowację. Całoroczna Fiszka Pomysłu oraz Generator Wniosków Grantowych FERS Action 5.1 (do 50 000 zł) ROPS Kraków.",
+  description: "Fiszka pomysłu lub wniosek FERS do 50 000 zł.",
 };
 
 export default function KreatorPage() {
@@ -22,7 +21,7 @@ export default function KreatorPage() {
 
       <PageHeader
         title="Kreator Pomysłów i Generator Wniosków FERS"
-        description="Rozwiń nową ideę wspierającą włączenie społeczne i deinstytucjonalizację w Małopolsce. Złóż szybką fiszkę koncepcyjną lub przygotuj wniosek mikrograntowy do 50 000 PLN."
+        description="Wybierz fiszkę pomysłu albo wniosek FERS do 50 000 zł."
       />
 
       <Suspense fallback={<div className="p-8 text-center type-body">Ładowanie kreatora...</div>}>

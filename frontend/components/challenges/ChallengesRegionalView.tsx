@@ -20,6 +20,7 @@ import { TabSwitcher } from "@/components/ui/TabSwitcher";
 import { ButtonLink } from "@/components/ui/Button";
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { SearchField } from "@/components/ui/FormControls";
+import { MatchmakingGap } from "@/components/ui/MatchmakingGap";
 
 type ChallengesRegionalViewProps = {
   counties: County[];
@@ -78,7 +79,8 @@ export function ChallengesRegionalView({
     return found || filteredChallenges[0] || challenges[0];
   }, [challenges, filteredChallenges, selectedChallengeSlug]);
 
-  // Powiązane innowacje dla wybranego powiatu
+  // Demo data has no county-to-innovation relation. These are suggestions for
+  // exploration, not a claim that a solution already covers the county need.
   const countyInnovations = useMemo(() => {
     if (!selectedCounty) return [];
     if (selectedCounty.slug === "nowosadecki") {
@@ -152,7 +154,7 @@ export function ChallengesRegionalView({
           <div
             aria-label="Lista powiatów"
             className="challenges-view__selector-list"
-            role="tablist"
+            role="group"
           >
             {filteredCounties.length === 0 ? (
               <p className="type-caption text-slate-500 p-3">Brak powiatów dla tego zapytania.</p>
@@ -162,11 +164,10 @@ export function ChallengesRegionalView({
                 const seniorVal = Number(c.senior_ratio);
                 return (
                   <button
-                    aria-selected={isSelected}
+                    aria-pressed={isSelected}
                     className={`challenges-view__selector-item${isSelected ? " is-selected" : ""}`}
                     key={c.slug}
                     onClick={() => setSelectedCountySlug(c.slug)}
-                    role="tab"
                     type="button"
                   >
                     <div className="challenges-view__selector-item-header">
@@ -265,11 +266,11 @@ export function ChallengesRegionalView({
               </div>
             )}
 
-            {/* Gotowe rozwiązania */}
+            {/* Rozwiązania do sprawdzenia */}
             <div className="challenges-view__section">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <h3 className="challenges-view__section-title">
-                  Gotowe rozwiązania odpowiadające na potrzeby powiatu
+                  Rozwiązania warte sprawdzenia w tym powiecie
                 </h3>
                 <ButtonLink href="/innowacje" trailingIcon={ArrowRight} variant="tertiary">
                   Wszystkie innowacje
@@ -335,7 +336,7 @@ export function ChallengesRegionalView({
           <div
             aria-label="Wybierz wyzwanie"
             className="challenges-view__selector-list"
-            role="tablist"
+            role="group"
           >
             {filteredChallenges.length === 0 ? (
               <p className="type-caption text-slate-500 p-3">Brak wyzwań dla podanych kryteriów.</p>
@@ -344,11 +345,10 @@ export function ChallengesRegionalView({
                 const isSelected = ch.slug === selectedChallenge?.slug;
                 return (
                   <button
-                    aria-selected={isSelected}
+                    aria-pressed={isSelected}
                     className={`challenges-view__selector-item${isSelected ? " is-selected" : ""}`}
                     key={ch.slug}
                     onClick={() => setSelectedChallengeSlug(ch.slug)}
-                    role="tab"
                     type="button"
                   >
                     <div className="challenges-view__selector-item-header">
@@ -418,14 +418,12 @@ export function ChallengesRegionalView({
               </div>
             )}
 
-            {/* Dedykowana innowacja */}
+            {/* Powiązane innowacje albo jawna luka */}
             <div className="challenges-view__section">
               <h3 className="challenges-view__section-title">Gotowe innowacje rozwiązujące ten problem</h3>
-              <div className="challenges-view__innovations-list">
-                {(selectedChallenge.related_innovations && selectedChallenge.related_innovations.length > 0
-                  ? selectedChallenge.related_innovations
-                  : allInnovations.slice(0, 2)
-                ).map((inn) => (
+              {selectedChallenge.related_innovations && selectedChallenge.related_innovations.length > 0 ? (
+                <div className="challenges-view__innovations-list">
+                  {selectedChallenge.related_innovations.map((inn) => (
                   <div className="challenges-view__inn-card" key={inn.id}>
                     <div className="challenges-view__inn-header">
                       <div className="flex items-center justify-between gap-2">
@@ -455,8 +453,27 @@ export function ChallengesRegionalView({
                       </ButtonLink>
                     </div>
                   </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <MatchmakingGap
+                  actions={
+                    <>
+                      <ButtonLink href="/kreator" leadingIcon={Sparkle} variant="primary">
+                        Zgłoś pomysł na rozwiązanie
+                      </ButtonLink>
+                      <ButtonLink href="/innowacje" variant="secondary">
+                        Przeglądaj bibliotekę
+                      </ButtonLink>
+                    </>
+                  }
+                  description="W katalogu nie ma jeszcze rozwiązania powiązanego z tym wyzwaniem. Możesz pomóc je stworzyć albo sprawdzić całą bibliotekę."
+                  heading="Brakuje powiązanego rozwiązania"
+                  noticeTitle="Biała plama wymaga dalszego działania"
+                >
+                  <p className="type-body">ROPS oznaczył to wyzwanie do dalszego rozpoznania. Zgłoszenie pomysłu nie zobowiązuje do jego realizacji.</p>
+                </MatchmakingGap>
+              )}
             </div>
           </article>
         )}
@@ -525,8 +542,9 @@ export function ChallengesRegionalView({
           </ButtonLink>
         </div>
 
-        <div className="challenges-view__white-spots-list">
-          {trends.white_spots.map((spot) => (
+        {trends.white_spots.length > 0 ? (
+          <div className="challenges-view__white-spots-list">
+            {trends.white_spots.map((spot) => (
             <article className="challenges-view__white-spot-card" key={spot.submission_id}>
               <div className="flex flex-col gap-2">
                 <div className="challenges-view__white-spot-meta">
@@ -548,8 +566,17 @@ export function ChallengesRegionalView({
                 </ButtonLink>
               </div>
             </article>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="challenges-view__empty-state" role="status">
+            <CheckCircle aria-hidden="true" size={28} weight="fill" />
+            <div>
+              <h4 className="type-h3">Brak zgłoszonych białych plam</h4>
+              <p className="type-body">W aktualnych danych nie ma potrzeb bez dopasowanego rozwiązania. To nie wyklucza zgłaszania nowych potrzeb.</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Przejrzysta tabela kategorii */}

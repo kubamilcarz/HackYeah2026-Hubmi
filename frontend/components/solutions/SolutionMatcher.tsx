@@ -8,7 +8,6 @@ import {
   MagicWand,
   PencilSimple,
   Sparkle,
-  WarningCircle,
 } from "@phosphor-icons/react";
 import type { Solution } from "@/lib/solutions";
 import { Dialog } from "@/components/ui/Dialog";
@@ -18,6 +17,7 @@ import { LinearProgress } from "@/components/ui/Progress";
 import { SolutionCard } from "@/components/ui/Cards";
 import { TextAreaField } from "@/components/ui/FormControls";
 import { Alert } from "@/components/ui/Alert";
+import { MatchmakingGap } from "@/components/ui/MatchmakingGap";
 import { analyzeMatchmaking, type MatchmakingAnalyzeResponse } from "@/lib/api";
 
 type MatcherPhase = "prompt" | "processing" | "results";
@@ -38,6 +38,43 @@ function currentStage(progress: number) {
   return [...processingStages].reverse().find((stage) => progress >= stage.threshold) ?? processingStages[0];
 }
 
+type EditMatcherDialogProps = {
+  error: string;
+  onDescriptionChange: (value: string) => void;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  open: boolean;
+  value: string;
+};
+
+function EditMatcherDialog({ error, onDescriptionChange, onOpenChange, onSubmit, open, value }: EditMatcherDialogProps) {
+  return (
+    <Dialog
+      description="Zmień opis, aby ponownie przygotować dopasowania innowacji ROPS."
+      onOpenChange={onOpenChange}
+      open={open}
+      title="Zmodyfikuj opis"
+    >
+      <form className="solution-matcher__dialog-form" noValidate onSubmit={onSubmit}>
+        <TextAreaField
+          error={error}
+          label="Opis potrzeby"
+          maxLength={500}
+          onChange={(event) => onDescriptionChange(event.target.value)}
+          required
+          rows={6}
+          showCharacterCount
+          value={value}
+        />
+        <div className="dialog__actions">
+          <Button onClick={() => onOpenChange(false)} type="button" variant="tertiary">Anuluj</Button>
+          <Button trailingIcon={MagicWand} type="submit">Dopasuj ponownie</Button>
+        </div>
+      </form>
+    </Dialog>
+  );
+}
+
 export function SolutionMatcher({ initialDescription = "", solutions: initialSolutions }: SolutionMatcherProps) {
   const [description, setDescription] = useState(initialDescription);
   const [draftDescription, setDraftDescription] = useState(initialDescription);
@@ -48,9 +85,12 @@ export function SolutionMatcher({ initialDescription = "", solutions: initialSol
   const [activeIndex, setActiveIndex] = useState(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [apiResult, setApiResult] = useState<MatchmakingAnalyzeResponse | null>(null);
+  const [analysisError, setAnalysisError] = useState("");
 
   const resultsHeadingRef = useRef<HTMLHeadingElement>(null);
   const slideRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const progressRef = useRef(0);
+  const analysisFinishedRef = useRef(false);
 
   // Rozpoczęcie analizy przy montowaniu jeśli przekazano opis
   useEffect(() => {
@@ -72,17 +112,26 @@ export function SolutionMatcher({ initialDescription = "", solutions: initialSol
       save_submission: false,
     })
       .then((res) => {
-        if (!isCancelled) setApiResult(res);
+        if (!isCancelled) {
+          setApiResult(res);
+          analysisFinishedRef.current = true;
+          if (progressRef.current === 100) setPhase("results");
+        }
       })
       .catch(() => {
-        // Fallback do danych domyślnych w razie braku połączenia
+        if (!isCancelled) {
+          setAnalysisError("Nie udało się połączyć z silnikiem dopasowania. Spróbuj ponownie albo przejrzyj bibliotekę samodzielnie.");
+          analysisFinishedRef.current = true;
+          if (progressRef.current === 100) setPhase("results");
+        }
       });
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reducedMotion) {
       const completion = window.setTimeout(() => {
         setProgress(100);
-        setPhase("results");
+        progressRef.current = 100;
+        if (analysisFinishedRef.current) setPhase("results");
       }, 300);
       return () => {
         isCancelled = true;
@@ -97,8 +146,9 @@ export function SolutionMatcher({ initialDescription = "", solutions: initialSol
     const advance = (now: number) => {
       const nextProgress = Math.min(100, Math.round(((now - startedAt) / duration) * 100));
       setProgress(nextProgress);
+      progressRef.current = nextProgress;
       if (nextProgress >= 100) {
-        setPhase("results");
+        if (analysisFinishedRef.current) setPhase("results");
         return;
       }
       frame = window.requestAnimationFrame(advance);
@@ -125,6 +175,9 @@ export function SolutionMatcher({ initialDescription = "", solutions: initialSol
     setProgress(0);
     setActiveIndex(0);
     setApiResult(null);
+    setAnalysisError("");
+    progressRef.current = 0;
+    analysisFinishedRef.current = false;
     setPhase("processing");
   }
 
@@ -155,9 +208,11 @@ export function SolutionMatcher({ initialDescription = "", solutions: initialSol
     setIsDialogOpen(true);
   }
 
+  const hasGap = apiResult?.is_gap_identified || (!!apiResult && apiResult.matches.length === 0);
+
   // Przygotuj listę rozwiązań do wyświetlenia
   const displayedSolutions: Solution[] =
-    apiResult && !apiResult.is_gap_identified && apiResult.matches.length > 0
+    apiResult && !hasGap && apiResult.matches.length > 0
       ? apiResult.matches.map((m) => ({
           slug: m.innovation.slug,
           title: m.innovation.title,
@@ -232,89 +287,69 @@ export function SolutionMatcher({ initialDescription = "", solutions: initialSol
   }
 
   // Wariant: Wykryto Białą Plamę w wyszukiwarce
-  if (apiResult?.is_gap_identified) {
+  if (hasGap) {
     return (
       <section aria-labelledby="matching-gap-heading" className="solution-matcher solution-matcher--results">
-        <div className="need-gap-card">
-          <div className="need-gap-card__header">
-            <span className="need-gap-card__icon" aria-hidden="true">
-              <WarningCircle size={32} weight="fill" />
-            </span>
-            <div>
-              <span className="need-gap-card__badge">Biała plama w innowacjach</span>
-              <h2 className="type-h2" id="matching-gap-heading" ref={resultsHeadingRef} tabIndex={-1}>
-                Wykryto lukę innowacyjną w bazie ROPS Kraków
-              </h2>
-            </div>
-          </div>
-
-          <Alert
-            description={apiResult.gap_message || "Dla wskazanego zapytania nie odnaleziono jeszcze gotowej innowacji o zgodności powyżej 45%."}
-            title="Brak gotowej innowacji"
-            variant="warning"
-          />
-
-          <div className="need-gap-card__body">
+        <MatchmakingGap
+          actions={
+            <>
+              <ButtonLink href={`/kreator?desc=${encodeURIComponent(description)}`} leadingIcon={Lightbulb} trailingIcon={ArrowRight}>
+                Stwórz rozwiązanie w Kreatorze Pomysłów
+              </ButtonLink>
+              <ButtonLink href="/needs/new" variant="secondary">Zgłoś oficjalną potrzebę</ButtonLink>
+              <Button leadingIcon={PencilSimple} onClick={openEditDialog} variant="tertiary">Zmień opis zapytania</Button>
+            </>
+          }
+          description={apiResult?.gap_message || "Dla wskazanego zapytania nie odnaleziono jeszcze gotowej innowacji o zgodności powyżej 45%."}
+          heading="Wykryto lukę innowacyjną w bazie ROPS Kraków"
+          headingRef={resultsHeadingRef}
+          noticeTitle="Brak gotowej innowacji"
+        >
             <p className="type-body">
               Twój opis: <em>„{description}”</em> nie ma jeszcze bezpośredniego odpowiednika w katalogu gotowych usług i produktów ROPS.
             </p>
             <p className="type-body">
               Możesz zgłosić ten problem jako formalną potrzebę (co zapisze lukę w Bazie Wyzwań Regionalnych) lub stworzyć nową koncepcję innowacji w Kreatorze Pomysłów.
             </p>
-          </div>
+        </MatchmakingGap>
 
-          <div className="need-gap-card__actions">
-            <ButtonLink
-              href={`/kreator?desc=${encodeURIComponent(description)}`}
-              leadingIcon={Lightbulb}
-              trailingIcon={ArrowRight}
-            >
-              Stwórz rozwiązanie w Kreatorze Pomysłów
-            </ButtonLink>
-            <ButtonLink
-              href={`/needs/new`}
-              variant="secondary"
-            >
-              Zgłoś oficjalną potrzebę
-            </ButtonLink>
-            <Button leadingIcon={PencilSimple} onClick={openEditDialog} variant="tertiary">
-              Zmień opis zapytania
-            </Button>
-          </div>
-        </div>
-
-        <Dialog
-          description="Zmień opis, aby ponownie przeszukać bazę innowacji ROPS."
+        <EditMatcherDialog
+          error={dialogError}
+          onDescriptionChange={setDraftDescription}
           onOpenChange={setIsDialogOpen}
+          onSubmit={handleDescriptionUpdate}
           open={isDialogOpen}
-          title="Zmodyfikuj zapytanie"
-        >
-          <form className="solution-matcher__dialog-form" noValidate onSubmit={handleDescriptionUpdate}>
-            <TextAreaField
-              error={dialogError}
-              label="Opis potrzeby"
-              maxLength={500}
-              onChange={(event) => setDraftDescription(event.target.value)}
-              required
-              rows={6}
-              showCharacterCount
-              value={draftDescription}
-            />
-            <div className="dialog__actions">
-              <Button onClick={() => setIsDialogOpen(false)} type="button" variant="tertiary">
-                Anuluj
-              </Button>
-              <Button trailingIcon={MagicWand} type="submit">
-                Dopasuj ponownie
-              </Button>
-            </div>
-          </form>
-        </Dialog>
+          value={draftDescription}
+        />
       </section>
     );
   }
 
   // Wariant: Wyniki dopasowania
+  if (analysisError) {
+    return (
+      <section aria-labelledby="matching-error-heading" className="solution-matcher solution-matcher--results solution-matcher--error">
+        <h2 className="type-h2" id="matching-error-heading" ref={resultsHeadingRef} tabIndex={-1}>
+          Nie udało się przygotować dopasowania
+        </h2>
+        <Alert description={analysisError} title="Analiza jest chwilowo niedostępna" variant="warning" />
+        <div className="solution-matcher__error-actions">
+          <Button onClick={() => startMatching(description)} trailingIcon={MagicWand}>Spróbuj ponownie</Button>
+          <Button leadingIcon={PencilSimple} onClick={openEditDialog} variant="secondary">Zmień opis</Button>
+          <ButtonLink href="/innowacje" variant="tertiary">Przeglądaj bibliotekę</ButtonLink>
+        </div>
+        <EditMatcherDialog
+          error={dialogError}
+          onDescriptionChange={setDraftDescription}
+          onOpenChange={setIsDialogOpen}
+          onSubmit={handleDescriptionUpdate}
+          open={isDialogOpen}
+          value={draftDescription}
+        />
+      </section>
+    );
+  }
+
   return (
     <section aria-labelledby="matching-results-heading" className="solution-matcher solution-matcher--results">
       <div className="solution-matcher__results-header">
@@ -392,33 +427,14 @@ export function SolutionMatcher({ initialDescription = "", solutions: initialSol
         </div>
       </div>
 
-      <Dialog
-        description="Zmień opis, aby ponownie przygotować dopasowania innowacji ROPS."
+      <EditMatcherDialog
+        error={dialogError}
+        onDescriptionChange={setDraftDescription}
         onOpenChange={setIsDialogOpen}
+        onSubmit={handleDescriptionUpdate}
         open={isDialogOpen}
-        title="Zmodyfikuj opis"
-      >
-        <form className="solution-matcher__dialog-form" noValidate onSubmit={handleDescriptionUpdate}>
-          <TextAreaField
-            error={dialogError}
-            label="Opis potrzeby"
-            maxLength={500}
-            onChange={(event) => setDraftDescription(event.target.value)}
-            required
-            rows={6}
-            showCharacterCount
-            value={draftDescription}
-          />
-          <div className="dialog__actions">
-            <Button onClick={() => setIsDialogOpen(false)} type="button" variant="tertiary">
-              Anuluj
-            </Button>
-            <Button trailingIcon={MagicWand} type="submit">
-              Dopasuj ponownie
-            </Button>
-          </div>
-        </form>
-      </Dialog>
+        value={draftDescription}
+      />
     </section>
   );
 }

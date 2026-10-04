@@ -1,6 +1,6 @@
 "use client";
 
-import { Printer, ArrowLeft, CheckCircle } from "@phosphor-icons/react";
+import { Printer, ArrowLeft, CheckCircle, WarningCircle } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/Button";
 import type { ActionPlanItem, GroupMember } from "@/lib/api";
 
@@ -48,7 +48,7 @@ export function FersPrintView({ data, onBack }: FersPrintViewProps) {
   const grandTotal = prepTotal + testTotal;
 
   return (
-    <div className="fers-print-container max-w-4xl mx-auto space-y-6">
+    <div className="fers-print-container space-y-6">
       {/* Pasek narzędzi na ekranie (ukryty przy druku) */}
       <div className="no-print bg-slate-900 text-white p-4 rounded-2xl flex items-center justify-between flex-wrap gap-4 shadow-md">
         <div>
@@ -81,9 +81,9 @@ export function FersPrintView({ data, onBack }: FersPrintViewProps) {
             <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">
               Regionalny Ośrodek Polityki Społecznej w Krakowie
             </span>
-            <h1 className="text-2xl font-bold text-slate-900 mt-1">
+            <h2 className="text-2xl font-bold text-slate-900 mt-1">
               FORMULARZ ZGŁOSZENIOWY INNOWACJI SPOŁECZNEJ
-            </h1>
+            </h2>
             <p className="text-sm text-slate-600 font-medium">
               Inkubator Włączenia Społecznego 2.0 • Program FERS Działanie 5.1 (Innowacje Społeczne)
             </p>
@@ -361,11 +361,15 @@ export function FersPrintView({ data, onBack }: FersPrintViewProps) {
             12. Oświadczenia formalne wnioskodawcy
           </h2>
           <div className="flex items-start gap-2 text-xs text-slate-700 pt-1">
-            <CheckCircle className="text-emerald-700 shrink-0 mt-0.5" size={16} weight="fill" />
+            {data.formalDeclarationsAccepted ? (
+              <CheckCircle className="text-emerald-700 shrink-0 mt-0.5" size={16} weight="fill" />
+            ) : (
+              <WarningCircle className="shrink-0 mt-0.5" size={16} weight="fill" />
+            )}
             <span>
-              Wnioskodawca oświadcza, że zapoznał się z Regulaminem Naboru Inkubatora Włączenia Społecznego 2.0
-              (FERS Działanie 5.1), spełnia kryteria formalne, nie zalega ze zobowiązaniami publicznoprawnymi
-              i wyraża zgodę na przetwarzanie danych osobowych przez ROPS Kraków na potrzeby procedury naboru.
+              {data.formalDeclarationsAccepted
+                ? "Wnioskodawca oświadcza, że zapoznał się z Regulaminem Naboru Inkubatora Włączenia Społecznego 2.0 (FERS Działanie 5.1), spełnia kryteria formalne, nie zalega ze zobowiązaniami publicznoprawnymi i wyraża zgodę na przetwarzanie danych osobowych przez ROPS Kraków na potrzeby procedury naboru."
+                : "Oświadczenia formalne nie zostały jeszcze zaakceptowane. Przed złożeniem wniosku wróć do edycji i potwierdź wymagane oświadczenie."}
             </span>
           </div>
 

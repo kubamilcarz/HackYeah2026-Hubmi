@@ -81,18 +81,11 @@ export function ConceptDiagramView({
         </div>
       </div>
 
-      <p className="type-caption text-slate-600">
-        Wizualny przepływ logiki projektu od zdiagnozowanej potrzeby, przez etapy przygotowania i testowania, aż po trwały efekt deinstytucjonalizacji w Małopolsce.
-      </p>
-
       {showCode ? (
         <div className="relative">
           <pre className="p-4 bg-slate-900 text-emerald-400 font-mono text-xs rounded-xl overflow-x-auto whitespace-pre">
             {defaultMermaid}
           </pre>
-          <span className="block mt-1 type-caption text-slate-500">
-            Kod kompatybilny z Mermaid.js oraz dokumentacją Markdown naboru ROPS.
-          </span>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 pt-2">

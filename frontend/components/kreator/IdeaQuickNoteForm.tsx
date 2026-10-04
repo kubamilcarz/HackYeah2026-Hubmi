@@ -106,12 +106,7 @@ export function IdeaQuickNoteForm({
         <div className="flex items-start gap-3">
           <FileText size={24} className="text-emerald-700 shrink-0 mt-0.5" weight="fill" />
           <div>
-            <h4 className="type-body font-semibold text-emerald-950">
-              Szukasz dofinansowania do 50 000 zł na prototyp i testy?
-            </h4>
-            <p className="type-caption text-emerald-800">
-              Możesz w każdej chwili przekształcić tę fiszkę w pełny wniosek do Inkubatora Włączenia Społecznego 2.0 (FERS Działanie 5.1).
-            </p>
+            <h4 className="type-body font-semibold text-emerald-950">Potrzebujesz do 50 000 zł?</h4>
           </div>
         </div>
         <Button
@@ -209,13 +204,13 @@ export function IdeaQuickNoteForm({
             disabled={isAiLoading}
             onClick={handleAiAssist}
           >
-            {isAiLoading ? "Pobieranie wskazówki..." : "Podpowiedź Asystenta ROPS"}
+            {isAiLoading ? "Przygotowuję..." : "Podpowiedź"}
           </Button>
         </div>
 
         {aiTip && (
           <Alert
-            title="Wskazówka Asystenta Innowacji Społecznych"
+            title="Podpowiedź"
             description={aiTip}
             variant="info"
           />
@@ -228,8 +223,8 @@ export function IdeaQuickNoteForm({
           rows={4}
           value={concept}
           onChange={(e) => setConcept(e.target.value)}
-          placeholder="Opisz krótko problem, proponowane rozwiązanie oraz czym różni się ono od dotychczasowych działań pomocy społecznej..."
-          helperText="Wystarczą 2–4 zwięzłe zdania. Zespół ROPS pomoże Ci rozwinąć szczegóły."
+          placeholder="Problem, rozwiązanie i co je wyróżnia."
+          helperText="2–4 zdania wystarczą."
         />
 
         <TextField
@@ -273,7 +268,7 @@ export function IdeaQuickNoteForm({
       {/* Akcja złożenia */}
       <div className="pt-6 border-t border-slate-100 flex items-center justify-between flex-wrap gap-4">
         <span className="type-caption text-slate-500">
-          Złożenie fiszki nie zobowiązuje do podpisania umowy grantowej. Koordynator ROPS skontaktuje się w ciągu 3 dni roboczych.
+          Odpowiemy w ciągu 3 dni roboczych.
         </span>
         <Button
           type="submit"
