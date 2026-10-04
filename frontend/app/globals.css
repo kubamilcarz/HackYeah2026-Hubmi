@@ -453,10 +453,16 @@ html {
   filter: grayscale(1);
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   background: var(--surface-canvas);
   color: var(--content-primary);
   font-family: var(--font-family-sans);
+  min-width: 1024px;
 }
 
 .type-display,
@@ -3154,7 +3160,7 @@ a.app-navigation__link {
 }
 
 /* Public landing page */
-.landing-page { background: var(--surface-raised); isolation: isolate; min-height: 100dvh; overflow: clip; position: relative; }
+.landing-page { background: var(--surface-raised); isolation: isolate; min-height: 100dvh; min-width: 1024px; overflow: clip; position: relative; }
 .landing-page::before, .landing-page::after { border-radius: 50%; content: ""; pointer-events: none; position: absolute; z-index: 0; }
 .landing-page::before { background: var(--feedback-success-background); height: 17rem; left: -11rem; top: 18rem; width: 17rem; }
 .landing-page::after { background: var(--surface-subtle); bottom: -10rem; height: 19rem; right: -12rem; width: 19rem; }
@@ -3248,7 +3254,7 @@ a.app-navigation__link {
 }
 
 /* Resident application framing and need-report flow. */
-.hub-shell { background: var(--surface-canvas); min-height: 100dvh; }
+.hub-shell { background: var(--surface-canvas); min-height: 100dvh; min-width: 1024px; }
 .hub-shell > .app-navigation { border-bottom: 1px solid var(--border-strong); border-right: 0; min-height: auto; padding: var(--space-3) var(--space-4); position: static; width: 100%; }
 .hub-shell .app-navigation__brand { margin: 0 var(--space-4) 0 0; vertical-align: middle; }
 .hub-shell .app-navigation__brand-logo { height: var(--control-height-lg); width: var(--control-height-lg); }

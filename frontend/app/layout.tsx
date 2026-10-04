@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AccessibilityMenu } from "@/components/accessibility/AccessibilityMenu";
 import { AccessibilityProvider } from "@/components/accessibility/AccessibilityProvider";
@@ -20,8 +20,34 @@ export const metadata: Metadata = {
   description: "Splot łączy potrzeby społeczne z innowacyjnymi rozwiązaniami w Małopolsce.",
 };
 
+export const viewport: Viewport = {
+  width: 1024,
+  initialScale: 1,
+};
+
 const preferenceScript = `
   (() => {
+    try {
+      const updateMobileViewport = () => {
+        const screenWidth = window.screen.width;
+        if (screenWidth < 1024) {
+          const scale = (screenWidth / 1024).toFixed(4);
+          let meta = document.querySelector('meta[name="viewport"]');
+          if (!meta) {
+            meta = document.createElement('meta');
+            meta.name = 'viewport';
+            document.head.appendChild(meta);
+          }
+          meta.setAttribute('content', 'width=1024, initial-scale=' + scale + ', minimum-scale=' + scale + ', maximum-scale=3');
+        }
+      };
+      updateMobileViewport();
+      window.addEventListener('orientationchange', () => setTimeout(updateMobileViewport, 120));
+      window.addEventListener('resize', () => {
+        if (window.screen.width < 1024) updateMobileViewport();
+      });
+    } catch {}
+
     const themes = ["system", "light", "dark", "hc-black-white", "hc-black-yellow", "grayscale"];
     const scales = [25, 50, 75, 100, 112.5, 125, 150, 175, 200];
     const defaultPreferences = { appearance: "system", textScale: 100, underlineLinks: false };

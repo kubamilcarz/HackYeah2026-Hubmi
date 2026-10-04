@@ -153,6 +153,34 @@ export function AccessibilityProvider({ children }: { children: ReactNode }) {
   }, [preferences]);
 
   useEffect(() => {
+    const updateMobileViewport = () => {
+      if (typeof window === "undefined") return;
+      const screenWidth = window.screen.width;
+      if (screenWidth < 1024) {
+        const scale = (screenWidth / 1024).toFixed(4);
+        let meta = document.querySelector<HTMLMetaElement>('meta[name="viewport"]');
+        if (!meta) {
+          meta = document.createElement("meta");
+          meta.name = "viewport";
+          document.head.appendChild(meta);
+        }
+        meta.setAttribute(
+          "content",
+          `width=1024, initial-scale=${scale}, minimum-scale=${scale}, maximum-scale=3`,
+        );
+      }
+    };
+
+    updateMobileViewport();
+    window.addEventListener("orientationchange", updateMobileViewport);
+    window.addEventListener("resize", updateMobileViewport);
+    return () => {
+      window.removeEventListener("orientationchange", updateMobileViewport);
+      window.removeEventListener("resize", updateMobileViewport);
+    };
+  }, []);
+
+  useEffect(() => {
     if (preferences.appearance !== "system") return;
 
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
