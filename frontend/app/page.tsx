@@ -33,8 +33,7 @@ export default function Home() {
       <header className="landing-header">
         <div className="landing-shell landing-header__inner">
           <Link aria-label="Splot — strona główna" className="landing-brand" href="/">
-            <Image alt="" aria-hidden="true" className="landing-brand__mark" height={44} priority src="/logo-icon.svg" width={44} />
-            <span>SPLOT</span>
+            <Image alt="" aria-hidden="true" className="landing-brand__mark" height={44} priority src="/logo-color.svg" width={44} />
           </Link>
 
           <nav aria-label="Główna nawigacja" className="landing-nav">

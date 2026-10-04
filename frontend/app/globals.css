@@ -3140,8 +3140,8 @@ a.app-navigation__link {
 .landing-shell { box-sizing: border-box; margin-inline: auto; max-width: 78rem; padding-inline: var(--space-5); width: 100%; }
 .landing-header { background: var(--surface-raised); border-bottom: 1px solid var(--border-subtle); }
 .landing-header__inner { align-items: center; display: flex; justify-content: space-between; min-height: 4.75rem; position: relative; }
-.landing-brand { align-items: center; color: var(--content-primary); display: inline-flex; flex: 0 0 auto; font-size: 1.6rem; font-weight: var(--font-weight-bold); gap: var(--space-2); letter-spacing: -0.06em; line-height: 1; text-decoration: none; }
-.landing-brand__mark { height: 2.5rem; width: 2.5rem; }
+.landing-brand { color: var(--content-primary); display: block; flex: 0 0 auto; height: 2.75rem; line-height: 1; overflow: hidden; text-decoration: none; width: 8.25rem; }
+.landing-brand__mark { display: block; height: 8.25rem; max-width: none; transform: translateY(-2.75rem); width: 8.25rem; }
 .landing-nav, .landing-header__actions { display: none; }
 .landing-search { position: relative; }
 .landing-search > summary { align-items: center; color: var(--content-primary); cursor: pointer; display: inline-flex; justify-content: center; list-style: none; min-height: var(--control-height-sm); min-width: var(--control-height-sm); }
@@ -6690,5 +6690,4 @@ a.app-navigation__link {
   background: var(--surface-subtle);
   border-top: 1px solid var(--border-subtle);
 }
-
 
